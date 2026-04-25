@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Farmacéutico - Pet Clinic</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/farmaceutico.css">
+    <link rel="stylesheet" th:href="@{/css/farmaceutico.css}">
 </head>
 <body>
 <div class="dashboard">
@@ -296,6 +296,6 @@
     <span id="toastMessage"></span>
 </div>
 
-<script src="/js/farmaceutico.js"></script>
+<script th:src="@{/js/farmaceutico.js}"></script>
 </body>
 </html>
