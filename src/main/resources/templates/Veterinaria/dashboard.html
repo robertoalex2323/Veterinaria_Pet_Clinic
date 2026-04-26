@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Veterinario</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">🐾</div>
+            <nav class="menu">
+                <a href="#" class="menu-item active">🏠</a>
+                <a href="#" class="menu-item">✨</a>
+                <a href="#" class="menu-item">📄</a>
+                <a href="#" class="menu-item">📅</a>
+                <a href="#" class="menu-item">⚙</a>
+            </nav>
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main">
+            <!-- Header -->
+            <header class="header">
+                <div class="status-pill">● Sistema Activo</div>
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar paciente...">
+                </div>
+            </header>
+
+            <section class="hero">
+                <h1>Panel Veterinario</h1>
+                <p>Viernes, 25 de Abril 2026</p>
+            </section>
+
+            <!-- Estadísticas -->
+            <section class="stats-grid">
+                <article class="stat-card blue">
+                    <div class="stat-label">Atendidos Hoy</div>
+                    <div class="stat-value" id="atendidosHoy">0</div>
+                </article>
+
+                <article class="stat-card orange">
+                    <div class="stat-label">Pendientes</div>
+                    <div class="stat-value" id="pendientes">0</div>
+                </article>
+
+                <article class="stat-card red">
+                    <div class="stat-label">Críticos</div>
+                    <div class="stat-value" id="criticos">0</div>
+                </article>
+
+                <article class="stat-card green">
+                    <div class="stat-label">Mejoría</div>
+                    <div class="stat-value" id="mejoria">0</div>
+                </article>
+            </section>
+
+            <!-- Filtro por especie -->
+            <section class="filter-bar">
+                <span>Filtrar por especie:</span>
+                <button class="chip active">🐶 Perros</button>
+                <button class="chip">🐱 Gatos</button>
+                <button class="chip">🐦 Aves</button>
+                <button class="chip">🦎 Reptiles</button>
+            </section>
+
+            <!-- Grid principal -->
+            <section class="dashboard-grid">
+                <!-- Pacientes recientes -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Pacientes Recientes</h2>
+                        <span class="badge" id="totalActivos">12 activos</span>
+                    </div>
+                    <div class="patient-list" id="listaPacientes">
+                        <!-- JS -->
+                    </div>
+                </div>
+
+                <!-- Ficha del paciente -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Ficha del Paciente</h2>
+                        <span class="subtext" id="pacienteSeleccionadoTitulo">—</span>
+                    </div>
+
+                    <div class="patient-profile" id="fichaPaciente">
+                        <p>Selecciona un paciente de la lista</p>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn purple">Diagnóstico IA</button>
+                        <button class="btn blue">Ver Historial</button>
+                    </div>
+
+                    <div class="quick-note">
+                        <label>Nota Rápida</label>
+                        <textarea placeholder="Observaciones de la consulta actual..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Columna derecha -->
+                <div class="right-column">
+                    <div class="panel alert-panel">
+                        <div class="panel-header">
+                            <h2>Alertas Críticas</h2>
+                        </div>
+                        <div id="alertasCriticas" class="small-list"></div>
+                    </div>
+
+                    <div class="panel follow-panel">
+                        <div class="panel-header">
+                            <h2>Seguimiento Rápido</h2>
+                        </div>
+                        <div class="small-list">
+                            <div class="small-item">
+                                <div>
+                                    <strong>Luna</strong>
+                                    <p>Signos vitales</p>
+                                </div>
+                                <span class="tag normal">Normal</span>
+                            </div>
+                            <div class="small-item">
+                                <div>
+                                    <strong>Kiwi</strong>
+                                    <p>Peso corporal</p>
+                                </div>
+                                <span class="tag warning">-5%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel vaccines-panel">
+                        <div class="panel-header">
+                            <h2>Vacunas Pendientes</h2>
+                        </div>
+                        <div class="small-list" id="vacunasPendientes">
+                            <div class="small-item">
+                                <div>
+                                    <strong>Rabia</strong>
+                                    <p>Max - próxima dosis pendiente</p>
+                                </div>
+                                <span class="tag danger">Hoy</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

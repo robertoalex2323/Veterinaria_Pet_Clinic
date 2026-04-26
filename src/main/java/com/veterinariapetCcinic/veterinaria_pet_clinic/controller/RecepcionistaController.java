@@ -26,7 +26,6 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Pago;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ClienteService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;
@@ -49,8 +48,7 @@ public class RecepcionistaController {
     @Autowired
     private PagoService pagoService;
 
-    @Autowired
-    private AgendaService agendaService;
+    // AgendaService removed because it was unused
 
     @Autowired
     private NotificacionService notificacionService;

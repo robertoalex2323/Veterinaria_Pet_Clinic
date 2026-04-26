@@ -50,47 +50,30 @@ public class ClienteService {
         return clienteRepository.save(existente);
     }
     
-    @SuppressWarnings("unchecked")
     public Cliente buscarPorId(Long id) {
-        Optional<?> optional = clienteRepository.findById(id);
-        if (optional.isPresent()) {
-            return (Cliente) optional.get();
-        }
-        throw new RuntimeException("Cliente no encontrado con ID: " + id);
+        Optional<Cliente> optional = clienteRepository.findById(id);
+        return optional.orElseThrow(() -> new RuntimeException("Cliente no encontrado con ID: " + id));
     }
-    
-    @SuppressWarnings("unchecked")
+
     public Cliente buscarPorTelefono(String telefono) {
-        Optional<?> optional = clienteRepository.findByTelefono(telefono);
-        if (optional.isPresent()) {
-            return (Cliente) optional.get();
-        }
-        throw new RuntimeException("Cliente no encontrado con teléfono: " + telefono);
+        Optional<Cliente> optional = clienteRepository.findByTelefono(telefono);
+        return optional.orElseThrow(() -> new RuntimeException("Cliente no encontrado con teléfono: " + telefono));
     }
-    
-    @SuppressWarnings("unchecked")
+
     public List<Cliente> listarTodos() {
-        List<?> resultado = clienteRepository.findAll();
-        return (List<Cliente>) resultado;
+        return clienteRepository.findAll();
     }
-    
-    @SuppressWarnings("unchecked")
+
     public List<Cliente> buscarClientes(String nombre) {
         if (nombre != null && !nombre.isEmpty()) {
-            List<?> resultado = clienteRepository.findByNombreContainingIgnoreCase(nombre);
-            return (List<Cliente>) resultado;
+            return clienteRepository.findByNombreContainingIgnoreCase(nombre);
         }
-        List<?> resultado = clienteRepository.findAll();
-        return (List<Cliente>) resultado;
+        return clienteRepository.findAll();
     }
-    
-    @SuppressWarnings("unchecked")
+
     public Cliente obtenerClienteConMascotas(Long id) {
-        Optional<?> optional = clienteRepository.findByIdWithMascotas(id);
-        if (optional.isPresent()) {
-            return (Cliente) optional.get();
-        }
-        throw new RuntimeException("Cliente no encontrado");
+        Optional<Cliente> optional = clienteRepository.findByIdWithMascotas(id);
+        return optional.orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
     }
     
     public long contarClientes() {
