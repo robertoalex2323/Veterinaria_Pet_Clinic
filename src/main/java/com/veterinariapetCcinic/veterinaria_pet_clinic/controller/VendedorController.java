@@ -1,6 +1,6 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.venta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.VentaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,8 +18,8 @@ public class VendedorController {
     private VentaService ventaService;
 
     @PostMapping("/ventas")
-    public ResponseEntity<Venta> registrarVenta(@RequestBody Venta nuevaVenta) {
-        Venta ventaProcesada = ventaService.procesarVenta(nuevaVenta);
+    public ResponseEntity<venta> registrarVenta(@RequestBody venta nuevaVenta) {
+        venta ventaProcesada = ventaService.procesarVenta(nuevaVenta);
         return new ResponseEntity<>(ventaProcesada, HttpStatus.CREATED);
     }
 
