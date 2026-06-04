@@ -25,9 +25,11 @@ public interface AgendaRepository extends JpaRepository<Agenda, Long> {
     @Query("SELECT a FROM Agenda a WHERE a.veterinario.id = :veterinarioId AND a.fecha = :fecha")
     List<Agenda> findByVeterinarioAndFecha(@Param("veterinarioId") Long veterinarioId, @Param("fecha") LocalDate fecha);
     
-   @Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio = :hora AND a.disponible = true")
-List<Agenda> findAgendaDisponiblePorFechaYHora(@Param("fecha") LocalDate fecha, @Param("hora") java.time.LocalTime hora);
 
-@Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio = :hora")
-List<Agenda> findAgendaPorFechaYHora(@Param("fecha") LocalDate fecha, @Param("hora") java.time.LocalTime hora);
+    @Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio <= :hora AND a.horaFin > :hora AND a.disponible = true")
+    List<Agenda> findAgendaDisponiblePorFechaYHora(@Param("fecha") LocalDate fecha, @Param("hora") java.time.LocalTime hora);
+
+    @Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio <= :hora AND a.horaFin > :hora")
+    List<Agenda> findAgendaPorFechaYHora(@Param("fecha") LocalDate fecha, @Param("hora") java.time.LocalTime hora);
+
 }

@@ -20,16 +20,6 @@
             </div>
         </div>
 
-        <!-- Alertas -->
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-            <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-            <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-
         <!-- Calendario Header -->
         <div class="citas-header-bg mb-4 d-flex justify-content-between align-items-center flex-wrap">
             <div>
@@ -58,15 +48,16 @@
 
             <div class="card-body p-0">
                 <!-- Iteración de citas -->
-                <div class="cita-row" th:each="cita : ${citas}">
+                <div class="cita-row" th:each="cita : ${citas}" 
+                     th:classappend="${cita.estado == 'CANCELADA' ? 'opacity-75 bg-light' : ''}">
                     <div class="cita-hora">
                         <i class="far fa-clock me-2 text-muted"></i>
                         <span th:text="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'HH:mm') : '-'}">10:00</span>
                     </div>
 
-                    <div class="cita-info">
+                    <div class="cita-info" th:style="${cita.estado == 'CANCELADA' ? 'text-decoration: line-through;' : ''}">
                         <div class="d-flex align-items-center gap-2">
-                            <div class="cita-mascota" th:text="${cita.mascota?.nombre}">Max</div>
+                            <div class="cita-mascota" th:text="${cita.mascota?.nombre}" th:classappend="${cita.estado == 'CANCELADA' ? 'text-muted' : ''}">Max</div>
                             <span class="badge bg-light text-dark border"><i class="fas fa-paw text-primary"></i> <span
                                     th:text="${cita.mascota?.especie}">Perro</span></span>
                         </div>

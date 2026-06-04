@@ -29,7 +29,7 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     @Query("SELECT c FROM Cita c WHERE c.mascota.cliente.telefono = :telefono")
     List<Cita> findCitasByClienteTelefono(@Param("telefono") String telefono);
 
-    long countByFechaHoraBetweenAndEstado(LocalDateTime inicio, LocalDateTime fin, String estado);
+    long countByFechaHoraBetweenAndEstadoIn(LocalDateTime inicio, LocalDateTime fin, List<String> estados);
 
     @Query("SELECT c FROM Cita c WHERE c.estado = 'AGENDADA' AND c.fechaHora > :ahora")
     List<Cita> findCitasPendientes(@Param("ahora") LocalDateTime ahora);

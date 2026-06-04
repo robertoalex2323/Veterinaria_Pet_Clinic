@@ -4,25 +4,30 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.AgendaRepository;
 
 @Service
 public class AgendaService {
 
     private final AgendaRepository agendaRepository;
+    private final AppProperties appProperties;
 
-    public AgendaService(AgendaRepository agendaRepository) {
+    public AgendaService(AgendaRepository agendaRepository, AppProperties appProperties) {
         this.agendaRepository = agendaRepository;
+        this.appProperties = appProperties;
     }
 
     @Transactional
     public Agenda guardar(Agenda agenda) {
-        return agendaRepository.save(agenda);
+        Objects.requireNonNull(agenda, "La agenda no puede ser nula");
+        return Objects.requireNonNull(agendaRepository.save(agenda));
     }
 
     public List<Agenda> obtenerHorariosDelDia(LocalDate fecha) {
@@ -40,6 +45,7 @@ public class AgendaService {
 
     @Transactional
     public void bloquearHorario(Long id) {
+        Objects.requireNonNull(id, "El ID no puede ser nulo");
         Agenda agenda = agendaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Horario no encontrado"));
         agenda.setDisponible(false);
@@ -94,6 +100,7 @@ public class AgendaService {
 
     @Transactional
     public void liberarHorario(Long id) {
+        Objects.requireNonNull(id, "El ID no puede ser nulo");
         Agenda agenda = agendaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Horario no encontrado"));
         agenda.setDisponible(true);
@@ -127,19 +134,20 @@ public class AgendaService {
                 if (fecha.getDayOfWeek() == java.time.DayOfWeek.SUNDAY)
                     continue;
 
-                LocalTime cursor = LocalTime.of(8, 0);
-                LocalTime fin = LocalTime.of(20, 0);
+                LocalTime cursor = LocalTime.parse(appProperties.getBusiness().getStartTime());
+                LocalTime fin = LocalTime.parse(appProperties.getBusiness().getEndTime());
+                int duracion = appProperties.getBusiness().getDefaultSlotDuration();
 
-                while (cursor.plusMinutes(30).compareTo(fin) <= 0) {
+                while (cursor.plusMinutes(duracion).compareTo(fin) <= 0) {
                     Agenda agenda = new Agenda();
                     agenda.setFecha(fecha);
                     agenda.setHoraInicio(cursor);
-                    agenda.setHoraFin(cursor.plusMinutes(30));
-                    agenda.setDuracionTurno(30);
+                    agenda.setHoraFin(cursor.plusMinutes(duracion));
+                    agenda.setDuracionTurno(duracion);
                     agenda.setDisponible(true);
                     agenda.setVeterinario(veterinarioDefecto);
                     agendaRepository.save(agenda);
-                    cursor = cursor.plusMinutes(30);
+                    cursor = cursor.plusMinutes(duracion);
                 }
             }
         }

@@ -76,4 +76,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     renderCalendar(currentMonth, currentYear);
+
+    // --- Inteligencia para el cálculo automático de duración ---
+    const horaInicioInput = document.getElementById('horaInicio');
+    const horaFinInput = document.getElementById('horaFin');
+    const duracionInput = document.getElementById('duracionTurno');
+    const formGenerar = document.querySelector('form[action*="/horarios/generar"]');
+
+    if (horaInicioInput && horaFinInput && duracionInput) {
+        const calcularDiferencia = () => {
+            const inicio = horaInicioInput.value;
+            const fin = horaFinInput.value;
+
+            if (inicio && fin) {
+                const [h1, m1] = inicio.split(':').map(Number);
+                const [h2, m2] = fin.split(':').map(Number);
+
+                const minutosInicio = (h1 * 60) + m1;
+                const minutosFin = (h2 * 60) + m2;
+                const diferencia = minutosFin - minutosInicio;
+
+                const submitBtn = formGenerar ? formGenerar.querySelector('button[type="submit"]') : null;
+
+                if (diferencia > 0) {
+                    duracionInput.value = diferencia;
+                    
+                    // El sistema es flexible: el recepcionista decide la duración según la cita
+                    // Solo validamos que la diferencia sea positiva
+                    duracionInput.style.borderColor = "#ced4da";
+                    if (submitBtn) submitBtn.disabled = false;
+                    
+                } else {
+                    duracionInput.value = '';
+                    duracionInput.style.borderColor = "#ced4da";
+                    if (submitBtn) submitBtn.disabled = true;
+                }
+            }
+        };
+
+        horaInicioInput.addEventListener('change', calcularDiferencia);
+        horaFinInput.addEventListener('change', calcularDiferencia);
+    }
 });
