@@ -1,0 +1,15 @@
+{
+  "sessionId": "1781820912802",
+  "createdAt": 1781820912811,
+  "updatedAt": 1781820912813,
+  "approvedCommands": [],
+  "decisions": [],
+  "stack": {
+    "languages": [
+      "java"
+    ],
+    "frameworks": [],
+    "packageManager": "maven",
+    "detectedAt": 1781820912812
+  }
+}

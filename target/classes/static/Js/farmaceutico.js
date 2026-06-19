@@ -1,25 +1,7 @@
 // ===========================
-// DATOS SIMULADOS
+// API BASE URL
 // ===========================
-let prescriptions = [
-    { id: "RX001", code: "VET-2024-001", patient: "Max (Perro)", vet: "Dr. Meza", date: "2024-01-15", status: "Pendiente", medicines: ["Amoxicilina", "Meloxicam"] },
-    { id: "RX002", code: "VET-2024-002", patient: "Luna (Gato)", vet: "Dra. Llacsahuanga ", date: "2024-01-14", status: "Pendiente", medicines: ["Doxiciclina"] },
-    { id: "RX003", code: "VET-2024-003", patient: "Rocky (Perro)", vet: "Dr. Anton", date: "2024-01-13", status: "Verificada", medicines: ["Omeprazol"] }
-];
-
-let inventory = [
-    { id: 1, name: "Amoxicilina", presentation: "Tabletas 500mg", stock: 150, price: 15.50, description: "Antibiótico de amplio espectro. Indicado para infecciones bacterianas." },
-    { id: 2, name: "Meloxicam", presentation: "Suspensión oral", stock: 45, price: 22.00, description: "Antiinflamatorio no esteroideo para dolor y fiebre." },
-    { id: 3, name: "Doxiciclina", presentation: "Cápsulas 100mg", stock: 8, price: 18.75, description: "Antibiótico para infecciones respiratorias y dermatológicas." },
-    { id: 4, name: "Omeprazol", presentation: "Tabletas 20mg", stock: 120, price: 12.30, description: "Protector gastrointestinal, reduce acidez estomacal." },
-    { id: 5, name: "Fipronil", presentation: "Solución tópica", stock: 3, price: 35.00, description: "Antipulgas y garrapatas de acción prolongada." }
-];
-
-let sales = [
-    { date: "2024-01-15", medicine: "Amoxicilina", quantity: 2, total: 31.00, client: "María González", payment: "Efectivo" }
-];
-
-let dispensations = [];
+const API_BASE = '/api/farmaceutico';
 
 // ===========================
 // FUNCIONES DE UTILIDAD
@@ -36,265 +18,359 @@ function showToast(message, isError = false) {
     }, 3000);
 }
 
-function updateStats() {
-    document.getElementById('prescriptionsCount').textContent = prescriptions.filter(p => p.status === 'Pendiente').length;
-    document.getElementById('dispensedCount').textContent = dispensations.length;
-    
-    const todaySales = sales.filter(s => s.date === new Date().toISOString().split('T')[0]);
-    const totalSales = todaySales.reduce((sum, s) => sum + s.total, 0);
-    document.getElementById('salesCount').textContent = `$${totalSales.toFixed(2)}`;
-    
-    const lowStock = inventory.filter(m => m.stock < 10).length;
-    document.getElementById('lowStockCount').textContent = lowStock;
+async function fetchAPI(endpoint, options = {}) {
+
+    try {
+
+        console.log("URL:", `${API_BASE}${endpoint}`);
+
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            ...options
+        });
+
+        console.log("STATUS:", response.status);
+
+        const text = await response.text();
+
+        console.log("RESPUESTA:", text);
+
+        if (!response.ok) {
+            throw new Error(text);
+        }
+
+        return text ? JSON.parse(text) : {};
+
+    } catch (error) {
+
+        console.error("ERROR FETCH:", error);
+
+        showToast(error.message, true);
+
+        throw error;
+    }
 }
 
-function renderPrescriptions() {
-    const tbody = document.getElementById('prescriptionsList');
-    tbody.innerHTML = prescriptions.map(p => `
-        <tr>
-            <td>${p.code}</td>
-            <td>${p.patient}</td>
-            <td>${p.vet}</td>
-            <td>${p.date}</td>
-            <td><span class="badge ${p.status === 'Verificada' ? 'badge-success' : 'badge-warning'}">${p.status}</span></td>
-            <td>
-                ${p.status === 'Pendiente' ? `
-                    <button class="action-btn" onclick="verifyPrescriptionById('${p.id}')" title="Verificar">
+// ===========================
+// CARGAR ESTADÍSTICAS
+// ===========================
+async function loadStats() {
+    try {
+        const stats = await fetchAPI('/stats');
+        document.getElementById('prescriptionsCount').textContent = stats.recetasPendientes;
+        document.getElementById('dispensedCount').textContent = stats.dispensados;
+        document.getElementById('salesCount').textContent = `$${stats.ventasHoy.toFixed(2)}`;
+        document.getElementById('lowStockCount').textContent = stats.stockBajo;
+    } catch (error) {
+        console.error('Error cargando estadísticas:', error);
+    }
+}
+
+// ===========================
+// RECETAS PENDIENTES
+// ===========================
+async function loadPrescriptions() {
+    try {
+        const recetas = await fetchAPI('/recetas/pendientes');
+        const tbody = document.getElementById('prescriptionsList');
+        
+        if (recetas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay recetas pendientes</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = recetas.map(receta => `
+            <tr>
+                <td>${receta.id}</td>
+                <td>${receta.paciente?.nombre || 'N/A'}</td>
+                <td>${receta.veterinario?.nombre || 'N/A'}</td>
+                <td>${receta.fecha || 'N/A'}</td>
+                <td><span class="badge badge-warning">${receta.estado}</span></td>
+                <td>
+                    <button class="action-btn" onclick="verificarReceta(${receta.id})" title="Verificar">
                         <i class="fa-solid fa-check-circle"></i>
                     </button>
-                ` : '<span class="badge badge-success">Verificada</span>'}
-            </td>
-        </tr>
-    `).join('');
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error cargando recetas:', error);
+    }
 }
 
-function renderInventory() {
-    const searchTerm = document.getElementById('inventorySearch')?.value.toLowerCase() || '';
-    const filtered = inventory.filter(m => m.name.toLowerCase().includes(searchTerm));
-    const tbody = document.getElementById('inventoryList');
-    tbody.innerHTML = filtered.map(m => `
-        <tr class="${m.stock < 10 ? 'inventory-low' : ''}">
-            <td>${m.id}</td>
-            <td><strong>${m.name}</strong></td>
-            <td>${m.presentation}</td>
-            <td><span class="badge ${m.stock < 10 ? 'badge-danger' : 'badge-success'}">${m.stock} unidades</span></td>
-            <td>$${m.price.toFixed(2)}</td>
-            <td>${m.stock < 10 ? '<span class="badge badge-danger">Stock Bajo</span>' : '<span class="badge badge-success">Disponible</span>'}</td>
-            <td>
-                <button class="action-btn" onclick="editStock(${m.id})" title="Editar stock">
-                    <i class="fa-solid fa-pen"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
+async function verificarReceta(id) {
+    try {
+        const resultado = await fetchAPI(`/recetas/verificar/${id}`);
+        
+        let mensaje = '';
+        if (resultado.valida) {
+            mensaje = '✅ Receta válida';
+            // Opcional: dispensar automáticamente
+            await dispensarReceta(id);
+        } else {
+            mensaje = '❌ Receta no válida:\n' + resultado.errores.join('\n');
+        }
+        
+        if (resultado.advertencias.length > 0) {
+            mensaje += '\n⚠️ Advertencias:\n' + resultado.advertencias.join('\n');
+        }
+        
+        showToast(mensaje, !resultado.valida);
+        if (resultado.valida) {
+            loadPrescriptions();
+            loadStats();
+        }
+    } catch (error) {
+        showToast('Error al verificar receta', true);
+    }
 }
 
-function renderSalesHistory() {
-    const tbody = document.getElementById('salesHistory');
-    tbody.innerHTML = sales.slice().reverse().map(s => `
-        <tr>
-            <td>${s.date}</td>
-            <td>${s.medicine}</td>
-            <td>${s.quantity}</td>
-            <td>$${s.total.toFixed(2)}</td>
-            <td>${s.client}</td>
-        </tr>
-    `).join('');
-}
-
-function renderMedicinesInfo() {
-    const searchTerm = document.getElementById('infoSearch')?.value.toLowerCase() || '';
-    const filtered = inventory.filter(m => m.name.toLowerCase().includes(searchTerm));
-    const container = document.getElementById('medicinesInfo');
-    container.innerHTML = filtered.map(m => `
-        <div style="padding: 1rem; border-bottom: 1px solid var(--border-default);">
-            <h3 style="color: var(--green-main); margin-bottom: 0.5rem;">${m.name}</h3>
-            <p><strong>Presentación:</strong> ${m.presentation}</p>
-            <p><strong>Precio:</strong> $${m.price.toFixed(2)}</p>
-            <p><strong>Stock disponible:</strong> ${m.stock} unidades</p>
-            <p><strong>Descripción:</strong> ${m.description}</p>
-        </div>
-    `).join('');
-    if (filtered.length === 0) container.innerHTML = '<p style="text-align: center; padding: 2rem;">No se encontraron medicamentos</p>';
-}
-
-function populateMedicineSelects() {
-    const options = inventory.map(m => `<option value="${m.id}">${m.name} - $${m.price.toFixed(2)} (Stock: ${m.stock})</option>`).join('');
-    document.getElementById('dispenseMedicine').innerHTML = '<option value="">Seleccione medicamento...</option>' + options;
-    document.getElementById('saleMedicine').innerHTML = '<option value="">Seleccione medicamento...</option>' + options;
-    
-    const pendingPrescriptions = prescriptions.filter(p => p.status === 'Verificada');
-    const prescOptions = pendingPrescriptions.map(p => `<option value="${p.id}">${p.code} - ${p.patient}</option>`).join('');
-    document.getElementById('dispensePrescription').innerHTML = '<option value="">Seleccione una receta...</option>' + prescOptions;
+async function dispensarReceta(id) {
+    try {
+        const resultado = await fetchAPI(`/recetas/dispensar/${id}`, { method: 'POST' });
+        if (resultado.dispensado) {
+            showToast('Receta dispensada con éxito');
+            loadPrescriptions();
+            loadStats();
+            loadInventory();
+        } else {
+            showToast('Error al dispensar: ' + resultado.errores.join(', '), true);
+        }
+    } catch (error) {
+        showToast('Error al dispensar receta', true);
+    }
 }
 
 // ===========================
-// FUNCIONES PRINCIPALES
+// INVENTARIO
 // ===========================
-function verifyPrescription() {
-    const code = document.getElementById('prescriptionCode').value;
-    const resultDiv = document.getElementById('prescriptionResult');
+async function loadInventory() {
+    try {
+        const searchTerm = document.getElementById('inventorySearch')?.value || '';
+        const medicamentos = await fetchAPI(`/medicamentos?search=${encodeURIComponent(searchTerm)}`);
+        const tbody = document.getElementById('inventoryList');
+        
+        if (medicamentos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay medicamentos</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = medicamentos.map(m => `
+            <tr class="${m.stock < 10 ? 'inventory-low' : ''}">
+                <td>${m.id}</td>
+                <td><strong>${m.nombre}</strong></td>
+                <td>${m.presentacion || 'N/A'}</td>
+                <td><span class="badge ${m.stock < 5 ? 'badge-danger' : m.stock < 10 ? 'badge-warning' : 'badge-success'}">${m.stock} unidades</span></td>
+                <td>$${m.precio?.toFixed(2) || '0'}</td>
+                <td>${m.stock < 5 ? '<span class="badge badge-danger">Stock Crítico</span>' : m.stock < 10 ? '<span class="badge badge-warning">Stock Bajo</span>' : '<span class="badge badge-success">Disponible</span>'}</td>
+                <td>
+                    <button class="action-btn" onclick="editStock(${m.id})" title="Editar stock">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error cargando inventario:', error);
+    }
+}
+
+async function editStock(id) {
+
+    const newStock = prompt('Ingrese el nuevo stock:');
+
+    if (newStock === null) return;
+
+    if (isNaN(newStock) || parseInt(newStock) < 0) {
+
+        showToast('Ingrese un stock válido', true);
+
+        return;
+    }
+
+    try {
+
+        const response = await fetchAPI(
+            `/medicamentos/${id}/stock?stock=${parseInt(newStock)}`,
+            {
+                method: 'PUT'
+            }
+        );
+
+        console.log(response);
+
+        if (response.success) {
+
+            showToast(response.message);
+
+            await loadInventory();
+            await loadStats();
+            await loadMedicineSelects();
+
+        } else {
+
+            showToast(response.message, true);
+
+        }
+
+    } catch (error) {
+
+        console.error('ERROR COMPLETO:', error);
+
+        showToast('Error al actualizar stock', true);
+
+    }
+}
+async function addMedicine() {
+    const nombre = document.getElementById('newMedName').value;
+    const presentacion = document.getElementById('newMedPresentation').value;
+    const stock = parseInt(document.getElementById('newMedStock').value);
+    const precio = parseFloat(document.getElementById('newMedPrice').value);
+    const descripcion = document.getElementById('newMedDescription').value;
     
-    if (!code) {
-        showToast('Ingrese un código de receta', true);
+    if (!nombre || !presentacion || isNaN(stock) || isNaN(precio)) {
+        showToast('Complete todos los campos correctamente', true);
         return;
     }
     
-    const prescription = prescriptions.find(p => p.code === code);
-    if (prescription) {
-        resultDiv.innerHTML = `
-            <div style="background: var(--success-bg); padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid var(--green-main);">
-                <strong>✓ Receta Encontrada</strong><br>
-                Paciente: ${prescription.patient}<br>
-                Veterinario: ${prescription.vet}<br>
-                Fecha: ${prescription.date}<br>
-                Medicamentos: ${prescription.medicines.join(', ')}<br>
-                Estado actual: ${prescription.status}
+    try {
+        await fetchAPI('/medicamentos', {
+            method: 'POST',
+            body: JSON.stringify({
+                nombre,
+                presentacion,
+                stock,
+                precio,
+                descripcion: descripcion || 'Sin descripción',
+                contraindicaciones: '',
+                interacciones: ''
+            })
+        });
+        
+        closeModal();
+        loadInventory();
+        loadStats();
+        renderMedicinesInfo();
+        showToast(`Medicamento ${nombre} agregado correctamente`);
+    } catch (error) {
+        showToast('Error al agregar medicamento', true);
+    }
+}
+
+// ===========================
+// INFORMACIÓN DE MEDICAMENTOS
+// ===========================
+async function renderMedicinesInfo() {
+    try {
+        const searchTerm = document.getElementById('infoSearch')?.value || '';
+        const medicamentos = await fetchAPI(`/medicamentos?search=${encodeURIComponent(searchTerm)}`);
+        const container = document.getElementById('medicinesInfo');
+        
+        if (medicamentos.length === 0) {
+            container.innerHTML = '<p style="text-align: center; padding: 2rem;">No se encontraron medicamentos</p>';
+            return;
+        }
+        
+        container.innerHTML = medicamentos.map(m => `
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border-default);">
+                <h3 style="color: var(--green-main); margin-bottom: 0.5rem;">${m.nombre}</h3>
+                <p><strong>Presentación:</strong> ${m.presentacion || 'N/A'}</p>
+                <p><strong>Precio:</strong> $${m.precio?.toFixed(2) || '0'}</p>
+                <p><strong>Stock disponible:</strong> ${m.stock} unidades</p>
+                <p><strong>Descripción:</strong> ${m.descripcion || 'Sin descripción'}</p>
+                ${m.contraindicaciones ? `<p><strong>Contraindicaciones:</strong> ${m.contraindicaciones}</p>` : ''}
+                ${m.interacciones ? `<p><strong>Interacciones:</strong> ${m.interacciones}</p>` : ''}
             </div>
-        `;
-    } else {
-        resultDiv.innerHTML = `
-            <div style="background: var(--red-bg); padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid var(--red-text);">
-                <strong>✗ Receta no encontrada</strong><br>
-                Verifique el código ingresado.
-            </div>
-        `;
+        `).join('');
+    } catch (error) {
+        console.error('Error cargando información:', error);
     }
 }
 
-function verifyPrescriptionById(id) {
-    const prescription = prescriptions.find(p => p.id === id);
-    if (prescription && prescription.status === 'Pendiente') {
-        prescription.status = 'Verificada';
-        renderPrescriptions();
-        populateMedicineSelects();
-        updateStats();
-        showToast(`Receta ${prescription.code} verificada correctamente`);
-    } else if (prescription.status === 'Verificada') {
-        showToast('Esta receta ya fue verificada', true);
+// ===========================
+// VENTAS
+// ===========================
+async function loadMedicineSelects() {
+    try {
+        const medicamentos = await fetchAPI('/medicamentos');
+        const options = medicamentos.map(m => `<option value="${m.id}">${m.nombre} - $${m.precio?.toFixed(2)} (Stock: ${m.stock})</option>`).join('');
+        document.getElementById('dispenseMedicine').innerHTML = '<option value="">Seleccione medicamento...</option>' + options;
+        document.getElementById('saleMedicine').innerHTML = '<option value="">Seleccione medicamento...</option>' + options;
+    } catch (error) {
+        console.error('Error cargando selects:', error);
     }
 }
 
-function dispenseMedicine() {
-    const prescriptionId = document.getElementById('dispensePrescription').value;
-    const medicineId = document.getElementById('dispenseMedicine').value;
-    const quantity = parseInt(document.getElementById('dispenseQuantity').value);
-    const instructions = document.getElementById('dispenseInstructions').value;
-    
-    if (!prescriptionId || !medicineId || !quantity) {
-        showToast('Complete todos los campos', true);
-        return;
-    }
-    
-    const prescription = prescriptions.find(p => p.id === prescriptionId);
-    const medicine = inventory.find(m => m.id == medicineId);
-    
-    if (!prescription || !medicine) {
-        showToast('Datos inválidos', true);
-        return;
-    }
-    
-    if (medicine.stock < quantity) {
-        showToast(`Stock insuficiente de ${medicine.name}. Disponible: ${medicine.stock}`, true);
-        return;
-    }
-    
-    medicine.stock -= quantity;
-    
-    dispensations.push({
-        id: Date.now(),
-        prescriptionId,
-        medicineId,
-        medicineName: medicine.name,
-        quantity,
-        instructions,
-        date: new Date().toISOString().split('T')[0]
-    });
-    
-    showToast(`Dispensado: ${quantity} ${medicine.name} para ${prescription.patient}`);
-    
-    document.getElementById('dispenseQuantity').value = '';
-    document.getElementById('dispenseInstructions').value = '';
-    
-    renderInventory();
-    populateMedicineSelects();
-    updateStats();
-}
-
-function updateTotalAmount() {
+async function updateTotalAmount() {
     const medicineId = document.getElementById('saleMedicine').value;
     const quantity = parseInt(document.getElementById('saleQuantity').value) || 0;
-    const medicine = inventory.find(m => m.id == medicineId);
-    if (medicine && quantity > 0) {
-        document.getElementById('salePrice').value = `$${medicine.price.toFixed(2)}`;
-        document.getElementById('totalAmount').textContent = `$${(medicine.price * quantity).toFixed(2)}`;
+    
+    if (medicineId && quantity > 0) {
+        try {
+            const medicamentos = await fetchAPI('/medicamentos');
+            const medicine = medicamentos.find(m => m.id == medicineId);
+            if (medicine) {
+                document.getElementById('salePrice').value = `$${medicine.precio.toFixed(2)}`;
+                document.getElementById('totalAmount').textContent = `$${(medicine.precio * quantity).toFixed(2)}`;
+            }
+        } catch (error) {
+            console.error('Error calculando total:', error);
+        }
     } else {
         document.getElementById('salePrice').value = '';
         document.getElementById('totalAmount').textContent = '$0';
     }
 }
 
-function registerSale() {
+async function registerSale() {
     const medicineId = document.getElementById('saleMedicine').value;
     const quantity = parseInt(document.getElementById('saleQuantity').value);
-    const client = document.getElementById('saleClient').value;
-    const payment = document.getElementById('salePayment').value;
+    const cliente = document.getElementById('saleClient').value;
+    const pago = document.getElementById('salePayment').value;
     
-    if (!medicineId || !quantity || !client) {
+    if (!medicineId || !quantity || !cliente) {
         showToast('Complete todos los campos', true);
         return;
     }
     
-    const medicine = inventory.find(m => m.id == medicineId);
-    if (!medicine) {
-        showToast('Medicamento no encontrado', true);
-        return;
+    try {
+        const resultado = await fetchAPI('/ventas', {
+            method: 'POST',
+            body: JSON.stringify({ medicamentoId: parseInt(medicineId), cantidad: quantity, cliente, pago })
+        });
+        
+        showToast(`Venta registrada: $${resultado.total.toFixed(2)}`);
+        
+        document.getElementById('saleQuantity').value = '';
+        document.getElementById('saleClient').value = '';
+        document.getElementById('saleMedicine').value = '';
+        document.getElementById('salePrice').value = '';
+        document.getElementById('totalAmount').textContent = '$0';
+        
+        loadInventory();
+        loadMedicineSelects();
+        loadStats();
+    } catch (error) {
+        showToast('Error al registrar venta', true);
     }
-    
-    if (medicine.stock < quantity) {
-        showToast(`Stock insuficiente. Disponible: ${medicine.stock}`, true);
-        return;
-    }
-    
-    const total = medicine.price * quantity;
-    
-    medicine.stock -= quantity;
-    
-    sales.push({
-        date: new Date().toISOString().split('T')[0],
-        medicine: medicine.name,
-        quantity,
-        total,
-        client,
-        payment
-    });
-    
-    showToast(`Venta registrada: $${total.toFixed(2)}`);
-    
-    document.getElementById('saleQuantity').value = '';
-    document.getElementById('saleClient').value = '';
-    document.getElementById('saleMedicine').value = '';
-    document.getElementById('salePrice').value = '';
-    document.getElementById('totalAmount').textContent = '$0';
-    
-    renderInventory();
-    renderSalesHistory();
-    populateMedicineSelects();
-    updateStats();
 }
 
-function editStock(id) {
-    const newStock = prompt('Ingrese el nuevo stock:');
-    if (newStock !== null && !isNaN(newStock) && parseInt(newStock) >= 0) {
-        const medicine = inventory.find(m => m.id === id);
-        if (medicine) {
-            medicine.stock = parseInt(newStock);
-            renderInventory();
-            populateMedicineSelects();
-            updateStats();
-            showToast(`Stock de ${medicine.name} actualizado a ${newStock}`);
-        }
-    }
+// ===========================
+// NAVEGACIÓN
+// ===========================
+function switchPanel(panelId) {
+    const panels = ['verifyPanel', 'dispensePanel', 'salesPanel', 'inventoryPanel', 'infoPanel'];
+    panels.forEach(panel => {
+        const element = document.getElementById(panel);
+        if (element) element.style.display = 'none';
+    });
+    document.getElementById(panelId).style.display = 'block';
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
 }
 
 function openAddMedicineModal() {
@@ -310,62 +386,21 @@ function closeModal() {
     document.getElementById('newMedDescription').value = '';
 }
 
-function addMedicine() {
-    const name = document.getElementById('newMedName').value;
-    const presentation = document.getElementById('newMedPresentation').value;
-    const stock = parseInt(document.getElementById('newMedStock').value);
-    const price = parseFloat(document.getElementById('newMedPrice').value);
-    const description = document.getElementById('newMedDescription').value;
-    
-    if (!name || !presentation || isNaN(stock) || isNaN(price)) {
-        showToast('Complete todos los campos correctamente', true);
-        return;
-    }
-    
-    const newId = inventory.length > 0 ? Math.max(...inventory.map(m => m.id)) + 1 : 1;
-    inventory.push({
-        id: newId,
-        name,
-        presentation,
-        stock,
-        price,
-        description: description || 'Sin descripción'
-    });
-    
-    closeModal();
-    renderInventory();
-    populateMedicineSelects();
-    updateStats();
-    renderMedicinesInfo();
-    showToast(`Medicamento ${name} agregado correctamente`);
-}
-
-// ===========================
-// NAVEGACIÓN ENTRE PANELES
-// ===========================
-function switchPanel(panelId) {
-    const panels = ['verifyPanel', 'dispensePanel', 'salesPanel', 'inventoryPanel', 'infoPanel'];
-    panels.forEach(panel => {
-        const element = document.getElementById(panel);
-        if (element) element.style.display = 'none';
-    });
-    document.getElementById(panelId).style.display = 'block';
-    
-    // Actualizar estado activo del menú
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-}
-
-// Event listeners para navegación
 document.addEventListener('DOMContentLoaded', function() {
-    // Mostrar fecha actual
+    // Mostrar fecha
     const dateDisplay = document.getElementById('currentDate');
     if (dateDisplay) {
         const today = new Date();
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         dateDisplay.textContent = today.toLocaleDateString('es-ES', options);
     }
+    
+    // Cargar datos
+    loadStats();
+    loadPrescriptions();
+    loadInventory();
+    loadMedicineSelects();
+    renderMedicinesInfo();
     
     // Configurar navegación
     const navItems = document.querySelectorAll('.nav-item');
@@ -384,27 +419,24 @@ document.addEventListener('DOMContentLoaded', function() {
             navItems.forEach(nav => nav.classList.remove('active'));
             this.classList.add('active');
             
-            if (panelId) {
-                switchPanel(panelId);
-            }
+            if (panelId) switchPanel(panelId);
         });
     });
     
-    // Inicializar datos
-    renderPrescriptions();
-    renderInventory();
-    renderSalesHistory();
-    renderMedicinesInfo();
-    populateMedicineSelects();
-    updateStats();
+    // Event listeners
+    document.getElementById('saleMedicine')?.addEventListener('change', updateTotalAmount);
+    document.getElementById('saleQuantity')?.addEventListener('input', updateTotalAmount);
+    document.getElementById('inventorySearch')?.addEventListener('input', () => loadInventory());
+    document.getElementById('infoSearch')?.addEventListener('input', () => renderMedicinesInfo());
     
-    // Event listener para total en ventas
-    const saleMedicine = document.getElementById('saleMedicine');
-    if (saleMedicine) {
-        saleMedicine.addEventListener('change', updateTotalAmount);
-    }
-    const saleQuantity = document.getElementById('saleQuantity');
-    if (saleQuantity) {
-        saleQuantity.addEventListener('input', updateTotalAmount);
-    }
+    // Exponer funciones globales
+    window.verificarReceta = verificarReceta;
+    window.dispensarReceta = dispensarReceta;
+    window.registerSale = registerSale;
+    window.editStock = editStock;
+    window.addMedicine = addMedicine;
+    window.openAddMedicineModal = openAddMedicineModal;
+    window.closeModal = closeModal;
+    window.verifyPrescription = () => showToast('Use el botón "Verificar" en la lista de recetas', true);
+    window.dispenseMedicine = () => showToast('Seleccione una receta de la lista para dispensar', true);
 });
