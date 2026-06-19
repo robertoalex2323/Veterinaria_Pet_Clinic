@@ -1,0 +1,503 @@
+/* ===========================
+   RESET & BASE
+=========================== */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --green-main:   #1D9E75;
+    --green-dark:   #0F6E56;
+    --green-deeper: #085041;
+    --green-light:  #E1F5EE;
+    --green-glow:   rgba(29, 158, 117, 0.15);
+
+    --text-primary:   #111827;
+    --text-secondary: #6B7280;
+    --text-muted:     #9CA3AF;
+
+    --bg-page:  #F0F4F8;
+    --bg-card:  #FFFFFF;
+    --bg-input: #F9FAFB;
+
+    --border-default: #E5E7EB;
+    --border-focus:   var(--green-main);
+
+    --red-text: #DC2626;
+    --red-bg:   rgba(220, 38, 38, 0.08);
+    --red-border: rgba(220, 38, 38, 0.3);
+
+    --success-text:   #059669;
+    --success-bg:     rgba(5, 150, 105, 0.08);
+    --success-border: rgba(5, 150, 105, 0.3);
+
+    --shadow-card: 0 4px 6px -1px rgba(0,0,0,0.07), 0 10px 30px -5px rgba(0,0,0,0.1);
+    --shadow-btn:  0 4px 14px rgba(29, 158, 117, 0.35);
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+
+    --transition: 0.2s ease;
+}
+
+html, body {
+    height: 100%;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ===========================
+   LAYOUT PRINCIPAL
+=========================== */
+.login-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ===========================
+   PANEL IZQUIERDO
+=========================== */
+.login-left {
+    flex: 1;
+    background: var(--green-main);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Círculos decorativos */
+.login-left::before,
+.login-left::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+}
+.login-left::before {
+    width: 320px; height: 320px;
+    top: -80px; left: -80px;
+}
+.login-left::after {
+    width: 220px; height: 220px;
+    bottom: -50px; right: -60px;
+}
+
+/* Logo */
+.logo-wrapper {
+    width: 88px; height: 88px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.25rem;
+    z-index: 1;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+.logo {
+    width: 56px; height: 56px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.brand-name {
+    font-size: 30px;
+    font-weight: 700;
+    color: #ffffff;
+    z-index: 1;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.brand-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.75);
+    text-align: center;
+    line-height: 1.65;
+    z-index: 1;
+    max-width: 260px;
+    margin-bottom: 2rem;
+}
+
+/* Lista de características */
+.features-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 280px;
+    z-index: 1;
+}
+
+.features-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 100px;
+    padding: 10px 16px;
+    font-size: 13.5px;
+    color: rgba(255,255,255,0.92);
+    font-weight: 500;
+    transition: background var(--transition);
+}
+.features-list li:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.feature-icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #fff;
+}
+
+/* Footer izquierdo */
+.left-footer {
+    position: absolute;
+    bottom: 1.5rem;
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    z-index: 1;
+}
+
+/* ===========================
+   PANEL DERECHO
+=========================== */
+.login-right {
+    flex: 1.1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--bg-page);
+}
+
+.login-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--shadow-card);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 380px;
+    animation: slideUp 0.4s ease both;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Encabezado de la tarjeta */
+.card-header {
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+.paw-badge {
+    width: 52px; height: 52px;
+    background: var(--green-light);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 22px;
+    color: var(--green-main);
+    margin-bottom: 1rem;
+}
+
+.card-header h2 {
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.card-header p {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+}
+
+/* ===========================
+   ALERTAS
+=========================== */
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+    border: 1px solid transparent;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.alert-error {
+    color: var(--red-text);
+    background: var(--red-bg);
+    border-color: var(--red-border);
+}
+
+.alert-success {
+    color: var(--success-text);
+    background: var(--success-bg);
+    border-color: var(--success-border);
+}
+
+/* ===========================
+   FORMULARIO
+=========================== */
+.input-group {
+    margin-bottom: 1.1rem;
+}
+
+.input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.input-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 13px;
+    font-size: 14px;
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: color var(--transition);
+}
+
+.input-field input {
+    width: 100%;
+    height: 44px;
+    padding: 0 42px 0 38px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.input-field input::placeholder {
+    color: var(--text-muted);
+    font-size: 13.5px;
+}
+
+.input-field input:hover {
+    border-color: #D1D5DB;
+}
+
+.input-field input:focus {
+    border-color: var(--green-main);
+    background: #fff;
+    box-shadow: 0 0 0 3px var(--green-glow);
+}
+
+/* Icono activo cuando el input tiene foco */
+.input-field:focus-within .input-icon {
+    color: var(--green-main);
+}
+
+/* Botón mostrar/ocultar contraseña */
+.toggle-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    color: var(--text-muted);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: color var(--transition), background var(--transition);
+}
+.toggle-btn:hover {
+    color: var(--green-main);
+    background: var(--green-glow);
+}
+
+/* Mensajes de error por campo */
+.field-error {
+    display: block;
+    font-size: 12px;
+    color: var(--red-text);
+    margin-top: 4px;
+    min-height: 16px;
+}
+
+/* ===========================
+   FOOTER DEL FORMULARIO
+=========================== */
+.form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0.25rem 0 1.25rem;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 15px; height: 15px;
+    accent-color: var(--green-main);
+    cursor: pointer;
+}
+
+.forgot-link {
+    font-size: 13px;
+    color: var(--green-main);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition);
+}
+.forgot-link:hover {
+    color: var(--green-dark);
+    text-decoration: underline;
+}
+
+/* ===========================
+   BOTÓN INGRESAR
+=========================== */
+.btn-login {
+    width: 100%;
+    height: 46px;
+    background: var(--green-main);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+    transition: background var(--transition), box-shadow var(--transition), transform 0.1s ease;
+    box-shadow: var(--shadow-btn);
+}
+
+.btn-login:hover {
+    background: var(--green-dark);
+    box-shadow: 0 6px 20px rgba(29, 158, 117, 0.45);
+}
+
+.btn-login:active {
+    transform: scale(0.98);
+    box-shadow: none;
+}
+
+.btn-login:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-arrow {
+    font-size: 13px;
+    transition: transform var(--transition);
+}
+
+.btn-login:hover .btn-arrow {
+    transform: translateX(3px);
+}
+
+/* Estado de carga */
+.btn-login.loading .btn-text::after {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.btn-login.loading .btn-arrow {
+    display: none;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+@media (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .login-left {
+        padding: 2.5rem 1.5rem;
+        min-height: 240px;
+    }
+
+    .left-footer {
+        display: none;
+    }
+
+    .login-right {
+        flex: none;
+        padding: 1.5rem 1rem;
+        align-items: flex-start;
+    }
+
+    .login-card {
+        padding: 1.75rem 1.25rem;
+        box-shadow: none;
+        border: none;
+        background: transparent;
+    }
+}
+
+@media (max-width: 400px) {
+    .form-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}

@@ -7,7 +7,6 @@
     <link rel="stylesheet" th:href="@{/css/login.css}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <!-- Favicon -->
     <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}" />
 </head>
 <body>
@@ -72,7 +71,9 @@
  
             <form th:action="@{/login}" method="POST" id="loginForm" novalidate>
  
-               
+                <!-- CSRF token - CORREGIDO: Maneja null -->
+                <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+ 
                 <div class="input-group">
                     <label for="username">Usuario</label>
                     <div class="input-field">

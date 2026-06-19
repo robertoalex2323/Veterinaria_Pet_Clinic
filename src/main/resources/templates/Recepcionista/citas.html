@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::content}, 'citas')}">
+
+<head>
+    <title>Agenda de Citas - Recepcionista</title>
+</head>
+
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0"><i class="fas fa-calendar-alt text-primary"></i> Agenda de Citas</h2>
+                <p class="text-muted mb-0">Gestión de turnos y citas veterinarias</p>
+            </div>
+            <div>
+                <a href="/recepcionista/citas/nueva" class="btn btn-primary shadow-sm">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> Nueva Cita
+                </a>
+            </div>
+        </div>
+
+        <!-- Calendario Header -->
+        <div class="citas-header-bg mb-4 d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h4 class="mb-1 fw-bold text-white"><i class="fas fa-calendar-day me-2"></i>Citas del Día</h4>
+                <div class="text-white-50 small" th:text="${#temporals.format(fecha, 'EEEE, d MMMM yyyy')}">Lunes, 15
+                    Octubre 2023</div>
+            </div>
+
+            <form id="filtroCitasForm" th:action="@{/recepcionista/citas}" method="get"
+                class="date-selector-form d-flex align-items-center mt-3 mt-md-0">
+                <label class="me-2 text-white fw-bold">Seleccionar Fecha:</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-0"><i class="fas fa-calendar"></i></span>
+                    <input type="date" class="form-control" id="fechaFiltro" name="fecha" th:value="${fecha}">
+                </div>
+                <button type="submit" class="btn btn-light ms-2 d-none">Ir</button>
+            </form>
+        </div>
+
+        <!-- Lista de Citas -->
+        <div class="citas-card bg-white">
+            <div class="citas-card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Cronograma</h6>
+                <span class="badge bg-primary rounded-pill" th:text="|${#lists.size(citas)} citas|">0 citas</span>
+            </div>
+
+            <div class="card-body p-0">
+                <!-- Iteración de citas -->
+                <div class="cita-row" th:each="cita : ${citas}" 
+                     th:classappend="${cita.estado == 'CANCELADA' ? 'opacity-75 bg-light' : ''}">
+                    <div class="cita-hora">
+                        <i class="far fa-clock me-2 text-muted"></i>
+                        <span th:text="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'HH:mm') : '-'}">10:00</span>
+                    </div>
+
+                    <div class="cita-info" th:style="${cita.estado == 'CANCELADA' ? 'text-decoration: line-through;' : ''}">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="cita-mascota" th:text="${cita.mascota?.nombre}" th:classappend="${cita.estado == 'CANCELADA' ? 'text-muted' : ''}">Max</div>
+                            <span class="badge bg-light text-dark border"><i class="fas fa-paw text-primary"></i> <span
+                                    th:text="${cita.mascota?.especie}">Perro</span></span>
+                        </div>
+                        <div class="cita-cliente mt-1">
+                            <i class="fas fa-user-circle me-1"></i> Dueño: <span
+                                th:text="${cita.mascota?.cliente?.nombre}">Juan Perez</span>
+                            <span class="ms-2"><i class="fas fa-phone-alt me-1"></i> <span
+                                    th:text="${cita.mascota?.cliente?.telefono}">987654321</span></span>
+                        </div>
+                        <div class="cita-motivo mt-2" th:if="${cita.motivo != null and !cita.motivo.empty}">
+                            <i class="fas fa-stethoscope text-primary opacity-50 me-1"></i> <span
+                                th:text="${cita.motivo}">Consulta general</span>
+                        </div>
+                    </div>
+
+                    <div class="cita-estado">
+                        <span class="estado-badge"
+                            th:classappend="${cita.estado == 'AGENDADA' ? 'estado-agendada' : (cita.estado == 'CANCELADA' ? 'estado-cancelada' : 'estado-completada')}"
+                            th:text="${cita.estado}">AGENDADA</span>
+                    </div>
+
+                    <div class="cita-actions">
+                        <button th:if="${cita.estado == 'AGENDADA'}" class="btn btn-outline-danger btn-sm"
+                            title="Cancelar Cita" th:onclick="'confirmarCancelacion(' + ${cita.id} + ')'">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <!-- Si está completada o cancelada no muestra acción o muestra otra -->
+                        <button th:unless="${cita.estado == 'AGENDADA'}" class="btn btn-light btn-sm text-muted border"
+                            disabled>
+                            <i class="fas fa-ban"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty state -->
+                <div th:if="${#lists.isEmpty(citas)}" class="text-center py-5">
+                    <div class="d-inline-block bg-light rounded-circle p-4 mb-3">
+                        <i class="fas fa-calendar-times fa-3x text-muted opacity-50"></i>
+                    </div>
+                    <h5 class="text-muted fw-bold">No hay citas registradas</h5>
+                    <p class="text-muted mb-4">No se encontraron citas programadas para esta fecha.</p>
+                    <a href="/recepcionista/citas/nueva" class="btn btn-primary btn-sm">Agendar Nueva Cita</a>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/js/citas.js}"></script>
+    </div>
+</body>
+
+</html>

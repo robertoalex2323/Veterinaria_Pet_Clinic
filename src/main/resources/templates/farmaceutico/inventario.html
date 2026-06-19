@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sildebar_farmaceutico::layout(~{::div#content}, 'inventario')}">
+<head>
+    <title>Gestión de Inventario</title>
+</head>
+<body>
+<div id="content">
+    <!-- Encabezado y Acciones -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0 text-dark">Gestión de Inventario</h2>
+            <p class="text-muted">Administra el stock, precios y proveedores de tus medicamentos.</p>
+        </div>
+        <button class="btn btn-primary btn-lg shadow-sm" data-bs-toggle="modal" data-bs-target="#medicamentoModal" onclick="prepareNewForm()">
+            <i class="fas fa-plus-circle me-2"></i> Nuevo Medicamento
+        </button>
+    </div>
+
+    <!-- Buscador -->
+    <div class="mb-4">
+        <div class="input-group shadow-sm">
+            <span class="input-group-text bg-light border-0"><i class="fas fa-search"></i></span>
+            <input type="text" id="searchInput" class="form-control border-0" placeholder="Buscar por nombre de medicamento...">
+        </div>
+    </div>
+
+    <!-- Tabla de Medicamentos -->
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Medicamento</th>
+                    <th>Presentación</th>
+                    <th>Precio Venta</th>
+                    <th class="text-center">Stock</th>
+                    <th>Proveedor</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="medicamentosTableBody">
+                <tr th:each="med : ${medicamentos}">
+                    <td class="fw-bold" th:text="${med.nombre}">Paracetamol 500mg</td>
+                    <td th:text="${med.presentacion}">Caja x20</td>
+                    <td th:text="'S/ ' + ${#numbers.formatDecimal(med.precio, 1, 'COMMA', 2, 'POINT')}">S/ 15.00</td>
+                    <td class="text-center">
+                        <span th:text="${med.stock}" class="fw-bold me-2"></span>
+                        <span th:if="${med.stock <= med.stockMinimo}" class="badge bg-danger-soft text-danger">Bajo Stock</span>
+                        <span th:if="${med.stock > med.stockMinimo and med.stock <= med.stockMinimo * 1.5}" class="badge bg-warning-soft text-warning">Por Agotarse</span>
+                        <span th:if="${med.stock > med.stockMinimo * 1.5}" class="badge bg-success-soft text-success">En Stock</span>
+                    </td>
+                    <td th:text="${med.proveedor != null ? med.proveedor.nombre : 'N/A'}">Genérico SAC</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary"
+                                th:attr="data-id=${med.id}, data-nombre=${med.nombre}, data-presentacion=${med.presentacion}, data-precio=${med.precio}, data-stock=${med.stock}, data-stockminimo=${med.stockMinimo}, data-proveedorid=${med.proveedor?.id}"
+                                data-bs-toggle="modal" data-bs-target="#medicamentoModal" onclick="prepareEditForm(this)">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" th:onclick="|confirmDelete(${med.id})|">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para Nuevo/Editar Medicamento -->
+    <div class="modal fade" id="medicamentoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <form id="medicamentoForm" th:action="@{/farmaceutico/inventario/guardar}" method="post" th:object="${medicamento}">
+                    <input type="hidden" id="medicamentoId" name="id">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="modalTitle">Nuevo Medicamento</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Nombre del Medicamento</label>
+                                <input type="text" id="nombre" name="nombre" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Presentación</label>
+                                <input type="text" id="presentacion" name="presentacion" class="form-control" placeholder="Ej: Caja x30, Frasco 100ml">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Precio de Venta (S/)</label>
+                                <input type="number" id="precio" name="precio" class="form-control" step="0.01" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Stock Actual</label>
+                                <input type="number" id="stock" name="stock" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Stock Mínimo</label>
+                                <input type="number" id="stockMinimo" name="stockMinimo" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Proveedor</label>
+                                <select id="proveedor" name="proveedor.id" class="form-select">
+                                    <option value="">-- Seleccione un proveedor --</option>
+                                    <option th:each="prov : ${proveedores}" th:value="${prov.id}" th:text="${prov.nombre}"></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i> Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script específico para la página de inventario -->
+    <script th:src="@{/js/inventario.js}"></script>
+</div>
+</body>
+</html>

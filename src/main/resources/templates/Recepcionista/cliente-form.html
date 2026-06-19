@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::content}, 'clientes')}">
+
+<head>
+    <title th:text="${cliente.id == null ? 'Nuevo Cliente' : 'Editar Cliente'}">Formulario de Cliente</title>
+    <link rel="stylesheet" th:href="@{/css/clientes.css}">
+</head>
+
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0">
+                    <i
+                        th:class="${cliente.id == null ? 'fas fa-user-plus text-primary' : 'fas fa-user-edit text-primary'}"></i>
+                    <span th:text="${cliente.id == null ? 'Nuevo Cliente' : 'Editar Cliente'}">Nuevo Cliente</span>
+                </h2>
+                <p class="text-muted mb-0">Complete la información del cliente</p>
+            </div>
+            <div>
+                <a href="/recepcionista/clientes" class="btn btn-secondary shadow-sm">
+                    <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-xl-8 col-lg-10">
+                <div class="card mb-4 shadow-sm border-0">
+                    <div class="card-header py-3 bg-white">
+                        <h6 class="m-0 font-weight-bold text-primary">Datos del Cliente</h6>
+                    </div>
+                    <div class="card-body">
+                        <form
+                            th:action="@{${cliente.id == null ? '/recepcionista/clientes/guardar' : '/recepcionista/clientes/actualizar/' + cliente.id}}"
+                            th:object="${cliente}" method="post">
+
+                            <input type="hidden" th:field="*{id}" th:if="${cliente.id != null}" />
+
+                            <div class="row gx-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Nombre Completo <span
+                                            class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" th:field="*{nombre}" required
+                                            maxlength="100" placeholder="Ej. Juan Pérez">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Teléfono <span
+                                            class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="text" class="form-control" th:field="*{telefono}" required
+                                            maxlength="20" placeholder="Ej. 987654321">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row gx-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Correo Electrónico</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" th:field="*{email}" maxlength="100"
+                                            placeholder="Ej. correo@ejemplo.com">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Dirección</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                        <input type="text" class="form-control" th:field="*{direccion}" maxlength="200"
+                                            placeholder="Ej. Av. Principal 123">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="/recepcionista/clientes" class="btn btn-light border">Cancelar</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar Cliente
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

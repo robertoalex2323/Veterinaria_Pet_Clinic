@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-VeterinariaPetClinicApplication<veterinaria-pet-clinic>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.veterinariapetCcinic.veterinaria_pet_clinic.VeterinariaPetClinicApplication",
+            "projectName": "veterinaria-pet-clinic",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

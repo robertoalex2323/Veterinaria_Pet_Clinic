@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content, currentPage)">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+
+<body>
+    <div class="container-fluid p-0">
+        <div class="sidebar admin-sidebar">
+            <div class="sidebar-logo">
+                <img th:src="@{/Imagen/Iconos/logo.png}" alt="Logo Pet Clinic">
+                <h3>Pet Clinic</h3>
+                <p>Administrador</p>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'dashboard'} ? 'active' : ''" class="nav-link" href="/admin/dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'usuarios'} ? 'active' : ''" class="nav-link" href="/admin/usuarios">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Usuarios</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'clientes'} ? 'active' : ''" class="nav-link" href="/admin/clientes">
+                        <i class="fas fa-users"></i>
+                        <span>Clientes</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'mascotas'} ? 'active' : ''" class="nav-link" href="/admin/mascotas">
+                        <i class="fas fa-paw"></i>
+                        <span>Mascotas</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'citas'} ? 'active' : ''" class="nav-link" href="/admin/citas">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Citas</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'agenda'} ? 'active' : ''" class="nav-link" href="/admin/agenda">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>Agenda</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'pagos'} ? 'active' : ''" class="nav-link" href="/admin/pagos">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Pagos</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-user">
+                <div class="user-name">
+                    <i class="fas fa-user-circle"></i>
+                    <span th:text="${nombreUsuario != null ? nombreUsuario : 'Administrador'}">Administrador</span>
+                </div>
+                <div class="user-role text-muted">Administrador</div>
+                <a href="/logout" class="logout-link mt-2">
+                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesion</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="navbar-custom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clinic-medical"></i> Veterinaria Pet Clinic
+                    </h4>
+                    <a href="/logout" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </a>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <div th:replace="${content}"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::div#content}, 'pagos')}">
+
+<head>
+    <title>Factura de Pago - Recepcionista</title>
+</head>
+
+<body>
+    <div id="content">
+        <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+            <div>
+                <h2 class="mb-0"><i class="fas fa-file-invoice-dollar text-success"></i> Detalle de Pago</h2>
+                <p class="text-muted mb-0">Comprobante y Facturación</p>
+            </div>
+            <div>
+                <a href="/recepcionista/pagos" class="btn btn-secondary shadow-sm me-2">
+                    <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver a Pagos
+                </a>
+                <button onclick="window.print()" class="btn btn-primary shadow-sm">
+                    <i class="fas fa-print fa-sm text-white-50"></i> Imprimir Recibo
+                </button>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card invoice-card shadow-sm border-0">
+                    <div class="card-body p-5">
+                        <!-- Cabecera Factura -->
+                        <div class="row mb-5">
+                            <div class="col-sm-6">
+                                <h2 class="text-success fw-bold mb-1">VETERINARIA PET CLINIC</h2>
+                                <p class="text-muted mb-0">Cuidando a tu mejor amigo</p>
+                                <p class="text-muted mb-0">Av. Principal 123, Lima</p>
+                                <p class="text-muted mb-0">Tel: (01) 555-1234</p>
+                            </div>
+                            <div class="col-sm-6 text-sm-end mt-4 mt-sm-0">
+                                <h4 class="text-uppercase text-muted fw-bold">Recibo</h4>
+                                <h5 class="text-dark mb-3">N° <span
+                                        th:text="${#numbers.formatInteger(pago.id, 6)}">000001</span></h5>
+                                <p class="text-muted mb-0">
+                                    <strong>Fecha:</strong> <span
+                                        th:text="${pago.fechaPago != null ? #temporals.format(pago.fechaPago, 'dd/MM/yyyy HH:mm') : '-'}">01/01/2026</span>
+                                </p>
+                                <p class="text-muted mb-0">
+                                    <strong>Estado:</strong>
+                                    <span class="badge rounded-pill ms-1"
+                                        th:classappend="${pago.estado == 'PAGADO'} ? 'bg-success' : 'bg-warning'"
+                                        th:text="${pago.estado}">PAGADO</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="row mb-5">
+                            <!-- Cliente Info -->
+                            <div class="col-sm-6">
+                                <h6 class="text-muted text-uppercase fw-bold mb-3">Facturado A:</h6>
+                                <h5 class="text-dark fw-bold mb-1" th:text="${pago.cliente?.nombre}">Nombre Cliente</h5>
+                                <p class="text-muted mb-0"><i class="fas fa-envelope me-2"></i> <span
+                                        th:text="${pago.cliente?.email}">correo@ejemplo.com</span></p>
+                                <p class="text-muted mb-0"><i class="fas fa-phone me-2"></i> <span
+                                        th:text="${pago.cliente?.telefono}">987654321</span></p>
+                            </div>
+                            <!-- Pago Info -->
+                            <div class="col-sm-6 text-sm-end mt-4 mt-sm-0">
+                                <h6 class="text-muted text-uppercase fw-bold mb-3">Detalles del Pago:</h6>
+                                <p class="text-dark mb-1"><strong>Método:</strong> <span
+                                        th:text="${pago.metodoPago}">Efectivo</span></p>
+                                <p class="text-dark mb-0" th:if="${pago.cita != null}">
+                                    <strong>Ref. Cita ID:</strong> #<span th:text="${pago.cita.id}">123</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Conceptos -->
+                        <div class="table-responsive mb-4">
+                            <table class="table table-borderless border-bottom border-top">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="py-3 text-muted text-uppercase">Descripción</th>
+                                        <th class="py-3 text-muted text-uppercase text-center">Cant.</th>
+                                        <th class="py-3 text-muted text-uppercase text-end">Importe</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="py-3">
+                                            <p class="fw-bold text-dark mb-0">Servicios Veterinarios</p>
+                                            <small class="text-muted" th:if="${pago.cita != null}"
+                                                th:text="|Atención: ${pago.cita.mascota?.nombre} - Motivo: ${pago.cita.motivo}|">Atención
+                                                médica general</small>
+                                            <small class="text-muted" th:unless="${pago.cita != null}">Cobro general en
+                                                recepción</small>
+                                        </td>
+                                        <td class="py-3 text-center">1</td>
+                                        <td class="py-3 text-end fw-bold text-dark">S/ <span
+                                                th:text="${#numbers.formatDecimal(pago.monto, 1, 'COMMA', 2, 'POINT')}">150.00</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Totales -->
+                        <div class="row justify-content-end mb-4">
+                            <div class="col-sm-5">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Subtotal:</span>
+                                    <span class="text-dark fw-bold">S/ <span
+                                            th:text="${#numbers.formatDecimal(pago.monto, 1, 'COMMA', 2, 'POINT')}">150.00</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">IGV (0%):</span>
+                                    <span class="text-dark fw-bold">S/ 0.00</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-uppercase fw-bold text-success"
+                                        style="font-size: 1.2rem;">Total:</span>
+                                    <span class="text-success fw-bold" style="font-size: 1.5rem;">S/ <span
+                                            th:text="${#numbers.formatDecimal(pago.monto, 1, 'COMMA', 2, 'POINT')}">150.00</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer Factura -->
+                        <div class="text-center mt-5 pt-4 border-top">
+                            <p class="text-muted small mb-0">¡Gracias por confiar en Veterinaria Pet Clinic!</p>
+                            <p class="text-muted small mb-0">Este documento es un comprobante de pago válido.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
