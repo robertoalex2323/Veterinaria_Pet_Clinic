@@ -1,7 +1,14 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.model;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Medicamento {
@@ -13,11 +20,15 @@ public class Medicamento {
     private String nombre;
     private String presentacion;
     private Integer stock;
-    private Integer stockMinimo; // NUEVO CAMPO
+    private Integer stockMinimo;
     private BigDecimal precio;
     private String descripcion;
     private String contraindicaciones;
     private String interacciones;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proveedor_id")
+    private Proveedor proveedor;
 
     // GETTERS Y SETTERS
 
@@ -91,5 +102,13 @@ public class Medicamento {
 
     public void setInteracciones(String interacciones) {
         this.interacciones = interacciones;
+    }
+
+    public Proveedor getProveedor() {
+        return proveedor;
+    }
+
+    public void setProveedor(Proveedor proveedor) {
+        this.proveedor = proveedor;
     }
 }
