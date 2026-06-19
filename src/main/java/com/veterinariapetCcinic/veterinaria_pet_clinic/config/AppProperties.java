@@ -3,10 +3,7 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Configuración centralizada para las propiedades personalizadas del aplicativo.
- * Esto resuelve las advertencias de "Unknown property" en el IDE y proporciona tipado fuerte.
- */
+
 @Configuration
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {

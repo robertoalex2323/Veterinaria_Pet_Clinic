@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content, currentPage)">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'dashboard'}" th:href="@{/css/dashboard-farmaceutico.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'inventario'}" th:href="@{/css/inventario.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'medicamentos'}" th:href="@{/css/medicamentos.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'recetas'}" th:href="@{/css/recetas.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'perfil'}" th:href="@{/css/perfil.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'proveedores'}" th:href="@{/css/proveedores.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'ventas'}" th:href="@{/css/ventas.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'reportes'}" th:href="@{/css/reportes.css}">
+</head>
+
+<body>
+    <div class="container-fluid p-0">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img th:src="@{/Imagen/Iconos/logo.png}" alt="Logo Pet Clinic">
+                <h3>Pet Clinic</h3>
+                <p>Farmacéutico</p>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'dashboard'} ? 'active' : ''" class="nav-link"
+                        href="/farmaceutico/dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'inventario'} ? 'active' : ''" class="nav-link"
+                        href="/farmaceutico/inventario">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        <span>Gestionar Inventario</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'medicamentos'} ? 'active' : ''" class="nav-link"
+                        href="/farmaceutico/medicamentos">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>Medicamentos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'recetas'} ? 'active' : ''" class="nav-link"
+                        href="/farmaceutico/recetas">
+                        <i class="fas fa-file-prescription"></i>
+                        <span>Recetas</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'proveedores'} ? 'active' : ''" class="nav-link"
+                        href="/farmaceutico/proveedores">
+                        <i class="fas fa-truck"></i>
+                        <span>Proveedores</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'ventas'} ? 'active' : ''" class="nav-link"
+                        href="/farmaceutico/ventas">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Registrar Ventas</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'reportes'} ? 'active' : ''" class="nav-link"
+                        href="/farmaceutico/reportes">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Reportes y Stock</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'perfil'} ? 'active' : ''" class="nav-link"
+                        href="/farmaceutico/perfil">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Mi Perfil</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-user">
+                <div class="user-name">
+                    <i class="fas fa-user-circle"></i>
+                    <span th:text="${nombreUsuario != null ? nombreUsuario : 'Farmacéutico'}">Farmacéutico</span>
+                </div>
+                <div class="user-role text-muted">Dario Arroyo</div>
+                <a href="/logout" class="logout-link mt-2">
+                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="main-content">
+            <div class="navbar-custom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clinic-medical"></i> Veterinaria Pet Clinic
+                    </h4>
+                    <div class="d-flex align-items-center">
+                        <!-- Bandeja de Notificaciones -->
+                        <div class="dropdown me-3">
+                            <button class="btn btn-link text-dark position-relative p-0" id="notificationTray" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-bell fs-5"></i>
+                                <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size: 0.6em;">0</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-0" aria-labelledby="notificationTray" style="width: 320px; max-height: 450px;">
+                                <li class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 fw-bold">Notificaciones Recientes</h6>
+                                    <button class="btn btn-sm btn-link text-decoration-none p-0" id="clearNotifications">Limpiar</button>
+                                </li>
+                                <div id="notificationList" style="max-height: 350px; overflow-y: auto;">
+                                    <li class="p-4 text-center text-muted small">No hay notificaciones recientes</li>
+                                </div>
+                            </ul>
+                        </div>
+
+                        <div class="dropdown">
+                            <button class="dropdown-toggle btn border-0 bg-transparent" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle fs-5"></i>
+                                <span th:text="${nombreUsuario != null ? nombreUsuario : 'Farmacéutico'}">Farmacéutico</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li><a class="dropdown-item" href="/farmaceutico/perfil"><i class="fas fa-user me-2"></i> Mi Perfil</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <!-- Mensajes de Alerta Dinámicos -->
+                <div th:if="${success}" class="alert alert-success alert-dismissible fade show m-3">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span th:text="${success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show m-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div th:if="${info}" class="alert alert-info alert-dismissible fade show m-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span th:text="${info}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div th:replace="${content}"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/global.js}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Librerías para WebSockets -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <!-- Script de notificaciones UI -->
+    <script th:src="@{/js/notificaciones-ui.js}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Auto-cerrar alertas de éxito/error después de 5 segundos
+            setTimeout(function () {
+                document.querySelectorAll('.alert').forEach(function (alert) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+
+            const clearBtn = document.getElementById('clearNotifications');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    localStorage.removeItem('notificationHistory');
+                    location.reload(); 
+                });
+            }
+        });
+    </script>
+</body>
+</html>

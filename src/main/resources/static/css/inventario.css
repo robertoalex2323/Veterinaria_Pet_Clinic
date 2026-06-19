@@ -1,0 +1,44 @@
+/* Estilos para los badges de stock */
+.bg-danger-soft {
+    background-color: rgba(220, 53, 69, 0.15);
+}
+
+.bg-warning-soft {
+    background-color: rgba(255, 193, 7, 0.15);
+}
+
+.bg-success-soft {
+    background-color: rgba(25, 135, 84, 0.15);
+}
+
+/* Ajuste para que la tabla se vea moderna */
+.table { 
+    border-radius: .5rem; 
+    overflow: hidden; 
+}
+
+.table thead {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Estilo para el buscador */
+#searchInput {
+    border-radius: 10px !important;
+    padding: 0.75rem 1rem;
+    box-shadow: none !important;
+    transition: all 0.2s ease-in-out;
+}
+#searchInput:focus {
+    background-color: #fff;
+    border-color: var(--primary) !important;
+}
+
+/* Estilo para el modal */
+.modal-header {
+    border-bottom: none;
+}
+.modal-content {
+    border-radius: 1rem;
+}
