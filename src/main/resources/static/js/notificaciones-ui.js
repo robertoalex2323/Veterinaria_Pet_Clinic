@@ -84,7 +84,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // 2. Recuperar pendientes del servidor (por ejemplo, después de refrescar por cancelar una cita)
-    fetch('/recepcionista/agenda/api/ui-notifications', { method: 'GET', cache: 'no-store' })
+    const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/agenda/api/ui-notifications';
+    fetch(apiUrl, { method: 'GET', cache: 'no-store' })
         .then(res => {
             if (!res.ok) throw new Error("Error al obtener notificaciones");
             return res.json();

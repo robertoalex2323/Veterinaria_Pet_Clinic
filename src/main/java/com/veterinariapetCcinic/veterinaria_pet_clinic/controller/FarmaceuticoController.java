@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpHeaders;
@@ -260,6 +261,12 @@ public class FarmaceuticoController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=reporte_stock_bajo.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdfData);
+    }
+
+    @GetMapping("/api/ui-notifications")
+    @ResponseBody
+    public List<NotificacionService.UINotification> getNotifications() {
+        return notificacionService.getAndClearUINotifications();
     }
 
     @GetMapping("/ventas/comprobante/{id}")

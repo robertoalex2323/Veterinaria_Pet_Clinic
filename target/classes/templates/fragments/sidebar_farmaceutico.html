@@ -13,7 +13,7 @@
     <link rel="stylesheet" th:if="${currentPage == 'dashboard'}" th:href="@{/css/dashboard-farmaceutico.css}">
     <link rel="stylesheet" th:if="${currentPage == 'inventario'}" th:href="@{/css/inventario.css}">
     <link rel="stylesheet" th:if="${currentPage == 'medicamentos'}" th:href="@{/css/medicamentos-farmaceutico.css}">
-    <link rel="stylesheet" th:if="${currentPage == 'recetas'}" th:href="@{/css/recetas.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'recetas'}" th:href="@{/css/recetas-farmaceutico.css}">
     <link rel="stylesheet" th:if="${currentPage == 'perfil'}" th:href="@{/css/perfil.css}">
     <link rel="stylesheet" th:if="${currentPage == 'proveedores'}" th:href="@{/css/proveedores-farmaceutico.css}">
     <link rel="stylesheet" th:if="${currentPage == 'ventas'}" th:href="@{/css/ventas.css}">
@@ -173,6 +173,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
     <!-- Script de notificaciones UI -->
+    <script>window.NOTIFICACION_API_URL = '/farmaceutico/api/ui-notifications';</script>
     <script th:src="@{/js/notificaciones-ui.js}"></script>
 
     <script>
