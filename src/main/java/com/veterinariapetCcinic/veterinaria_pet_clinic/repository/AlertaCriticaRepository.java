@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.AlertaCritica;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.AlertaCritica;
 
 @Repository
 public interface AlertaCriticaRepository extends JpaRepository<AlertaCritica, Long> {

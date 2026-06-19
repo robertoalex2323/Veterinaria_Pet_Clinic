@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Medicamento;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Medicamento;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.MedicamentoRepository;
 
 @Service

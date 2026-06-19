@@ -1,5 +1,5 @@
 
-package com.veterinariapetCcinic.veterinaria_pet_clinic.Model;
+package com.veterinariapetCcinic.veterinaria_pet_clinic.model;
 
 import java.time.LocalDate;
 

@@ -9,8 +9,8 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.AgendaRepository;
 
 @Service
@@ -125,7 +125,7 @@ public class AgendaService {
 
     @Transactional
     public void generarAgendaBaseSiVacia(
-            com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario veterinarioDefecto) {
+            com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario veterinarioDefecto) {
         if (agendaRepository.count() == 0) {
             LocalDate hoy = LocalDate.now();
             for (int i = 0; i < 30; i++) {

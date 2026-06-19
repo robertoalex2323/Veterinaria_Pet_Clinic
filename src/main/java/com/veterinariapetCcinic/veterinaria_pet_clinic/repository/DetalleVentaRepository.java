@@ -3,7 +3,7 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.DetalleVenta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.DetalleVenta;
 
 @Repository
 public interface DetalleVentaRepository extends JpaRepository<DetalleVenta, Long> {

@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Consulta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Consulta;
 
 @Repository
 public interface ConsultaRepository extends JpaRepository<Consulta, Long> {

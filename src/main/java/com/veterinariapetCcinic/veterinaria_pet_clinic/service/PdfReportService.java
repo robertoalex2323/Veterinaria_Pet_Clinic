@@ -14,9 +14,9 @@ import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.DetalleVenta;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Medicamento;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Venta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.DetalleVenta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Medicamento;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 
 @Service
 public class PdfReportService {

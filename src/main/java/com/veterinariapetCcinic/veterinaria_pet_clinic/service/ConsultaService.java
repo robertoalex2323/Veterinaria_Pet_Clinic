@@ -6,9 +6,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Consulta;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Consulta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ConsultaRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.MascotaRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;

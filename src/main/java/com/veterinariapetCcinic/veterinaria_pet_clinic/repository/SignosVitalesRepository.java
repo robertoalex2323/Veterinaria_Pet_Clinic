@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.SignosVitales;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.SignosVitales;
 
 @Repository
 public interface SignosVitalesRepository extends JpaRepository<SignosVitales, Long> {

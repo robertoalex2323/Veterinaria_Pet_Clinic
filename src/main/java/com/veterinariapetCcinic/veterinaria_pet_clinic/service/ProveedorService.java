@@ -1,9 +1,11 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.service;
 
 import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Proveedor;
+
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Proveedor;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ProveedorRepository;
 
 @Service
