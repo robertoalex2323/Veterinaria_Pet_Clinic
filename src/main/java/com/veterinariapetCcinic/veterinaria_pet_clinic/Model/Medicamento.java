@@ -25,90 +25,42 @@ public class Medicamento {
     private String descripcion;
     private String contraindicaciones;
     private String interacciones;
+    private String imagenUrl;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "proveedor_id")
     private Proveedor proveedor;
 
-    // GETTERS Y SETTERS
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getPresentacion() { return presentacion; }
+    public void setPresentacion(String presentacion) { this.presentacion = presentacion; }
 
-    public String getNombre() {
-        return nombre;
-    }
+    public Integer getStock() { return stock; }
+    public void setStock(Integer stock) { this.stock = stock; }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
+    public Integer getStockMinimo() { return stockMinimo; }
+    public void setStockMinimo(Integer stockMinimo) { this.stockMinimo = stockMinimo; }
 
-    public String getPresentacion() {
-        return presentacion;
-    }
+    public BigDecimal getPrecio() { return precio; }
+    public void setPrecio(BigDecimal precio) { this.precio = precio; }
 
-    public void setPresentacion(String presentacion) {
-        this.presentacion = presentacion;
-    }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public Integer getStock() {
-        return stock;
-    }
+    public String getContraindicaciones() { return contraindicaciones; }
+    public void setContraindicaciones(String contraindicaciones) { this.contraindicaciones = contraindicaciones; }
 
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
+    public String getInteracciones() { return interacciones; }
+    public void setInteracciones(String interacciones) { this.interacciones = interacciones; }
 
-    public Integer getStockMinimo() {
-        return stockMinimo;
-    }
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 
-    public void setStockMinimo(Integer stockMinimo) {
-        this.stockMinimo = stockMinimo;
-    }
-
-    public BigDecimal getPrecio() {
-        return precio;
-    }
-
-    public void setPrecio(BigDecimal precio) {
-        this.precio = precio;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public String getContraindicaciones() {
-        return contraindicaciones;
-    }
-
-    public void setContraindicaciones(String contraindicaciones) {
-        this.contraindicaciones = contraindicaciones;
-    }
-
-    public String getInteracciones() {
-        return interacciones;
-    }
-
-    public void setInteracciones(String interacciones) {
-        this.interacciones = interacciones;
-    }
-
-    public Proveedor getProveedor() {
-        return proveedor;
-    }
-
-    public void setProveedor(Proveedor proveedor) {
-        this.proveedor = proveedor;
-    }
+    public Proveedor getProveedor() { return proveedor; }
+    public void setProveedor(Proveedor proveedor) { this.proveedor = proveedor; }
 }

@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const filter = this.value.toLowerCase();
             const rows = document.querySelectorAll('#medicamentosTableBody tr');
             rows.forEach(row => {
-                const name = row.cells[0].textContent.toLowerCase();
+                const name = row.cells[1].textContent.toLowerCase();
                 row.style.display = name.includes(filter) ? '' : 'none';
             });
         });
@@ -35,6 +35,44 @@ function prepareEditForm(button) {
     document.getElementById('stock').value = button.dataset.stock;
     document.getElementById('stockMinimo').value = button.dataset.stockminimo;
     document.getElementById('proveedor').value = button.dataset.proveedorid;
+
+    // Set imagenUrl and preview
+    const imgUrl = button.dataset.imagenurl || '';
+    document.getElementById('imagenUrl').value = imgUrl;
+    const preview = document.getElementById('modalImagePreview');
+    if (imgUrl) {
+        preview.innerHTML = '<img src="' + imgUrl + '" alt="Preview" style="width:64px;height:64px;object-fit:cover;border-radius:6px;">';
+    } else {
+        preview.innerHTML = '<i class="fas fa-pills"></i>';
+    }
+}
+
+// Preview de imagen desde URL manual
+document.addEventListener('DOMContentLoaded', function () {
+    const imagenUrlInput = document.getElementById('imagenUrl');
+    if (imagenUrlInput) {
+        imagenUrlInput.addEventListener('input', function () {
+            const preview = document.getElementById('modalImagePreview');
+            const val = this.value.trim();
+            if (val) {
+                preview.innerHTML = '<img src="' + val + '" alt="Preview" style="width:64px;height:64px;object-fit:cover;border-radius:6px;" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-pills\\\'></i>\'">';
+            } else {
+                preview.innerHTML = '<i class="fas fa-pills"></i>';
+            }
+        });
+    }
+});
+
+// Preview de imagen desde archivo
+function previewModalImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const preview = document.getElementById('modalImagePreview');
+            preview.innerHTML = '<img src="' + e.target.result + '" alt="Preview" style="width:64px;height:64px;object-fit:cover;border-radius:6px;">';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
 }
 
 // Lógica para eliminar con confirmación (ahora funcional)
@@ -54,10 +92,6 @@ function confirmDelete(id) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = `/farmaceutico/inventario/eliminar/${id}`;
-            
-            // Para protección CSRF si la tienes habilitada en el futuro
-            // const csrfInput = document.querySelector('input[name="_csrf"]');
-            // if(csrfInput) form.appendChild(csrfInput.cloneNode());
             
             document.body.appendChild(form);
             form.submit();

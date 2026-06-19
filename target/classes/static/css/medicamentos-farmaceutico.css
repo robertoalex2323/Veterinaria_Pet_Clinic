@@ -1,0 +1,171 @@
+/* ===========================
+   MEDICAMENTOS - CARDS
+=========================== */
+
+.card-medicamento {
+    background: #fff;
+    border-radius: 16px;
+    border: 2px solid #111;
+    box-shadow: 6px 6px 0 #111;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-medicamento:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 #111;
+}
+
+/* Imagen */
+.med-img-wrapper {
+    position: relative;
+    height: 200px;
+    background: #f0f4f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-bottom: 2px solid #111;
+}
+
+.med-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.med-img-placeholder {
+    font-size: 4rem;
+    color: #bbb;
+}
+
+.btn-upload-img {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #111;
+    background: #fff;
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.9rem;
+}
+
+.btn-upload-img:hover {
+    background: #1D9E75;
+    color: #fff;
+}
+
+/* Cuerpo */
+.med-body {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.med-nombre {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    color: #111;
+}
+
+.med-presentacion {
+    font-size: 0.85rem;
+    color: #6B7280;
+    font-weight: 500;
+}
+
+.med-precio-stock {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.med-precio {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #1D9E75;
+}
+
+.med-descripcion {
+    font-size: 0.88rem;
+    color: #4B5563;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Detalles */
+.med-detalles {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #E5E7EB;
+}
+
+.med-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detalle-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.detalle-valor {
+    font-size: 0.85rem;
+    color: #111;
+    font-weight: 500;
+}
+
+/* Badges */
+.bg-danger-soft {
+    background-color: rgba(220, 53, 69, 0.12);
+}
+.bg-success-soft {
+    background-color: rgba(25, 135, 84, 0.12);
+}
+.bg-warning-soft {
+    background-color: rgba(255, 193, 7, 0.12);
+}
+
+/* Buscador */
+#searchMedicamento {
+    border-radius: 10px !important;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+#searchMedicamento:focus {
+    background-color: #fff;
+    border-color: #1D9E75 !important;
+    box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.15) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .med-img-wrapper {
+        height: 160px;
+    }
+    .card-medicamento {
+        box-shadow: 4px 4px 0 #111;
+    }
+}

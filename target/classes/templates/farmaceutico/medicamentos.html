@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_farmaceutico::layout(~{::div#content}, 'medicamentos')}">
+<head>
+    <title>Información de Medicamentos</title>
+</head>
+<body>
+<div id="content">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0 text-dark"><i class="fas fa-circle-info me-2 text-primary"></i>Información de Medicamentos</h2>
+            <p class="text-muted">Consulta detalles, imágenes, contraindicaciones e interacciones de cada medicamento.</p>
+        </div>
+    </div>
+
+    <!-- Buscador -->
+    <div class="mb-4">
+        <div class="input-group shadow-sm">
+            <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" id="searchMedicamento" class="form-control border-0" placeholder="Buscar por nombre de medicamento..." onkeyup="filtrarMedicamentos()">
+        </div>
+    </div>
+
+    <!-- Grid de Medicamentos -->
+    <div class="row g-4" id="medicamentosGrid">
+        <div th:each="med : ${medicamentos}" class="col-xl-4 col-lg-6 col-md-6" th:attr="data-nombre=${med.nombre}">
+            <div class="card-medicamento">
+                <!-- Imagen -->
+                <div class="med-img-wrapper">
+                    <img th:if="${med.imagenUrl != null and !med.imagenUrl.isEmpty()}" 
+                         th:src="@{${med.imagenUrl}}" 
+                         alt="Imagen de medicamento" class="med-img">
+                    <div th:unless="${med.imagenUrl != null and !med.imagenUrl.isEmpty()}" 
+                         class="med-img-placeholder">
+                        <i class="fas fa-pills"></i>
+                    </div>
+                    <!-- Botón subir imagen -->
+                    <button class="btn-upload-img" th:attr="data-id=${med.id}" th:onclick="|document.getElementById('fileInput_' + ${med.id} + '').click()|">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                    <form th:action="@{/farmaceutico/medicamentos/subir-imagen/{id}(id=${med.id})}" method="post" enctype="multipart/form-data" style="display:none;">
+                        <input type="file" name="archivo" th:id="'fileInput_' + ${med.id}" accept="image/*" onchange="this.form.submit()">
+                    </form>
+                </div>
+                <!-- Info -->
+                <div class="med-body">
+                    <h5 class="med-nombre" th:text="${med.nombre}">Aspirina</h5>
+                    <span class="med-presentacion" th:text="${med.presentacion}">Tabletas 100mg</span>
+                    
+                    <div class="med-precio-stock">
+                        <span class="med-precio" th:text="'S/ ' + ${#numbers.formatDecimal(med.precio, 1, 'COMMA', 2, 'POINT')}">S/ 35.00</span>
+                        <span th:if="${med.stockMinimo != null and med.stock <= med.stockMinimo}" class="badge bg-danger-soft text-danger">Stock Bajo</span>
+                        <span th:if="${med.stockMinimo == null or med.stock > med.stockMinimo}" class="badge bg-success-soft text-success" th:text="'Stock: ' + ${med.stock}">Stock: 12</span>
+                    </div>
+
+                    <p class="med-descripcion" th:if="${med.descripcion != null and !med.descripcion.isEmpty()}" th:text="${med.descripcion}">Descripción del medicamento</p>
+
+                    <div class="med-detalles">
+                        <div class="med-detalle" th:if="${med.contraindicaciones != null and !med.contraindicaciones.isEmpty()}">
+                            <span class="detalle-label"><i class="fas fa-exclamation-triangle text-danger me-1"></i> Contraindicaciones</span>
+                            <span class="detalle-valor" th:text="${med.contraindicaciones}">No usar en gatos</span>
+                        </div>
+                        <div class="med-detalle" th:if="${med.interacciones != null and !med.interacciones.isEmpty()}">
+                            <span class="detalle-label"><i class="fas fa-pills text-warning me-1"></i> Interacciones</span>
+                            <span class="detalle-valor" th:text="${med.interacciones}">Ibuprofeno</span>
+                        </div>
+                        <div class="med-detalle">
+                            <span class="detalle-label"><i class="fas fa-boxes text-primary me-1"></i> Presentación</span>
+                            <span class="detalle-valor" th:text="${med.presentacion}">Caja x20</span>
+                        </div>
+                        <div class="med-detalle">
+                            <span class="detalle-label"><i class="fas fa-tag text-info me-1"></i> Proveedor</span>
+                            <span class="detalle-valor" th:text="${med.proveedor != null ? med.proveedor.nombre : 'Sin proveedor'}">Genérico SAC</span>
+                        </div>
+                        <div class="med-detalle">
+                            <span class="detalle-label"><i class="fas fa-cubes text-secondary me-1"></i> Stock Mínimo</span>
+                            <span class="detalle-valor" th:text="${med.stockMinimo != null ? med.stockMinimo : 'No definido'}">10</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensaje si no hay medicamentos -->
+    <div th:if="${#lists.isEmpty(medicamentos)}" class="text-center py-5">
+        <i class="fas fa-pills fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">No hay medicamentos registrados</h5>
+        <a th:href="@{/farmaceutico/inventario}" class="btn btn-primary mt-2">Ir a Inventario</a>
+    </div>
+</div>
+
+<script>
+function filtrarMedicamentos() {
+    const input = document.getElementById('searchMedicamento');
+    const filter = input.value.toLowerCase();
+    const cards = document.querySelectorAll('[data-nombre]');
+    cards.forEach(card => {
+        const nombre = card.getAttribute('data-nombre').toLowerCase();
+        card.style.display = nombre.includes(filter) ? '' : 'none';
+    });
+}
+</script>
+</body>
+</html>

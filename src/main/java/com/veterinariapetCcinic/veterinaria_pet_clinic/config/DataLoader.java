@@ -33,10 +33,11 @@ public class DataLoader {
                 return;
                 }
             Medicamento analgesico = new Medicamento();
-            analgesico.setNombre("Aspirina");
-            analgesico.setPresentacion("Tabletas 100mg");
+            analgesico.setNombre("Aspirin");
+            analgesico.setPresentacion("Tabletas 300mg");
             analgesico.setStock(12);
-            analgesico.setPrecio(new BigDecimal("35.00"));
+            analgesico.setStockMinimo(10);
+            analgesico.setPrecio(new BigDecimal("20.00"));
             analgesico.setDescripcion("Analgesico y antiinflamatorio");
             analgesico.setContraindicaciones("No usar en gatos");
             analgesico.setInteracciones("Ibuprofeno");
@@ -44,22 +45,26 @@ public class DataLoader {
 
             Medicamento antibiotico = new Medicamento();
             antibiotico.setNombre("Amoxicilina");
-            antibiotico.setPresentacion("Jarabe 250mg/5ml");
+            antibiotico.setPresentacion("Capsulas 500 mg");
             antibiotico.setStock(0);
-            antibiotico.setPrecio(new BigDecimal("60.00"));
+            antibiotico.setStockMinimo(5);
+            antibiotico.setPrecio(new BigDecimal("24.00"));
             antibiotico.setDescripcion("Antibiótico de amplio espectro");
             antibiotico.setContraindicaciones("No usar con alérgia a penicilina");
             antibiotico.setInteracciones("Doxiciclina");
+            antibiotico.setImagenUrl("/Imagen/Medicamento/amoxicilina.png");
             medicamentoRepository.save(antibiotico);
 
             Medicamento alternativa = new Medicamento();
             alternativa.setNombre("Cefalexina");
-            alternativa.setPresentacion("Jarabe 250mg/5ml");
+            alternativa.setPresentacion("Jarabe 100ml");
             alternativa.setStock(20);
+            alternativa.setStockMinimo(5);
             alternativa.setPrecio(new BigDecimal("55.00"));
             alternativa.setDescripcion("Alternativa para infecciones leves");
             alternativa.setContraindicaciones("No usar con alergia a cefalosporinas");
             alternativa.setInteracciones("");
+            alternativa.setImagenUrl("/Imagen/Medicamento/cefalexina.png");
             medicamentoRepository.save(alternativa);
 
             Paciente paciente = new Paciente();
