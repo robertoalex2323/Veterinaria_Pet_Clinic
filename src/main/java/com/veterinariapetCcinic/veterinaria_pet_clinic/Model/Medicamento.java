@@ -1,11 +1,7 @@
-package com.veterinariapetCcinic.veterinaria_pet_clinic.Model;
+package com.veterinariapetCcinic.veterinaria_pet_clinic.model;
 
+import jakarta.persistence.*;
 import java.math.BigDecimal;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 
 @Entity
 public class Medicamento {
@@ -17,7 +13,6 @@ public class Medicamento {
     private String nombre;
     private String presentacion;
     private Integer stock;
-    private Integer stockMinimo; // Para alertas de reabastecimiento
     private BigDecimal precio;
     private String descripcion;
     private String contraindicaciones;
@@ -32,8 +27,6 @@ public class Medicamento {
     public void setPresentacion(String presentacion) { this.presentacion = presentacion; }
     public Integer getStock() { return stock; }
     public void setStock(Integer stock) { this.stock = stock; }
-    public Integer getStockMinimo() { return stockMinimo; }
-    public void setStockMinimo(Integer stockMinimo) { this.stockMinimo = stockMinimo; }
     public BigDecimal getPrecio() { return precio; }
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
     public String getDescripcion() { return descripcion; }
