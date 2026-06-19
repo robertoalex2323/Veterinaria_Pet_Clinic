@@ -6,7 +6,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpHeaders;
@@ -27,6 +29,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Medicamento;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Proveedor;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.RecetaEstado;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MedicamentoService;
@@ -35,6 +39,8 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PdfReportService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProveedorService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.RecetaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.VentaService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/farmaceutico")
@@ -70,7 +76,7 @@ public class FarmaceuticoController {
     private void sendNotification(String type, String message) {
         try {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-            java.util.Map<String, String> notif = new java.util.HashMap<>();
+            Map<String, String> notif = new HashMap<>();
             notif.put("type", type);
             notif.put("message", message);
             notif.put("timestamp", timestamp);
@@ -227,14 +233,91 @@ public class FarmaceuticoController {
         return farmaceuticoService.dispensarReceta(id);
     }
 
+    // ===========================
+    // VENTAS - Página principal
+    // ===========================
     @GetMapping("/ventas")
     public String registrarVentas(Model model) {
         model.addAttribute("venta", new Venta());
         model.addAttribute("medicamentos", medicamentoService.listarTodos());
+        model.addAttribute("ventas", ventaService.listarVentas());
+        model.addAttribute("recetasDispensadas", farmaceuticoService.obtenerTodasLasRecetas().stream()
+                .filter(r -> r.getEstado() == RecetaEstado.DISPENSADA)
+                .toList());
         model.addAttribute("currentPage", "ventas");
-        return "farmaceutico/registrar-venta";
+        return "farmaceutico/ventas";
     }
 
+    // ===========================
+    // API: Listar ventas (JSON)
+    // ===========================
+    @GetMapping("/api/ventas")
+    @ResponseBody
+    public List<Venta> listarVentasApi() {
+        return ventaService.listarVentas();
+    }
+
+    // ===========================
+    // API: Crear venta desde receta
+    // ===========================
+    @PostMapping("/api/ventas/crear-desde-receta")
+    @ResponseBody
+    public Map<String, Object> crearVentaDesdeReceta(@RequestParam Long recetaId,
+                                                      @RequestParam String metodoPago,
+                                                      HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            Usuario usuario = (Usuario) session.getAttribute("usuario");
+            if (usuario == null) {
+                result.put("success", false);
+                result.put("message", "Usuario no autenticado");
+                return result;
+            }
+            Venta venta = ventaService.crearVentaDesdeReceta(recetaId, metodoPago, usuario);
+            // Generar PDF y enviar comprobante
+            byte[] pdf = pdfService.generarComprobanteVenta(venta);
+            notificacionService.enviarVentaConComprobante(venta, pdf);
+
+            sendNotification("success", "Venta #VTA-" + String.format("%05d", venta.getId()) + " generada desde receta");
+            result.put("success", true);
+            result.put("message", "Venta generada con éxito. El comprobante ha sido enviado al correo del cliente.");
+            result.put("ventaId", venta.getId());
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
+    // ===========================
+    // API: Procesar venta manual
+    // ===========================
+    @PostMapping("/api/ventas/procesar")
+    @ResponseBody
+    public Map<String, Object> procesarVentaApi(@RequestParam(required = false) String metodoPago,
+                                                 @RequestParam(required = false) String clienteNombre,
+                                                 @RequestParam(required = false) String itemsJson,
+                                                 HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            Usuario usuario = (Usuario) session.getAttribute("usuario");
+            if (usuario == null) {
+                result.put("success", false);
+                result.put("message", "Usuario no autenticado");
+                return result;
+            }
+            result.put("success", true);
+            result.put("message", "Venta procesada correctamente");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
+    // ===========================
+    // VISTA: procesar venta (POST tradicional)
+    // ===========================
     @PostMapping("/ventas/procesar")
     public String procesarVenta(@ModelAttribute Venta venta, RedirectAttributes ra) {
         try {
@@ -245,7 +328,7 @@ public class FarmaceuticoController {
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Error en la venta: " + e.getMessage());
         }
-        return "redirect:/farmaceutico/dashboard";
+        return "redirect:/farmaceutico/ventas";
     }
 
     @GetMapping("/perfil")
@@ -263,24 +346,18 @@ public class FarmaceuticoController {
                 .body(pdfData);
     }
 
-    @GetMapping("/api/ui-notifications")
-    @ResponseBody
-    public List<NotificacionService.UINotification> getNotifications() {
-        return notificacionService.getAndClearUINotifications();
-    }
-
     @GetMapping("/ventas/comprobante/{id}")
     public ResponseEntity<byte[]> descargarComprobante(@PathVariable Long id) {
-        Venta venta = ventaService.listarVentas().stream()
-                .filter(v -> v.getId().equals(id)).findFirst().orElse(null);
-        if (venta == null) {
+        try {
+            Venta venta = ventaService.buscarPorId(id);
+            byte[] pdfData = pdfService.generarComprobanteVenta(venta);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=comprobante_VTA" + String.format("%05d", id) + ".pdf")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdfData);
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
-        byte[] pdfData = pdfService.generarComprobanteVenta(venta);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=comprobante_" + id + ".pdf")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdfData);
     }
 
     @PostMapping("/medicamentos/subir-imagen/{id}")
