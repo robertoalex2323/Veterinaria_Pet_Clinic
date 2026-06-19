@@ -1,0 +1,164 @@
+/* ============ PAGOS CSS ============ */
+
+/* Tarjetas Principales */
+.pagos-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    background-color: #ffffff;
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.pagos-header {
+    background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+    color: white;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+    padding: 1.25rem 1.5rem;
+}
+
+/* Tabla de Pagos */
+.table-pagos {
+    width: 100%;
+    margin-bottom: 0;
+    color: #3a3b45;
+}
+
+.table-pagos thead th {
+    background-color: #f8f9fc;
+    color: #4e73df;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e3e6f0;
+    padding: 1rem;
+}
+
+.table-pagos tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.table-pagos tbody tr:hover {
+    background-color: #f1f3f9;
+}
+
+/* Estilos de Monto */
+.monto-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1cc88a;
+}
+
+/* Badges (Etiquetas) */
+.badge-metodo {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.metodo-efectivo {
+    background-color: #e3e6f0;
+    color: #5a5c69;
+}
+
+.metodo-tarjeta {
+    background-color: #4e73df;
+    color: white;
+}
+
+.metodo-transferencia {
+    background-color: #36b9cc;
+    color: white;
+}
+
+.metodo-yape {
+    background-color: #6f42c1;
+    color: white;
+}
+
+.badge-estado {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.estado-pagado {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.estado-pendiente {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.estado-anulado {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Recibo / Formulario */
+.receipt-container {
+    background: #f8f9fc;
+    border: 1px dashed #b7b9cc;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.input-monto-group .input-group-text {
+    background: #1cc88a;
+    color: white;
+    font-weight: bold;
+    border: none;
+    font-size: 1.2rem;
+}
+
+.input-monto-group input {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #1cc88a;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Factura / Recibo */
+.invoice-card {
+    border-top: 5px solid #1cc88a !important;
+}
+
+/* Yape / Plin QR */
+.qr-container img {
+    transition: transform 0.3s;
+}
+
+.qr-container img:hover {
+    transform: scale(1.05);
+}
+
+.payment-method-fields {
+    background: #f8f9fc;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e3e6f0;
+    animation: fadeIn 0.3s ease-out forwards;
+}
