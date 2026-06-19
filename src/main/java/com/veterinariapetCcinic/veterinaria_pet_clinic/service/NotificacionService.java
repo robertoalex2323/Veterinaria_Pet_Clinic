@@ -268,6 +268,16 @@ public class NotificacionService {
         enviarEmail(cliente.getEmail(), "Informe Veterinario", informe);
     }
 
+    public void enviarNotificacionUI(String type, String message) {
+        addUINotification(type, message);
+    }
+
+    public void enviarNotificacionNuevaReceta(String pacienteNombre, String veterinarioNombre, Long recetaId) {
+        String mensaje = "📋 Nueva receta #" + recetaId + " creada para " + pacienteNombre + " por " + veterinarioNombre;
+        addUINotification("info", mensaje);
+        log.info("📋 Notificación de nueva receta: {}", mensaje);
+    }
+
     public void enviarConfirmacionPago(Cliente cliente, Double monto, String metodoPago) {
         String mensaje = String.format("""
                 💰 PAGO REGISTRADO

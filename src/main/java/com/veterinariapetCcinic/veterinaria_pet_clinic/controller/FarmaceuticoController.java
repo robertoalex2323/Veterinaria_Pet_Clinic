@@ -20,12 +20,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Medicamento;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Proveedor;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MedicamentoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PdfReportService;
@@ -41,6 +43,7 @@ public class FarmaceuticoController {
     private final MedicamentoService medicamentoService;
     private final VentaService ventaService;
     private final RecetaService recetaService;
+    private final FarmaceuticoService farmaceuticoService;
     private final PdfReportService pdfService;
     private final NotificacionService notificacionService;
     private final SimpMessagingTemplate messagingTemplate;
@@ -49,6 +52,7 @@ public class FarmaceuticoController {
                                  MedicamentoService medicamentoService,
                                  VentaService ventaService,
                                  RecetaService recetaService,
+                                 FarmaceuticoService farmaceuticoService,
                                  PdfReportService pdfService,
                                  NotificacionService notificacionService,
                                  SimpMessagingTemplate messagingTemplate) {
@@ -56,6 +60,7 @@ public class FarmaceuticoController {
         this.medicamentoService = medicamentoService;
         this.ventaService = ventaService;
         this.recetaService = recetaService;
+        this.farmaceuticoService = farmaceuticoService;
         this.pdfService = pdfService;
         this.notificacionService = notificacionService;
         this.messagingTemplate = messagingTemplate;
@@ -69,6 +74,7 @@ public class FarmaceuticoController {
             notif.put("message", message);
             notif.put("timestamp", timestamp);
             messagingTemplate.convertAndSend("/topic/notifications", notif);
+            notificacionService.enviarNotificacionUI(type, message);
         } catch (Exception e) {
             // WebSocket may not be connected
         }
@@ -196,6 +202,7 @@ public class FarmaceuticoController {
     @GetMapping("/recetas")
     public String listarRecetas(Model model) {
         model.addAttribute("recetas", recetaService.listarTodas());
+        model.addAttribute("recetasMedicas", farmaceuticoService.obtenerTodasLasRecetas());
         model.addAttribute("currentPage", "recetas");
         return "farmaceutico/recetas";
     }
@@ -205,6 +212,18 @@ public class FarmaceuticoController {
         recetaService.marcarComoEntregada(id);
         ra.addFlashAttribute("success", "Receta entregada y marcada como completada.");
         return "redirect:/farmaceutico/recetas";
+    }
+
+    @PostMapping("/recetas/validar/{id}")
+    @ResponseBody
+    public FarmaceuticoService.ValidacionReceta validarReceta(@PathVariable Long id) {
+        return farmaceuticoService.validarReceta(id);
+    }
+
+    @PostMapping("/recetas/dispensar/{id}")
+    @ResponseBody
+    public FarmaceuticoService.DispensaResult dispensarReceta(@PathVariable Long id) {
+        return farmaceuticoService.dispensarReceta(id);
     }
 
     @GetMapping("/ventas")

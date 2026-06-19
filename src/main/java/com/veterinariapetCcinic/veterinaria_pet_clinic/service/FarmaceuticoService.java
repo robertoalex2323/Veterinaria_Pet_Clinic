@@ -34,6 +34,10 @@ public class FarmaceuticoService {
     }
 
 
+    public List<RecetaMedica> obtenerTodasLasRecetas() {
+        return recetaRepository.findAll();
+    }
+
     public List<RecetaMedica> obtenerRecetasPendientes() {
         return recetaRepository.findByEstado(RecetaEstado.PENDIENTE);
     }
