@@ -29,7 +29,7 @@ public class Agenda {
     @Column(nullable = false)
     private LocalTime horaFin;
     
-    private Integer duracionTurno; // minutos
+    private Integer duracionTurno; 
     
     private Boolean disponible = true;
     private String motivo;
