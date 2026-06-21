@@ -29,9 +29,43 @@ public class DataLoader {
 
         return args -> {
               if (medicamentoRepository.count() > 0) {
-                System.out.println("Los datos ya existen");
-                return;
-                }
+                  System.out.println("Los datos ya existen. Corrigiendo URLs de imágenes si es necesario...");
+                  medicamentoRepository.findAll().forEach(med -> {
+                      boolean changed = false;
+                      if (med.getImagenUrl() == null) {
+                          if (med.getNombre().equalsIgnoreCase("Amoxicilina")) {
+                              med.setImagenUrl("/Imagen/Medicamento/amoxicilina.png");
+                              changed = true;
+                          } else if (med.getNombre().equalsIgnoreCase("Aspirina") || med.getNombre().equalsIgnoreCase("Aspirin")) {
+                              med.setImagenUrl("/Imagen/Medicamento/aspirin.png");
+                              changed = true;
+                          } else if (med.getNombre().equalsIgnoreCase("Cefalexina")) {
+                              med.setImagenUrl("/Imagen/Medicamento/cefalexina.png");
+                              changed = true;
+                          }
+                      } else {
+                          String relativePath = med.getImagenUrl();
+                          java.io.File fileInSrc = new java.io.File("src/main/resources/static" + relativePath);
+                          java.io.File fileInTarget = new java.io.File("target/classes/static" + relativePath);
+                          if (!fileInSrc.exists() && !fileInTarget.exists()) {
+                              if (med.getNombre().equalsIgnoreCase("Amoxicilina")) {
+                                  med.setImagenUrl("/Imagen/Medicamento/amoxicilina.png");
+                                  changed = true;
+                              } else if (med.getNombre().equalsIgnoreCase("Aspirina") || med.getNombre().equalsIgnoreCase("Aspirin")) {
+                                  med.setImagenUrl("/Imagen/Medicamento/aspirin.png");
+                                  changed = true;
+                              } else if (med.getNombre().equalsIgnoreCase("Cefalexina")) {
+                                  med.setImagenUrl("/Imagen/Medicamento/cefalexina.png");
+                                  changed = true;
+                              }
+                          }
+                      }
+                      if (changed) {
+                          medicamentoRepository.save(med);
+                      }
+                  });
+                  return;
+              }
             Medicamento analgesico = new Medicamento();
             analgesico.setNombre("Aspirin");
             analgesico.setPresentacion("Tabletas 300mg");
@@ -41,6 +75,7 @@ public class DataLoader {
             analgesico.setDescripcion("Analgesico y antiinflamatorio");
             analgesico.setContraindicaciones("No usar en gatos");
             analgesico.setInteracciones("Ibuprofeno");
+            analgesico.setImagenUrl("/Imagen/Medicamento/aspirin.png");
             medicamentoRepository.save(analgesico);
 
             Medicamento antibiotico = new Medicamento();
