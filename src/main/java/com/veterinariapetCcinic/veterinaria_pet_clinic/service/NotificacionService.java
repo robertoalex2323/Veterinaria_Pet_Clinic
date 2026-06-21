@@ -10,17 +10,22 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
+
+import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class NotificacionService {
@@ -150,6 +155,52 @@ public class NotificacionService {
         }
     }
 
+    public void enviarEmailConAdjunto(String email, String asunto, String mensaje, byte[] adjunto, String nombreArchivo) {
+        if (email != null && !email.trim().isEmpty() && mailSender != null) {
+            try {
+                MimeMessage mimeMessage = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+                helper.setTo(email);
+                helper.setSubject(asunto);
+                helper.setText(mensaje);
+                helper.addAttachment(nombreArchivo, new ByteArrayResource(adjunto));
+
+                mailSender.send(mimeMessage);
+                log.info("✅ Correo con PDF enviado a: {}", email);
+            } catch (Exception e) {
+                log.error("❌ Error al enviar correo con adjunto a {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.warn("⚠️ No se pudo enviar el correo con adjunto. Email: {}, MailSender configurado: {}", 
+                email, (mailSender != null));
+        }
+    }
+
+    public void enviarVentaConComprobante(Venta venta, byte[] pdf) {
+        if (venta.getCliente() == null || venta.getCliente().getEmail() == null || venta.getCliente().getEmail().isBlank()) {
+            log.warn("⚠️ No se puede enviar comprobante: El cliente no tiene un email registrado.");
+            addUINotification("warning", "Venta registrada, pero el cliente no tiene email para el comprobante.");
+            return;
+        }
+
+        String nombreCliente = venta.getCliente().getNombre();
+        String asunto = "Su comprobante de compra - Pet Clinic";
+        String mensaje = String.format("""
+                Estimado(a) %s,
+                
+                Adjunto encontrará el comprobante de pago por su compra de medicamentos realizada hoy.
+                Total pagado: S/ %.2f
+                
+                ¡Gracias por confiar en Pet Clinic!
+                """, nombreCliente, venta.getTotal());
+
+        String nombreArchivo = "Comprobante_PetClinic_" + venta.getId() + ".pdf";
+
+        enviarEmailConAdjunto(venta.getCliente().getEmail(), asunto, mensaje, pdf, nombreArchivo);
+        addUINotification("success", "Comprobante enviado con éxito a: " + nombreCliente);
+    }
+
     @Scheduled(cron = "0 0 8 * * ?")
     @Transactional
     public void programarRecordatoriosManana() {
@@ -215,6 +266,16 @@ public class NotificacionService {
         log.info("📝 Mensaje:\n{}", informe);
 
         enviarEmail(cliente.getEmail(), "Informe Veterinario", informe);
+    }
+
+    public void enviarNotificacionUI(String type, String message) {
+        addUINotification(type, message);
+    }
+
+    public void enviarNotificacionNuevaReceta(String pacienteNombre, String veterinarioNombre, Long recetaId) {
+        String mensaje = "📋 Nueva receta #" + recetaId + " creada para " + pacienteNombre + " por " + veterinarioNombre;
+        addUINotification("info", mensaje);
+        log.info("📋 Notificación de nueva receta: {}", mensaje);
     }
 
     public void enviarConfirmacionPago(Cliente cliente, Double monto, String metodoPago) {

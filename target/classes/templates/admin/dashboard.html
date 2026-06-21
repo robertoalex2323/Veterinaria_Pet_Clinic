@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sildebar_admin::layout(~{::content}, 'dashboard')}">
+<head>
+    <title>Dashboard - Administrador</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="admin-header">
+        <div>
+            <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard Administrador</h2>
+            <p>Bienvenido(a), <strong th:text="${nombreUsuario}">Administrador</strong></p>
+        </div>
+        <span class="badge bg-primary">
+            <i class="fas fa-calendar-alt"></i>
+            <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">26/04/2026</span>
+        </span>
+    </div>
+
+    <div class="admin-stats">
+        <a class="admin-stat-card stat-users" href="/admin/usuarios-admin">
+            <i class="fas fa-user-shield"></i>
+            <span>Usuarios</span>
+            <strong th:text="${totalUsuarios}">0</strong>
+        </a>
+        <a class="admin-stat-card stat-clients" href="/admin/clientes-admin">
+            <i class="fas fa-users"></i>
+            <span>Clientes</span>
+            <strong th:text="${totalClientes}">0</strong>
+        </a>
+        <a class="admin-stat-card stat-pets" href="/admin/mascotas-admin">
+            <i class="fas fa-paw"></i>
+            <span>Mascotas</span>
+            <strong th:text="${totalMascotas}">0</strong>
+        </a>
+        <a class="admin-stat-card stat-citas" href="/admin/citas-admin">
+            <i class="fas fa-calendar-check"></i>
+            <span>Citas</span>
+            <strong th:text="${totalCitas}">0</strong>
+        </a>
+        <a class="admin-stat-card stat-payments" href="/admin/pagos-admin">
+            <i class="fas fa-money-bill-wave"></i>
+            <span>Pagos</span>
+            <strong th:text="${totalPagos}">0</strong>
+        </a>
+        <a class="admin-stat-card stat-agenda" href="/admin/agenda-admin">
+            <i class="fas fa-calendar-day"></i>
+            <span>Agendas</span>
+            <strong th:text="${totalAgendas}">0</strong>
+        </a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Alertas Tempranas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" th:href="@{/css/pacientes-veterinaria.css}">
+    <link rel="stylesheet" th:href="@{/css/alertas-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+    <main class="main">
+        <section class="hero">
+            <h1>Alertas Tempranas</h1>
+            <p th:text="${#temporals.format(#temporals.createNow(), 'EEEE, dd ''de'' MMMM yyyy', new java.util.Locale('es'))}">Hoy</p>
+        </section>
+
+        <div class="alertas-header-card">
+            <div>
+                <h2>Alertas Tempranas</h2>
+                <p>Monitoreo automático de condiciones críticas y advertencias clínicas</p>
+            </div>
+            <div class="alertas-counts">
+                <span class="count-critical" th:text="${totalCriticas + ' críticas'}">0 críticas</span>
+                <span class="count-warning" th:text="${totalAdvertencias + ' advertencias'}">0 advertencias</span>
+            </div>
+        </div>
+
+        <section class="alertas-section">
+            <h3><i class="fas fa-triangle-exclamation"></i> Alertas Críticas</h3>
+
+            <div th:if="${alertasCriticas.empty}" class="agenda-empty">
+                <p>No hay alertas críticas pendientes.</p>
+            </div>
+
+            <div th:each="alerta : ${alertasCriticas}" class="alerta-card alerta-critica">
+                <div class="alerta-icon"><i class="fas fa-thermometer-half"></i></div>
+                <div class="alerta-body">
+                    <div class="alerta-title">
+                        <strong th:text="${alerta.mascota != null ? alerta.mascota.nombre : 'Paciente'}">Paciente</strong>
+                        <span>Crítico</span>
+                    </div>
+                    <small th:text="${alerta.fechaCreacion != null ? #temporals.format(alerta.fechaCreacion, 'dd/MM/yyyy HH:mm') : ''}">Fecha</small>
+                    <h4 th:text="${alerta.tipoAlerta}">Tipo</h4>
+                    <p th:text="${alerta.descripcion}">Descripción</p>
+                    <div class="alerta-actions">
+                        <form th:action="@{/veterinaria/alertas/{id}/resolver(id=${alerta.id})}" method="post">
+                            <button type="submit"><i class="fas fa-check-circle"></i> Marcar como resuelto</button>
+                        </form>
+                        <a th:if="${alerta.mascota != null}" th:href="@{/veterinaria/historial/{id}(id=${alerta.mascota.id})}">
+                            Ver paciente
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="alertas-section">
+            <h3><i class="fas fa-bell"></i> Advertencias</h3>
+
+            <div th:if="${advertencias.empty}" class="agenda-empty">
+                <p>No hay advertencias pendientes.</p>
+            </div>
+
+            <div th:each="alerta : ${advertencias}" class="alerta-card alerta-advertencia">
+                <div class="alerta-icon"><i class="fas fa-wave-square"></i></div>
+                <div class="alerta-body">
+                    <div class="alerta-title">
+                        <strong th:text="${alerta.mascota != null ? alerta.mascota.nombre : 'Paciente'}">Paciente</strong>
+                        <span>Advertencia</span>
+                    </div>
+                    <small th:text="${alerta.fechaCreacion != null ? #temporals.format(alerta.fechaCreacion, 'dd/MM/yyyy HH:mm') : ''}">Fecha</small>
+                    <h4 th:text="${alerta.tipoAlerta}">Tipo</h4>
+                    <p th:text="${alerta.descripcion}">Descripción</p>
+                    <div class="alerta-actions">
+                        <form th:action="@{/veterinaria/alertas/{id}/resolver(id=${alerta.id})}" method="post">
+                            <button type="submit"><i class="fas fa-check-circle"></i> Marcar como resuelto</button>
+                        </form>
+                        <a th:if="${alerta.mascota != null}" th:href="@{/veterinaria/historial/{id}(id=${alerta.mascota.id})}">
+                            Ver paciente
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

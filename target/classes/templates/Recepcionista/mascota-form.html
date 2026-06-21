@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::content}, 'mascotas')}">
+
+<head>
+    <title th:text="${mascota.id == null ? 'Nueva Mascota' : 'Editar Mascota'}">Formulario de Mascota</title>
+</head>
+
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0">
+                    <i
+                        th:class="${mascota.id == null ? 'fas fa-plus-circle text-success' : 'fas fa-edit text-success'}"></i>
+                    <span th:text="${mascota.id == null ? 'Registrar Mascota' : 'Editar Mascota'}">Nueva Mascota</span>
+                </h2>
+                <p class="text-muted mb-0">Ingrese los datos clínicos y de perfil del paciente</p>
+            </div>
+            <div>
+                <a href="/recepcionista/mascotas" class="btn btn-secondary shadow-sm">
+                    <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-xl-9 col-lg-11">
+                <form
+                    th:action="@{${mascota.id == null ? '/recepcionista/mascotas/guardar' : '/recepcionista/mascotas/actualizar/' + mascota.id}}"
+                    th:object="${mascota}" method="post">
+                    <input type="hidden" th:field="*{id}" th:if="${mascota.id != null}" />
+
+                    <div class="row">
+                        <!-- Columna Izquierda: Perfil y Dueño -->
+                        <div class="col-md-4 mb-4">
+                            <div
+                                class="mascotas-card bg-white p-4 h-100 text-center d-flex flex-column align-items-center">
+
+                                <!-- Foto Preview -->
+                                <div id="placeholderFoto" class="mascota-avatar-preview-placeholder">
+                                    <i class="fas fa-paw"></i>
+                                </div>
+                                <img id="previewFoto" src="" class="mascota-avatar-preview" alt="Vista previa" />
+
+                                <h6 class="font-weight-bold text-success mb-3 w-100 text-start border-bottom pb-2">Foto
+                                    de Perfil</h6>
+                                <div class="w-100 text-start mb-3">
+                                    <label class="form-label small fw-bold">URL de la Imagen (Opcional)</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text"><i class="fas fa-link"></i></span>
+                                        <input type="url" class="form-control" th:field="*{fotoUrl}" id="fotoUrl"
+                                            placeholder="https://ejemplo.com/foto.jpg">
+                                    </div>
+                                    <div class="form-text" style="font-size: 0.75rem;">Pega el enlace web de la foto
+                                        para generar la vista previa.</div>
+                                </div>
+
+                                <h6 class="font-weight-bold text-success mb-3 w-100 text-start border-bottom pb-2 mt-4">
+                                    Propietario</h6>
+                                <div class="w-100 text-start">
+                                    <label class="form-label small fw-bold">Cliente <span
+                                            class="text-danger">*</span></label>
+                                    <select name="clienteId" class="form-select" required
+                                        th:disabled="${mascota.id != null}">
+                                        <option value="">Seleccione un dueño...</option>
+                                        <option th:each="cliente : ${clientes}" th:value="${cliente.id}"
+                                            th:text="${cliente.nombre + ' (' + cliente.telefono + ')'}"
+                                            th:selected="${mascota.cliente != null and mascota.cliente.id == cliente.id}">
+                                        </option>
+                                    </select>
+                                    <!-- Si estamos editando, mandamos el clienteId oculto porque el select está deshabilitado -->
+                                    <input th:if="${mascota.id != null}" type="hidden" name="clienteId"
+                                        th:value="${mascota.cliente.id}" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Columna Derecha: Datos Médicos -->
+                        <div class="col-md-8 mb-4">
+                            <div class="mascotas-card bg-white h-100">
+                                <div class="mascotas-card-header">
+                                    <h6 class="m-0 font-weight-bold text-success">Datos Médicos y Físicos</h6>
+                                </div>
+                                <div class="card-body p-4">
+
+                                    <div class="row gx-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Nombre <span
+                                                    class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                                <input type="text" class="form-control" th:field="*{nombre}" required
+                                                    maxlength="100" placeholder="Ej. Firulais">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Especie <span
+                                                    class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-dna"></i></span>
+                                                <input type="text" class="form-control" th:field="*{especie}" required
+                                                    maxlength="50" placeholder="Ej. Perro, Gato, Ave">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row gx-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Raza</label>
+                                            <input type="text" class="form-control" th:field="*{raza}" maxlength="50"
+                                                placeholder="Ej. Bulldog">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Color</label>
+                                            <input type="text" class="form-control" th:field="*{color}"
+                                                placeholder="Ej. Blanco con manchas">
+                                        </div>
+                                    </div>
+
+                                    <div class="row gx-3 mb-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold">Fec. Nacimiento</label>
+                                            <input type="date" class="form-control" th:field="*{fechaNacimiento}"
+                                                id="fechaNacimiento" onchange="calcularEdad()">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold">Edad (Años)</label>
+                                            <input type="number" class="form-control bg-light" th:field="*{edad}"
+                                                id="edad" readonly>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold">Peso (Kg)</label>
+                                            <input type="number" step="0.01" class="form-control" th:field="*{peso}"
+                                                placeholder="0.00">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Alergias o Condiciones</label>
+                                        <textarea class="form-control" th:field="*{alergias}" rows="3"
+                                            placeholder="Registre cualquier alergia, enfermedad crónica o nota importante..."></textarea>
+                                    </div>
+
+                                    <hr class="my-4">
+
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a href="/recepcionista/mascotas" class="btn btn-light border">Cancelar</a>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-save"></i> Guardar Mascota
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script th:src="@{/js/mascota.js}"></script>
+    </div>
+</body>
+
+</html>

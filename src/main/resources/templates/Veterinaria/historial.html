@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial Clinico - Panel Veterinario</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" th:href="@{/css/pacientes-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+    <main class="main">
+        <header class="header">
+            <div class="status-pill">Sistema Activo</div>
+            <div class="search-box">
+                <input type="text" id="buscadorPaciente" placeholder="Buscar paciente...">
+            </div>
+        </header>
+
+        <section class="hero">
+            <h1>Historial Clinico</h1>
+            <p th:text="${#temporals.format(#temporals.createNow(), 'EEEE, dd ''de'' MMMM yyyy', new java.util.Locale('es'))}">Hoy</p>
+        </section>
+
+        <div th:if="${success}" class="alert-flash alert-flash-success">
+            <i class="fas fa-check-circle"></i> <span th:text="${success}"></span>
+        </div>
+        <div th:if="${error}" class="alert-flash alert-flash-error">
+            <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
+        </div>
+
+        <div class="historial-filter-card">
+            <div class="historial-search-row">
+                <i class="fas fa-search"></i>
+                <input type="text" id="buscadorHistorialPanel" placeholder="Buscar paciente o dueno...">
+            </div>
+            <div class="historial-tabs">
+                <a th:href="@{/veterinaria/historial(estado='todos')}"
+                   th:classappend="${estadoFiltro == 'todos'} ? ' active' : ''">Todos</a>
+                <a th:href="@{/veterinaria/historial(estado='activos')}"
+                   th:classappend="${estadoFiltro == 'activos'} ? ' active' : ''"
+                   th:text="${'Activos (' + totalActivas + ')'}">Activos</a>
+                <a th:href="@{/veterinaria/historial(estado='baja')}"
+                   th:classappend="${estadoFiltro == 'baja'} ? ' active baja' : ''"
+                   th:text="${'Baja (' + totalBaja + ')'}">Baja</a>
+            </div>
+        </div>
+
+        <div class="historial-grid">
+            <div class="historial-panel">
+                <div class="historial-panel-header">
+                    <h3>Registro de Pacientes</h3>
+                    <span class="badge-count badge-blue" th:text="${mascotas.size() + ' pacientes'}">0 pacientes</span>
+                </div>
+
+                <div class="mascota-list registro-fechas" id="listaMascotas">
+                    <div th:each="grupo : ${mascotasPorFecha}" class="fecha-group">
+                        <button type="button" class="fecha-group-header" onclick="toggleGrupoFecha(this)">
+                            <span>
+                                <i class="far fa-calendar"></i>
+                                <span th:text="${grupo.key}">Fecha</span>
+                            </span>
+                            <span class="fecha-count" th:text="${grupo.value.size()}">0</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="fecha-group-body">
+                            <div th:each="m : ${grupo.value}"
+                                 class="mascota-item"
+                                 th:classappend="${mascotaSeleccionada != null and mascotaSeleccionada.id == m.id ? ' mascota-item-active' : ''}"
+                                 th:attr="data-nombre=${m.nombre}, data-dueno=${m.cliente != null ? m.cliente.nombre : ''}, data-id=${m.id}"
+                                 th:onclick="'cargarHistorial(' + ${m.id} + ')'">
+                                <div class="mascota-item-left">
+                                    <div class="mascota-item-avatar">
+                                        <span th:text="${m.especie != null and m.especie.toLowerCase() == 'perro' ? 'P' : (m.especie != null and m.especie.toLowerCase() == 'gato' ? 'G' : (m.especie != null and m.especie.toLowerCase() == 'ave' ? 'A' : 'M'))}">M</span>
+                                    </div>
+                                    <div>
+                                        <div class="mascota-item-nombre">
+                                            <span th:text="${m.nombre}">Nombre</span>
+                                            <span th:class="${m.estaActivo() ? 'dot-estado dot-activo' : 'dot-estado dot-baja'}">•</span>
+                                        </div>
+                                        <div class="mascota-item-sub" th:text="${m.cliente != null ? m.cliente.nombre : (m.raza != null ? m.raza : m.especie)}">Dueno</div>
+                                    </div>
+                                </div>
+                                <span th:class="${m.estaActivo() ? 'prio-badge prio-baja' : 'prio-badge prio-alta'}"
+                                      th:text="${m.estaActivo() ? 'Activo' : 'Baja'}">Activo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${mascotas.empty}" class="triaje-empty">
+                        <i class="fas fa-paw" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:10px;"></i>
+                        <p>No hay mascotas registradas</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="historial-detalle" id="historialDetalle">
+                <div th:if="${mascotaSeleccionada == null}" class="historial-vacio">
+                    <i class="fas fa-paw" style="font-size:3rem; color:#d1d5db; margin-bottom:16px;"></i>
+                    <p>Selecciona un paciente para ver su historial</p>
+                </div>
+
+                <div th:if="${mascotaSeleccionada != null}" id="contenidoHistorial">
+                    <div class="historial-detalle-header">
+                        <div>
+                            <h2 th:text="'Historial de ' + ${mascotaSeleccionada.nombre}">Historial</h2>
+                            <p class="historial-subtitulo">Registro completo del paciente</p>
+                        </div>
+                        <div class="historial-actions">
+                            <a th:href="@{/veterinaria/historial(estado=${estadoFiltro})}" class="btn-dar-baja btn-volver">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                            <form th:if="${mascotaSeleccionada.estaActivo()}"
+                                  th:action="@{/veterinaria/historial/{id}/baja(id=${mascotaSeleccionada.id})}"
+                                  method="post">
+                                <button type="submit" class="btn-dar-baja">
+                                    <i class="fas fa-user-minus"></i> Dar de Baja
+                                </button>
+                            </form>
+                            <form th:if="${!mascotaSeleccionada.estaActivo()}"
+                                  th:action="@{/veterinaria/historial/{id}/readmitir(id=${mascotaSeleccionada.id})}"
+                                  method="post">
+                                <button type="submit" class="btn-readmitir">
+                                    <i class="fas fa-rotate-left"></i> Readmitir
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="historial-info-grid">
+                        <div class="info-chip">
+                            <label>Especie</label>
+                            <strong th:text="${mascotaSeleccionada.especie}">-</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Raza</label>
+                            <strong th:text="${mascotaSeleccionada.raza != null ? mascotaSeleccionada.raza : '-'}">-</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Edad</label>
+                            <strong th:text="${mascotaSeleccionada.edad != null ? mascotaSeleccionada.edad + ' anos' : '-'}">-</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Color</label>
+                            <strong th:text="${mascotaSeleccionada.color != null ? mascotaSeleccionada.color : '-'}">-</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Dueno</label>
+                            <strong th:text="${mascotaSeleccionada.cliente != null ? mascotaSeleccionada.cliente.nombre : '-'}">-</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Alergias</label>
+                            <strong th:text="${mascotaSeleccionada.alergias != null ? mascotaSeleccionada.alergias : 'Ninguna'}">-</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Estado</label>
+                            <strong th:text="${mascotaSeleccionada.estaActivo() ? 'Activo' : 'Dado de baja'}">Activo</strong>
+                        </div>
+                        <div class="info-chip" th:if="${!mascotaSeleccionada.estaActivo()}">
+                            <label>Fecha de baja</label>
+                            <strong th:text="${mascotaSeleccionada.fechaBaja != null ? #temporals.format(mascotaSeleccionada.fechaBaja, 'dd/MM/yyyy') : 'Sin fecha'}">Sin fecha</strong>
+                        </div>
+                    </div>
+
+                     <div class="panel historial-section" th:if="${ultimoSigno != null}">
+    <div class="panel-header">
+        <h2>
+            <i class="fas fa-wave-square" style="color:#e879b0; margin-right:8px;"></i>
+            Signos Vitales Actuales
+        </h2>
+        <button type="button" class="btn-editar-signos" onclick="toggleEditarSignos()">
+            <i class="fas fa-pen"></i> Editar
+        </button>
+    </div>
+
+    <div class="estado-general-vital"
+         th:classappend="${ultimoSigno.estadoGeneral != null ? ' estado-' + ultimoSigno.estadoGeneral.toLowerCase() : ''}">
+        Estado general: <strong th:text="${estadoGeneralTexto}">Normal</strong>
+    </div>
+
+    <div class="signos-grid">
+        <div class="signo-card signo-temp"
+             th:classappend="${ultimoSigno.estadoTemperatura != null ? ' estado-' + ultimoSigno.estadoTemperatura.toLowerCase().replace('_','-') : ''}">
+            <label>Temperatura</label>
+            <div class="signo-valor" th:text="${ultimoSigno.temperatura != null ? ultimoSigno.temperatura + ' C' : '-'}">-</div>
+            <span class="signo-estado" th:text="${estadoTempTexto}">Normal</span>
+        </div>
+
+        <div class="signo-card signo-peso">
+            <label>Peso</label>
+            <div class="signo-valor" th:text="${ultimoSigno.peso != null ? ultimoSigno.peso + ' kg' : '-'}">-</div>
+            <span class="signo-estado signo-estado-ok">Registrado</span>
+        </div>
+
+        <div class="signo-card signo-fc"
+             th:classappend="${ultimoSigno.estadoFrecuenciaCardiaca != null ? ' estado-' + ultimoSigno.estadoFrecuenciaCardiaca.toLowerCase().replace('_','-') : ''}">
+            <label>FC</label>
+            <div class="signo-valor" th:text="${ultimoSigno.frecuenciaCardiaca != null ? ultimoSigno.frecuenciaCardiaca + ' bpm' : '-'}">-</div>
+            <span class="signo-estado" th:text="${estadoFcTexto}">Normal</span>
+        </div>
+
+        <div class="signo-card signo-fr"
+             th:classappend="${ultimoSigno.estadoFrecuenciaRespiratoria != null ? ' estado-' + ultimoSigno.estadoFrecuenciaRespiratoria.toLowerCase().replace('_','-') : ''}">
+            <label>FR</label>
+            <div class="signo-valor" th:text="${ultimoSigno.frecuenciaRespiratoria != null ? ultimoSigno.frecuenciaRespiratoria + ' rpm' : '-'}">-</div>
+            <span class="signo-estado" th:text="${estadoFrTexto}">Normal</span>
+        </div>
+    </div>
+
+    <div th:if="${ultimoSigno.advertencia != null and !ultimoSigno.advertencia.empty}" class="historial-warning">
+        <i class="fas fa-triangle-exclamation"></i>
+        <span th:text="${ultimoSigno.advertencia}">Advertencia</span>
+    </div>
+
+    <form id="formEditarSignos" class="editar-signos-form" style="display:none;"
+          th:action="@{/veterinaria/historial/signos/{id}/actualizar(id=${ultimoSigno.id})}"
+          method="post">
+        <input type="hidden" name="mascotaId" th:value="${mascotaSeleccionada.id}">
+        <input type="hidden" name="estado" th:value="${estadoFiltro}">
+
+        <div class="editar-signos-grid">
+            <label>Peso
+                <input type="number" step="0.01" name="peso" th:value="${ultimoSigno.peso}">
+            </label>
+            <label>Temperatura
+                <input type="number" step="0.1" name="temperatura" th:value="${ultimoSigno.temperatura}">
+            </label>
+            <label>FC
+                <input type="number" name="frecuenciaCardiaca" th:value="${ultimoSigno.frecuenciaCardiaca}">
+            </label>
+            <label>FR
+                <input type="number" name="frecuenciaRespiratoria" th:value="${ultimoSigno.frecuenciaRespiratoria}">
+            </label>
+        </div>
+
+        <label class="advertencia-field">Advertencia clínica
+            <textarea name="advertencia" rows="3"
+                      placeholder="Ej: Medicación pendiente, pérdida de peso, requiere control urgente..."
+                      th:text="${ultimoSigno.advertencia}"></textarea>
+        </label>
+
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" onclick="toggleEditarSignos()">Cancelar</button>
+            <button type="submit" class="btn-modal-confirm">Guardar signos</button>
+        </div>
+    </form>
+</div>
+
+
+
+
+                    <div class="panel historial-section" th:if="${pesoValores != null and !pesoValores.empty}">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-chart-line" style="color:#3b82f6; margin-right:8px;"></i> Evolucion de Peso</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartPeso"></canvas>
+                        </div>
+                        <div id="pesoData" style="display:none;"
+                             th:attr="data-fechas=${pesoFechas}, data-pesos=${pesoValores}">
+                        </div>
+                    </div>
+
+                    <div class="panel historial-section">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-notes-medical" style="color:#7c3aed; margin-right:8px;"></i> Consultas Anteriores</h2>
+                            <span class="badge" th:text="${consultas.size() + ' registros'}">0</span>
+                        </div>
+
+                        <div th:if="${consultas.empty}" class="triaje-empty" style="padding:24px 0;">
+                            <i class="fas fa-file-medical" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:8px;"></i>
+                            <p>Sin consultas registradas aun</p>
+                        </div>
+
+                        <div th:each="consulta : ${consultas}" class="consulta-item">
+                            <div class="consulta-item-header">
+                                <div class="consulta-fecha">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span th:text="${#temporals.format(consulta.fechaConsulta, 'dd/MM/yyyy HH:mm')}">Fecha</span>
+                                </div>
+                                <span class="consulta-estado-badge"
+                                      th:classappend="${consulta.estado == 'ACTIVA' ? ' estado-activa' : (consulta.estado == 'FINALIZADA' ? ' estado-finalizada' : ' estado-otro')}"
+                                      th:text="${consulta.estado}">ACTIVA</span>
+                            </div>
+                            <div class="consulta-item-body">
+                                <div class="consulta-motivo">
+                                    <label>Motivo</label>
+                                    <p th:text="${consulta.motivoConsulta != null ? consulta.motivoConsulta : '-'}">-</p>
+                                </div>
+                                <div class="consulta-signos" th:if="${consulta.peso != null or consulta.temperatura != null}">
+                                    <span th:if="${consulta.peso != null}">
+                                        <i class="fas fa-weight"></i> <span th:text="${consulta.peso + ' kg'}"></span>
+                                    </span>
+                                    <span th:if="${consulta.temperatura != null}">
+                                        <i class="fas fa-thermometer-half"></i> <span th:text="${consulta.temperatura + ' C'}"></span>
+                                    </span>
+                                    <span th:if="${consulta.frecuenciaCardiaca != null}">
+                                        <i class="fas fa-heartbeat"></i> <span th:text="${consulta.frecuenciaCardiaca + ' bpm'}"></span>
+                                    </span>
+                                </div>
+                                <div class="consulta-obs" th:if="${consulta.observaciones != null and !consulta.observaciones.empty}">
+                                    <label>Observaciones / Plan</label>
+                                    <p th:text="${consulta.observaciones}">-</p>
+                                </div>
+                                <div class="consulta-vet" th:if="${consulta.veterinario != null}">
+                                    <i class="fas fa-user-md"></i> Dr. <span th:text="${consulta.veterinario.nombre}">Veterinario</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+         
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script th:inline="javascript">
+document.addEventListener('DOMContentLoaded', () => {
+    const pesoData = document.getElementById('pesoData');
+    if (!pesoData) return;
+
+    const fechas = pesoData.dataset.fechas ? pesoData.dataset.fechas.split(',') : [];
+    const pesos = pesoData.dataset.pesos ? pesoData.dataset.pesos.split(',').map(Number) : [];
+    if (fechas.length === 0 || pesos.length === 0) return;
+
+    const ctx = document.getElementById('chartPeso').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: fechas,
+            datasets: [{
+                label: 'Peso (kg)',
+                data: pesos,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.08)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#3b82f6',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: {
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { callback: v => v + ' kg' }
+                }
+            }
+        }
+    });
+});
+
+function cargarHistorial(id) {
+    const params = new URLSearchParams(window.location.search);
+    const estado = params.get('estado') || /*[[${estadoFiltro}]]*/ 'activos';
+    window.location.href = '/veterinaria/historial/' + id + '?estado=' + encodeURIComponent(estado);
+}
+
+function toggleGrupoFecha(btn) {
+    const group = btn.closest('.fecha-group');
+    if (group) group.classList.toggle('fecha-group-collapsed');
+}
+
+function filtrarItems(q) {
+    document.querySelectorAll('.mascota-item').forEach(item => {
+        const nombre = (item.dataset.nombre || '').toLowerCase();
+        const dueno = (item.dataset.dueno || '').toLowerCase();
+        item.style.display = nombre.includes(q) || dueno.includes(q) ? '' : 'none';
+    });
+}
+
+const buscadorPaciente = document.getElementById('buscadorPaciente');
+if (buscadorPaciente) {
+    buscadorPaciente.addEventListener('input', function() {
+        filtrarItems(this.value.toLowerCase());
+    });
+}
+
+const buscadorHistorialPanel = document.getElementById('buscadorHistorialPanel');
+if (buscadorHistorialPanel) {
+    buscadorHistorialPanel.addEventListener('input', function() {
+        filtrarItems(this.value.toLowerCase());
+    });
+}
+
+function toggleEditarSignos() {
+    const form = document.getElementById('formEditarSignos');
+    if (!form) return;
+    form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+}
+</script>
+</body>
+</html>

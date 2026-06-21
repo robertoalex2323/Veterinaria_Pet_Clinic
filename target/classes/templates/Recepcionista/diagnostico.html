@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::div#content}, 'diagnostico')}">
+
+<head>
+    <title>Diagnóstico IA - Recepcionista</title>
+</head>
+
+<body>
+    <div id="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0"><i class="fas fa-brain text-info"></i> Asistente de Diagnóstico IA</h2>
+                <p class="text-muted mb-0">Sistema experto basado en Machine Learning para pre-diagnósticos veterinarios
+                </p>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Formulario de Entrada -->
+            <div class="col-lg-5 mb-4">
+                <div class="card shadow-sm border-0 h-100 ia-card">
+                    <div class="card-header bg-white border-0 pt-4 pb-0">
+                        <h6 class="m-0 font-weight-bold text-dark"><i class="fas fa-clipboard-list me-2"></i> Datos
+                            Clínicos del Paciente</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="iaDiagnosticoForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark small">Especie <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select bg-light" id="especie" required>
+                                        <option value="" selected disabled>Seleccionar...</option>
+                                        <option value="Perro">Perro</option>
+                                        <option value="Gato">Gato</option>
+                                        <option value="Conejo">Conejo</option>
+                                        <option value="Ave">Ave</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark small">Edad (Años)</label>
+                                    <input type="number" class="form-control bg-light" id="edad" min="0" step="0.5"
+                                        placeholder="Ej. 3">
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-bold text-dark small">Temperatura (°C)</label>
+                                    <input type="number" class="form-control bg-light" id="temperatura" step="0.1"
+                                        placeholder="Ej. 38.5">
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-bold text-dark small">Síntomas Observados <span
+                                            class="text-danger">*</span></label>
+                                    <textarea class="form-control bg-light" id="sintomas" rows="4"
+                                        placeholder="Describa los síntomas (Ej: vómitos, apatía, fiebre, falta de apetito...)"
+                                        required></textarea>
+                                    <div class="form-text">Sea lo más descriptivo posible para mejorar la precisión del
+                                        modelo predictivo.</div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-info text-white btn-lg fw-bold shadow-sm"
+                                    id="btnAnalizar">
+                                    <i class="fas fa-microchip me-2"></i> Analizar con IA
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultados IA -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 h-100 ia-result-card" id="resultadoPanel">
+
+                    <!-- Estado Inicial / Vacío -->
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-5"
+                        id="estadoInicial">
+                        <div class="pulse-ring mb-4">
+                            <i class="fas fa-robot fa-4x text-info"></i>
+                        </div>
+                        <h4 class="fw-bold text-dark">Esperando Datos Clínicos</h4>
+                        <p class="text-muted w-75">Ingrese los síntomas y características del paciente en el panel
+                            izquierdo. Nuestro modelo de Machine Learning procesará la información para sugerir posibles
+                            patologías.</p>
+                    </div>
+
+                    <!-- Estado Cargando -->
+                    <div class="card-body d-none flex-column justify-content-center align-items-center text-center p-5"
+                        id="estadoCargando">
+                        <div class="spinner-border text-info mb-4" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Procesando...</span>
+                        </div>
+                        <h5 class="fw-bold text-info animation-blink">El modelo neuronal está analizando los síntomas...
+                        </h5>
+                        <p class="text-muted small mt-2">Correlacionando con base de datos de historiales clínicos
+                            (>10,000 registros)</p>
+                    </div>
+
+                    <!-- Estado Resultados -->
+                    <div class="card-body p-4 p-md-5 d-none" id="estadoResultados">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div>
+                                <span class="badge bg-info text-white rounded-pill px-3 py-2 mb-2"><i
+                                        class="fas fa-check-circle me-1"></i> Análisis Completado</span>
+                                <h3 class="fw-bold text-dark mb-0" id="diagnosticoTitulo">Posible Gastroenteritis</h3>
+                            </div>
+                            <div class="text-center">
+                                <div class="progress-circle p-85" id="confianzaCirculo">
+                                    <span id="confianzaPorcentaje">85%</span>
+                                </div>
+                                <span class="small text-muted fw-bold d-block mt-1">Precisión IA</span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning border-start border-warning border-4 bg-light mb-4">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            <strong>Aviso:</strong> Este es un pre-diagnóstico generado por un algoritmo predictivo y no
+                            sustituye la evaluación presencial de un médico veterinario colegiado.
+                        </div>
+
+                        <h6 class="fw-bold text-dark text-uppercase mb-3"><i
+                                class="fas fa-clipboard-check text-success me-2"></i> Justificación Clínica</h6>
+                        <p class="text-muted mb-4" id="justificacionTexto">
+                            Basado en los síntomas de vómitos recurrentes y letargo en un canino, existe una alta
+                            probabilidad de inflamación gastrointestinal.
+                        </p>
+
+                        <h6 class="fw-bold text-dark text-uppercase mb-3"><i
+                                class="fas fa-user-md text-primary me-2"></i> Acciones Recomendadas</h6>
+                        <ul class="list-group list-group-flush mb-0 border-top border-bottom rounded-0"
+                            id="recomendacionesLista">
+                            <li class="list-group-item bg-transparent px-0 border-bottom-dashed text-muted"><i
+                                    class="fas fa-angle-right text-info me-2"></i> Agendar consulta con Medicina General
+                                de inmediato.</li>
+                            <li class="list-group-item bg-transparent px-0 border-bottom-dashed text-muted"><i
+                                    class="fas fa-angle-right text-info me-2"></i> Suspender alimentación sólida por 12
+                                horas.</li>
+                            <li class="list-group-item bg-transparent px-0 text-muted"><i
+                                    class="fas fa-angle-right text-info me-2"></i> Mantener hidratación controlada.</li>
+                        </ul>
+
+                        <div class="mt-4 pt-3 border-top text-end">
+                            <button class="btn btn-outline-secondary me-2" onclick="resetIA()"><i
+                                    class="fas fa-redo me-1"></i> Nuevo Análisis</button>
+                            <a href="/recepcionista/citas/nuevo" class="btn btn-primary"><i
+                                    class="fas fa-calendar-plus me-1"></i> Agendar Cita Ahora</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/js/diagnostico.js}"></script>
+    </div>
+</body>
+
+</html>

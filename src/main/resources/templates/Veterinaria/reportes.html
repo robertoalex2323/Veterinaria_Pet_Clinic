@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reportes Clinicos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" th:href="@{/css/reportes-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+    <main class="main reportes-page">
+        <section class="hero">
+            <h1>Reportes Clinicos</h1>
+            <p th:text="${#temporals.format(#temporals.createNow(), 'EEEE, dd ''de'' MMMM yyyy', new java.util.Locale('es'))}">Hoy</p>
+        </section>
+
+        <div class="reportes-header-card">
+            <h2>Reportes Clinicos</h2>
+            <p>Generacion de documentos medicos</p>
+        </div>
+
+        <section class="reportes-layout">
+            <div class="reportes-left">
+                <form id="formReporte" class="report-card" th:action="@{/veterinaria/reportes}" method="get">
+                    <h3>Seleccionar Paciente</h3>
+
+                    <select name="mascotaId" onchange="document.getElementById('formReporte').submit()">
+                        <option th:each="m : ${mascotas}"
+                                th:value="${m.id}"
+                                th:selected="${mascotaSeleccionada != null and mascotaSeleccionada.id == m.id}"
+                                th:text="${m.nombre + ' - ' + (m.raza != null ? m.raza : m.especie)}">
+                            Mascota
+                        </option>
+                    </select>
+
+                    <input type="hidden" name="tipo" th:value="${tipoReporte}">
+
+                    <div class="selected-pet" th:if="${mascotaSeleccionada != null}">
+                        <div class="pet-avatar">
+                            <i class="fas fa-paw"></i>
+                        </div>
+                        <div>
+                            <strong th:text="${mascotaSeleccionada.nombre}">Luna</strong>
+                            <span th:text="${mascotaSeleccionada.raza != null ? mascotaSeleccionada.raza : mascotaSeleccionada.especie}">Raza</span>
+                        </div>
+
+                        <div class="pet-mini">
+                            <label>Edad</label>
+                            <b th:text="${mascotaSeleccionada.edad != null ? mascotaSeleccionada.edad + ' anos' : '-'}">-</b>
+                        </div>
+                        <div class="pet-mini">
+                            <label>Peso</label>
+                            <b th:text="${ultimoSigno != null and ultimoSigno.peso != null ? ultimoSigno.peso + ' kg' : '-'}">-</b>
+                        </div>
+                    </div>
+                </form>
+
+                <form class="report-card" th:action="@{/veterinaria/reportes}" method="get">
+                    <input type="hidden" name="mascotaId" th:value="${mascotaSeleccionada != null ? mascotaSeleccionada.id : ''}">
+
+                    <h3>Tipo de Reporte</h3>
+
+                    <label class="report-type" th:classappend="${tipoReporte == 'consulta'} ? ' active' : ''">
+                        <input type="radio" name="tipo" value="consulta" th:checked="${tipoReporte == 'consulta'}">
+                        <i class="fas fa-stethoscope"></i>
+                        <span>
+                            <b>Reporte de Consulta</b>
+                            <small>Diagnostico y tratamiento</small>
+                        </span>
+                    </label>
+
+                    <label class="report-type" th:classappend="${tipoReporte == 'tratamiento'} ? ' active' : ''">
+                        <input type="radio" name="tipo" value="tratamiento" th:checked="${tipoReporte == 'tratamiento'}">
+                        <i class="fas fa-capsules"></i>
+                        <span>
+                            <b>Plan de Tratamiento</b>
+                            <small>Medicacion y seguimiento</small>
+                        </span>
+                    </label>
+
+                    <label class="report-type" th:classappend="${tipoReporte == 'completo'} ? ' active' : ''">
+                        <input type="radio" name="tipo" value="completo" th:checked="${tipoReporte == 'completo'}">
+                        <i class="fas fa-file-medical"></i>
+                        <span>
+                            <b>Reporte Completo</b>
+                            <small>Historial e indicaciones</small>
+                        </span>
+                    </label>
+
+                    <button type="submit" class="btn-generar">
+                        <i class="fas fa-file-lines"></i> Generar Reporte
+                    </button>
+                </form>
+            </div>
+
+            <div class="report-preview-card">
+                <div class="preview-head">
+                    <h3>Vista Previa</h3>
+                    <button type="button" onclick="window.print()" th:if="${mascotaSeleccionada != null}">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                </div>
+
+                <div class="report-document" th:if="${mascotaSeleccionada != null}">
+                    <div class="doc-header">
+                        <h2>Veterinaria Pet Clinic</h2>
+                        <p>Reporte Clinico Veterinario</p>
+                    </div>
+
+                    <div class="doc-section">
+                        <h3>Datos del Paciente</h3>
+                        <div class="doc-grid">
+                            <p><b>Paciente:</b> <span th:text="${mascotaSeleccionada.nombre}">-</span></p>
+                            <p><b>Especie:</b> <span th:text="${mascotaSeleccionada.especie}">-</span></p>
+                            <p><b>Raza:</b> <span th:text="${mascotaSeleccionada.raza != null ? mascotaSeleccionada.raza : '-'}">-</span></p>
+                            <p><b>Edad:</b> <span th:text="${mascotaSeleccionada.edad != null ? mascotaSeleccionada.edad + ' anos' : '-'}">-</span></p>
+                            <p><b>Dueno:</b> <span th:text="${mascotaSeleccionada.cliente != null ? mascotaSeleccionada.cliente.nombre : '-'}">-</span></p>
+                            <p><b>Fecha:</b> <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">-</span></p>
+                        </div>
+                    </div>
+
+                    <div class="doc-section" th:if="${ultimoSigno != null}">
+                        <h3>Signos Vitales Actuales</h3>
+                        <div class="doc-grid">
+                            <p><b>Temperatura:</b> <span th:text="${ultimoSigno.temperatura != null ? ultimoSigno.temperatura + ' C - ' + estadoTempTexto : '-'}">-</span></p>
+                            <p><b>Peso:</b> <span th:text="${ultimoSigno.peso != null ? ultimoSigno.peso + ' kg' : '-'}">-</span></p>
+                            <p><b>FC:</b> <span th:text="${ultimoSigno.frecuenciaCardiaca != null ? ultimoSigno.frecuenciaCardiaca + ' bpm - ' + estadoFcTexto : '-'}">-</span></p>
+                            <p><b>FR:</b> <span th:text="${ultimoSigno.frecuenciaRespiratoria != null ? ultimoSigno.frecuenciaRespiratoria + ' rpm - ' + estadoFrTexto : '-'}">-</span></p>
+                            <p><b>Estado general:</b> <span th:text="${estadoGeneralTexto}">-</span></p>
+                        </div>
+                    </div>
+
+                    <div class="doc-section" th:if="${ultimoSigno != null and ultimoSigno.advertencia != null and !ultimoSigno.advertencia.empty}">
+                        <h3>Advertencia Clinica</h3>
+                        <p th:text="${ultimoSigno.advertencia}">Advertencia</p>
+                    </div>
+
+                    <div class="doc-section" th:if="${!#lists.isEmpty(alertas)}">
+                        <h3>Alertas Activas</h3>
+                        <div th:each="alerta : ${alertas}" class="doc-alert">
+                            <b th:text="${alerta.prioridad}">Prioridad</b>
+                            <span th:text="${alerta.descripcion}">Descripcion</span>
+                        </div>
+                    </div>
+
+                    <div class="doc-section" th:if="${tipoReporte == 'consulta' or tipoReporte == 'completo'}">
+                        <h3>Consultas Registradas</h3>
+                        <div th:if="${#lists.isEmpty(consultas)}">
+                            <p>No hay consultas registradas.</p>
+                        </div>
+                        <div th:each="consulta : ${consultas}" class="doc-consulta">
+                            <b th:text="${consulta.fechaConsulta != null ? #temporals.format(consulta.fechaConsulta, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">Fecha</b>
+                            <p><b>Motivo:</b> <span th:text="${consulta.motivoConsulta != null ? consulta.motivoConsulta : '-'}">-</span></p>
+                            <p><b>Observaciones:</b> <span th:text="${consulta.observaciones != null ? consulta.observaciones : '-'}">-</span></p>
+                        </div>
+                    </div>
+
+                    <div class="doc-section" th:if="${tipoReporte == 'tratamiento' or tipoReporte == 'completo'}">
+                        <h3>Plan e Indicaciones</h3>
+                        <p>Seguir las indicaciones registradas en consulta. Mantener observacion clinica y acudir a control si aparecen signos de alarma.</p>
+                    </div>
+                </div>
+
+                <div class="preview-empty" th:if="${mascotaSeleccionada == null}">
+                    <i class="far fa-file-lines"></i>
+                    <p>Selecciona un paciente y genera el reporte</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

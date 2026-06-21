@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Pago;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Pago;
 
 @Repository
 public interface PagoRepository extends JpaRepository<Pago, Long> {

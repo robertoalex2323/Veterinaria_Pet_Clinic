@@ -1,13 +1,14 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.MascotaRepository;
 
@@ -61,8 +62,20 @@ public class MascotaService {
         throw new RuntimeException("Mascota no encontrada con ID: " + id);
     }
 
+    public Mascota buscarPorIdConCliente(Long id) {
+        Optional<?> optional = mascotaRepository.findByIdWithCliente(id);
+        if (optional.isPresent()) {
+            return (Mascota) optional.get();
+        }
+        throw new RuntimeException("Mascota no encontrada con ID: " + id);
+    }
+
     public List<Mascota> listarTodos() {
         return mascotaRepository.findAll();
+    }
+
+    public List<Mascota> listarTodosConCliente() {
+        return mascotaRepository.findAllWithCliente();
     }
 
     public List<Mascota> buscarPorCliente(Long clienteId) {
@@ -79,6 +92,22 @@ public class MascotaService {
 
     public long contarMascotasPorCliente(Long clienteId) {
         return mascotaRepository.countByClienteId(clienteId);
+    }
+
+    @Transactional
+    public Mascota darDeBaja(Long id) {
+        Mascota mascota = buscarPorId(id);
+        mascota.setActivo(false);
+        mascota.setFechaBaja(LocalDate.now());
+        return mascotaRepository.save(mascota);
+    }
+
+    @Transactional
+    public Mascota readmitir(Long id) {
+        Mascota mascota = buscarPorId(id);
+        mascota.setActivo(true);
+        mascota.setFechaBaja(null);
+        return mascotaRepository.save(mascota);
     }
 
     @Transactional

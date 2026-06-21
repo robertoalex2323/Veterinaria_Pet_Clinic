@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::content}, 'mascotas')}">
+
+<head>
+    <title>Gestión de Mascotas - Recepcionista</title>
+</head>
+
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0"><i class="fas fa-paw text-success"></i> Mascotas</h2>
+                <p class="text-muted mb-0">Gestión de pacientes veterinarios</p>
+            </div>
+            <div>
+                <a href="/recepcionista/mascotas/nuevo" class="btn btn-success shadow-sm">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> Nueva Mascota
+                </a>
+            </div>
+        </div>
+
+        <!-- Mensajes de alerta -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="mascotas-card mb-4 bg-white">
+            <div class="mascotas-card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-success">Lista de Mascotas</h6>
+                <div class="d-flex gap-2">
+                    <select id="filtroEspecie" class="form-select form-select-sm border-0 bg-light" style="width: auto;"
+                        onchange="filtrarPorEspecie()">
+                        <option value="">Todas las especies</option>
+                        <option value="perro">Perro</option>
+                        <option value="gato">Gato</option>
+                        <option value="ave">Ave</option>
+                        <option value="exotico">Exótico</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-0"><i class="fas fa-search"></i></span>
+                        <input type="text" id="buscarMascota" class="form-control bg-light border-0"
+                            placeholder="Buscar mascota...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table id="mascotasTable" class="table mascotas-table mascotas-table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th width="80">Perfil</th>
+                                <th>Mascota</th>
+                                <th>Especie / Raza</th>
+                                <th>Edad</th>
+                                <th>Dueño</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="mascota : ${mascotas}" th:attr="data-especie=${mascota.especie}">
+                                <td>
+                                    <img th:if="${mascota.fotoUrl != null and !mascota.fotoUrl.empty}"
+                                        th:src="${mascota.fotoUrl}" class="mascota-avatar" alt="Foto">
+                                    <div th:unless="${mascota.fotoUrl != null and !mascota.fotoUrl.empty}"
+                                        class="mascota-avatar-placeholder">
+                                        <i
+                                            th:class="${mascota.especie.toLowerCase() == 'gato' ? 'fas fa-cat' : (mascota.especie.toLowerCase() == 'perro' ? 'fas fa-dog' : 'fas fa-paw')}"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark" th:text="${mascota.nombre}">Max</div>
+                                    <div class="small text-muted"
+                                        th:text="${mascota.color != null ? mascota.color : ''}">Dorado</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle"
+                                        th:text="${mascota.especie}">Perro</span>
+                                    <div class="small text-muted mt-1" th:text="${mascota.raza}">Golden Retriever</div>
+                                </td>
+                                <td>
+                                    <span th:text="${mascota.edad != null ? mascota.edad + ' años' : 'N/A'}">3
+                                        años</span>
+                                </td>
+                                <td>
+                                    <div class="dueño-nombre text-dark fw-medium" th:text="${mascota.cliente.nombre}">
+                                        Juan Perez</div>
+                                    <div class="small text-muted"><i class="fas fa-phone-alt"></i> <span
+                                            th:text="${mascota.cliente.telefono}">987654321</span></div>
+                                </td>
+                                <td class="text-center">
+                                    <a th:href="@{/recepcionista/mascotas/editar/{id}(id=${mascota.id})}"
+                                        class="btn btn-warning btn-sm text-white" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="javascript:void(0)" class="btn btn-danger btn-sm" title="Eliminar"
+                                        th:onclick="'confirmarEliminacion(' + ${mascota.id} + ')'">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${mascotas.empty}">
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fas fa-paw fa-3x mb-3 d-block opacity-25"></i>
+                                    No se encontraron mascotas registradas.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/js/mascota.js}"></script>
+        <script>
+            function confirmarEliminacion(id) {
+                if (confirm('¿Está seguro de eliminar esta mascota? Las citas asociadas podrían perderse.')) {
+                    window.location.href = '/recepcionista/mascotas/eliminar/' + id;
+                }
+            }
+        </script>
+    </div>
+</body>
+
+</html>

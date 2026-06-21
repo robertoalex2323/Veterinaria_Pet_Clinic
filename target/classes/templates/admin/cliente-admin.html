@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sildebar_admin::layout(~{::content}, 'clientes')}">
+<head>
+    <title>Clientes - Administrador</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-users text-primary"></i> Clientes</h2>
+            <p class="text-muted mb-0">Listado de clientes registrados</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Clientes</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Telefono</th>
+                            <th>Email</th>
+                            <th>Direccion</th>
+                            <th>Fecha Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cliente : ${clientes}">
+                            <td th:text="${cliente.id}">1</td>
+                            <td class="fw-bold" th:text="${cliente.nombre}">Cliente</td>
+                            <td th:text="${cliente.telefono}">999999999</td>
+                            <td th:text="${cliente.email != null ? cliente.email : '-'}">-</td>
+                            <td th:text="${cliente.direccion != null ? cliente.direccion : '-'}">-</td>
+                            <td th:text="${cliente.fechaRegistro != null ? #temporals.format(cliente.fechaRegistro, 'dd/MM/yyyy') : '-'}">-</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(clientes)}">
+                            <td colspan="6" class="text-center text-muted py-4">No hay clientes registrados.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

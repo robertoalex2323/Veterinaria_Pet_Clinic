@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
 
 @Service
@@ -35,11 +35,22 @@ public class CitaService {
     
     @Transactional
     public Cita guardar(Cita cita) {
+
+
+        if (cita.getMascota() != null && cita.getMascota().getId() != null
+        && citaRepository.existsByMascotaIdAndFechaHoraAndEstadoNot(
+                cita.getMascota().getId(),
+                cita.getFechaHora(),
+                "CANCELADA")) {
+    throw new RuntimeException("Ya existe una cita registrada para esta mascota en ese horario.");
+}
+
         Objects.requireNonNull(cita, "La cita no puede ser nula");
+
         validarDisponibilidad(cita.getFechaHora());
         
         // Bloquear horario en la agenda automáticamente
-        com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda agenda = agendaService.buscarAgendaDisponible(cita.getFechaHora().toLocalDate(), cita.getFechaHora().toLocalTime());
+        com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agenda = agendaService.buscarAgendaDisponible(cita.getFechaHora().toLocalDate(), cita.getFechaHora().toLocalTime());
         if (agenda != null) {
             agendaService.bloquearHorario(agenda.getId());
         }
@@ -74,7 +85,7 @@ public class CitaService {
         log.warn("Cita ID {} cancelada. Motivo: {}", id, motivo);
         
         // Liberar horario en la agenda automáticamente
-        com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda agenda = agendaService.buscarAgendaPorFechaYHora(cita.getFechaHora().toLocalDate(), cita.getFechaHora().toLocalTime());
+        com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agenda = agendaService.buscarAgendaPorFechaYHora(cita.getFechaHora().toLocalDate(), cita.getFechaHora().toLocalTime());
         if (agenda != null) {
             agendaService.liberarHorario(agenda.getId());
         }
@@ -131,7 +142,7 @@ public class CitaService {
         }
         
         // 3. Vincular con Agenda 
-        com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda agenda = agendaService.buscarAgendaDisponible(fechaHora.toLocalDate(), hora);
+        com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agenda = agendaService.buscarAgendaDisponible(fechaHora.toLocalDate(), hora);
         if (agenda == null) {
             log.warn("Horario no disponible en agenda para: {}", fechaHora);
             throw new RuntimeException("El horario seleccionado no existe en la agenda o ya no está disponible.");

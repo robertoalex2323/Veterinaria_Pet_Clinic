@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_farmaceutico::layout(~{::div#content}, 'ventas')}">
+<head>
+    <title>Registro de Ventas - Farmacéutico</title>
+</head>
+<body>
+<div id="content">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0 text-dark"><i class="fas fa-cash-register me-2 text-primary"></i>Registro de Ventas</h2>
+            <p class="text-muted">Administra las ventas de medicamentos a partir de las recetas dispensadas.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-lg shadow-sm" onclick="abrirModalNuevaVenta()">
+                <i class="fas fa-plus-circle me-2"></i>Nueva Venta
+            </button>
+            <button class="btn btn-outline-primary btn-lg shadow-sm" id="btnRefrescar">
+                <i class="fas fa-sync-alt me-2"></i>Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Resumen stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card bg-soft-success">
+                <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Ventas Hoy</span>
+                    <span class="stat-value" id="ventasHoyCount">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card bg-soft-primary">
+                <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Hoy</span>
+                    <span class="stat-value" id="totalHoy">S/ 0.00</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card bg-soft-warning">
+                <div class="stat-icon"><i class="fas fa-file-prescription"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Recetas Dispensadas</span>
+                    <span class="stat-value" th:text="${recetasDispensadas.size()}">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buscador y filtros -->
+    <div class="row mb-4 g-2">
+        <div class="col-md-6">
+            <div class="input-group shadow-sm">
+                <span class="input-group-text bg-light border-0"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" id="searchVenta" class="form-control border-0" placeholder="Buscar por cliente, N° venta o medicamento...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select id="filtroMetodoPago" class="form-select shadow-sm border-0 bg-light">
+                <option value="">Todos los métodos de pago</option>
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="TARJETA">Tarjeta</option>
+                <option value="YAPE">Yape</option>
+                <option value="PLIN">Plin</option>
+                <option value="TRANSFERENCIA">Transferencia</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="filtroFecha" class="form-select shadow-sm border-0 bg-light">
+                <option value="todas">Todas las fechas</option>
+                <option value="hoy">Hoy</option>
+                <option value="semana">Últimos 7 días</option>
+                <option value="mes">Últimos 30 días</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Tabla de Ventas -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="fas fa-history me-2 text-primary"></i>Historial de Ventas</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="ventasTable">
+                <thead class="table-light">
+                <tr>
+                    <th>N° Venta</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Medicamentos</th>
+                    <th>Subtotal</th>
+                    <th>IGV</th>
+                    <th>Total</th>
+                    <th>Método Pago</th>
+                    <th>Comprobante</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="ventasTableBody">
+                <!-- Se llena con JS -->
+                <tr>
+                    <td colspan="10" class="text-center py-5">
+                        <i class="fas fa-cash-register fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay ventas registradas</h5>
+                        <p class="text-muted">Las ventas generadas aparecerán aquí automáticamente.</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL: Nueva Venta desde Receta -->
+    <div class="modal fade" id="nuevaVentaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-cart-plus me-2"></i>Generar Venta desde Receta</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Selección de receta -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold"><i class="fas fa-file-prescription me-1 text-success"></i>Seleccionar Receta Dispensada</label>
+                        <select id="selectReceta" class="form-select form-select-lg shadow-sm" onchange="cargarDetalleRecetaVenta()">
+                            <option value="">-- Seleccione una receta dispensada --</option>
+                            <option th:each="receta : ${recetasDispensadas}" 
+                                    th:value="${receta.id}"
+                                    th:text="'#' + ${receta.id} + ' - ' + ${receta.paciente?.nombre} + ' - ' + ${#temporals.format(receta.fecha, 'dd/MM/yyyy')}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Detalle de receta seleccionada -->
+                    <div id="recetaDetalle" class="d-none">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="detalle-card">
+                                    <h6 class="detalle-titulo"><i class="fas fa-user me-2 text-primary"></i>Paciente</h6>
+                                    <p class="detalle-contenido" id="detPaciente">-</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="detalle-card">
+                                    <h6 class="detalle-titulo"><i class="fas fa-paw me-2 text-success"></i>Especie</h6>
+                                    <p class="detalle-contenido" id="detEspecie">-</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="detalle-card">
+                                    <h6 class="detalle-titulo"><i class="fas fa-user-md me-2 text-info"></i>Veterinario</h6>
+                                    <p class="detalle-contenido" id="detVeterinario">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-3"><i class="fas fa-pills me-2 text-primary"></i>Medicamentos a facturar</h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered table-striped" id="itemsVentaTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Medicamento</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unit.</th>
+                                        <th>Importe</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsVentaBody">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Totales -->
+                        <div class="row justify-content-end mb-4">
+                            <div class="col-md-5">
+                                <div class="totales-box">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="fw-bold">Subtotal:</span>
+                                        <span id="ventaSubtotal">S/ 0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="fw-bold">IGV (18%):</span>
+                                        <span id="ventaIgv">S/ 0.00</span>
+                                    </div>
+                                    <hr class="my-1">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold fs-5">TOTAL:</span>
+                                        <span class="fw-bold fs-5 text-success" id="ventaTotal">S/ 0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Método de pago -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold"><i class="fas fa-credit-card me-1"></i>Método de Pago</label>
+                                <div class="d-flex gap-2 flex-wrap" id="metodosPago">
+                                    <button type="button" class="btn btn-outline-success metodo-pago-btn" data-value="EFECTIVO" onclick="seleccionarMetodoPago(this)">
+                                        <i class="fas fa-money-bill-wave me-1"></i>Efectivo
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary metodo-pago-btn" data-value="TARJETA" onclick="seleccionarMetodoPago(this)">
+                                        <i class="fas fa-credit-card me-1"></i>Tarjeta
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info metodo-pago-btn" data-value="YAPE" onclick="seleccionarMetodoPago(this)">
+                                        <i class="fas fa-mobile-alt me-1"></i>Yape
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning metodo-pago-btn" data-value="PLIN" onclick="seleccionarMetodoPago(this)">
+                                        <i class="fas fa-mobile-alt me-1"></i>Plin
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary metodo-pago-btn" data-value="TRANSFERENCIA" onclick="seleccionarMetodoPago(this)">
+                                        <i class="fas fa-exchange-alt me-1"></i>Transferencia
+                                    </button>
+                                </div>
+                                <input type="hidden" id="metodoPagoSeleccionado" value="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="recetaNoSeleccionada" class="text-center py-5">
+                        <i class="fas fa-file-prescription fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">Seleccione una receta dispensada</h5>
+                        <p class="text-muted">Solo se muestran recetas que ya han sido dispensadas y están listas para facturación.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success btn-lg d-none" id="btnGenerarVenta" onclick="generarVentaDesdeReceta()">
+                        <i class="fas fa-check-circle me-2"></i>Generar Venta y Enviar Comprobante
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Detalle de Venta -->
+    <div class="modal fade" id="detalleVentaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-receipt me-2"></i>Detalle de Venta <span id="detVentaNumero"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="detalle-card">
+                                <h6 class="detalle-titulo"><i class="fas fa-calendar me-2 text-primary"></i>Fecha</h6>
+                                <p class="detalle-contenido" id="detFecha">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detalle-card">
+                                <h6 class="detalle-titulo"><i class="fas fa-user me-2 text-success"></i>Cliente</h6>
+                                <p class="detalle-contenido" id="detCliente">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detalle-card">
+                                <h6 class="detalle-titulo"><i class="fas fa-user-md me-2 text-info"></i>Atendido por</h6>
+                                <p class="detalle-contenido" id="detUsuario">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detalle-card">
+                                <h6 class="detalle-titulo"><i class="fas fa-credit-card me-2 text-warning"></i>Método de Pago</h6>
+                                <p class="detalle-contenido" id="detMetodoPago">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3"><i class="fas fa-pills me-2 text-primary"></i>Productos</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Medicamento</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unit.</th>
+                                    <th>Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detalleItemsBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row justify-content-end mt-3">
+                        <div class="col-md-5">
+                            <div class="totales-box">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">Subtotal:</span>
+                                    <span id="detSubtotal">S/ 0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">IGV (18%):</span>
+                                    <span id="detIgv">S/ 0.00</span>
+                                </div>
+                                <hr class="my-1">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold fs-5">TOTAL:</span>
+                                    <span class="fw-bold fs-5 text-success" id="detTotal">S/ 0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" id="btnDescargarComprobante" onclick="descargarComprobante()">
+                        <i class="fas fa-file-pdf me-2"></i>Descargar Comprobante
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script th:src="@{/js/ventas-farmaceutico.js}"></script>
+</div>
+
+</body>
+</html>

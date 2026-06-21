@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Pago;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Pago;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
@@ -305,7 +305,7 @@ public class RecepcionistaController {
                     .orElseThrow(() -> new RuntimeException("Veterinario no encontrado."));
             cita.setVeterinario(veterinario);
 
-            com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda agendaDisponible = agendaService
+            com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agendaDisponible = agendaService
                     .buscarAgendaDisponible(fechaHora.toLocalDate(), fechaHora.toLocalTime());
             if (agendaDisponible == null) {
                 throw new RuntimeException("El horario seleccionado no existe en la agenda o ya no está disponible.");

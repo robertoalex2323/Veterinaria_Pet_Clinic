@@ -52,7 +52,10 @@ public class SecurityConfig {
                         // Recursos públicos
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
                         .requestMatchers("/login").permitAll()
-
+                        // Solo VETERINARIO puede acceder a estas rutas
+                        .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
+                        // Solo FARMACEUTICO puede acceder a estas rutas
+                        .requestMatchers("/farmaceutico/**").hasRole("FARMACEUTICO")
                         // Solo RECEPCIONISTA puede acceder a estas rutas
                         .requestMatchers("/recepcionista/**").hasRole("RECEPCIONISTA")
                         .requestMatchers("/clientes/**").hasRole("RECEPCIONISTA")
@@ -65,19 +68,29 @@ public class SecurityConfig {
 
                         // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated())
-
-                .formLogin(form -> form
+                    .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler((request, response, authentication) -> {
                             boolean esAdmin = authentication.getAuthorities().stream()
                                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN")
                                             || authority.getAuthority().equals("ROLE_ADMINISTRADOR"));
 
+                            boolean esVeterinario = authentication.getAuthorities().stream()
+                                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_VETERINARIO"));
+
+                            boolean esFarmaceutico = authentication.getAuthorities().stream()
+                                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_FARMACEUTICO"));
+
                             if (esAdmin) {
                                 response.sendRedirect("/admin/dashboard");
+                            } else if (esVeterinario) {
+                                response.sendRedirect("/veterinaria/dashboard");
+                            } else if (esFarmaceutico) {
+                                response.sendRedirect("/farmaceutico/dashboard");
                             } else {
                                 response.sendRedirect("/recepcionista/dashboard");
                             }
+
                         })
                         .permitAll())
 

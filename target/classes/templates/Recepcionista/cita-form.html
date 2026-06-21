@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::content}, 'citas')}">
+
+<head>
+    <title>Agendar Cita - Recepcionista</title>
+</head>
+
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0">
+                    <i
+                        th:class="${cita.id != null} ? 'fas fa-edit text-primary' : 'fas fa-calendar-plus text-primary'"></i>
+                    <span th:text="${cita.id != null} ? 'Editar Cita' : 'Agendar Cita'">Agendar Cita</span>
+                </h2>
+                <p class="text-muted mb-0"
+                    th:text="${cita.id != null} ? 'Actualice los detalles de la cita' : 'Registre una nueva cita para un paciente'">
+                    Registre una nueva cita para un paciente</p>
+            </div>
+            <div>
+                <a href="/recepcionista/citas" class="btn btn-secondary shadow-sm">
+                    <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver a la Agenda
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-xl-8 col-lg-10">
+                <div class="citas-card bg-white h-100">
+                    <div class="citas-card-header bg-primary text-white border-0"
+                        style="border-radius: 12px 12px 0 0 !important;">
+                        <h6 class="m-0 font-weight-bold"><i class="fas fa-edit me-2"></i> Detalles de la Cita</h6>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+                        <form
+                            th:action="${cita.id != null} ? @{/recepcionista/citas/actualizar/{id}(id=${cita.id})} : @{/recepcionista/citas/guardar}"
+                            method="post">
+
+                            <!-- Selección de Paciente -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-dark">Paciente (Mascota) <span
+                                        class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-paw"></i></span>
+                                    <select name="mascotaId" id="mascotaId" class="form-select" required
+                                        th:disabled="${cita.id != null}">
+                                        <option value="">Seleccione una mascota / dueño...</option>
+                                        <option th:each="mascota : ${mascotas}" th:value="${mascota.id}"
+                                            th:selected="${cita.mascota?.id == mascota.id}"
+                                            th:text="${mascota.nombre + ' (' + mascota.especie + ') - Dueño: ' + mascota.cliente?.nombre}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <input type="hidden" name="mascotaId" th:if="${cita.id != null}"
+                                    th:value="${cita.mascota?.id}">
+                                <div class="form-text" th:if="${cita.id == null}"><i class="fas fa-info-circle"></i>
+                                    Escriba para buscar por nombre de mascota o cliente si usa la búsqueda.</div>
+                            </div>
+
+                            <!-- Fecha y Hora -->
+                            <div class="row gx-4 mb-4">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label class="form-label fw-bold text-dark">Fecha de la cita <span
+                                            class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                        <input type="date" id="fechaCita" name="fecha" class="form-control" required
+                                            th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}"
+                                            th:value="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'yyyy-MM-dd') : ''}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">Hora <span
+                                            class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="far fa-clock"></i></span>
+                                        <select id="horaCita" name="hora" class="form-select" required
+                                            th:disabled="${cita.id == null and cita.fechaHora == null}">
+                                            <option value="" th:if="${cita.id == null}">Seleccione una fecha primero...
+                                            </option>
+                                            <option th:if="${cita.id != null}"
+                                                th:value="${#temporals.format(cita.fechaHora, 'HH:mm')}"
+                                                th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}" selected>
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="form-text"><i class="fas fa-info-circle"></i> Solo se muestran horarios
+                                        disponibles según la agenda.</div>
+                                </div>
+                            </div>
+
+                            <input type="hidden" id="veterinarioId" name="veterinarioId"
+                                th:value="${cita.veterinario?.id}">
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-dark">Veterinario</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user-md"></i></span>
+                                    <input type="text" id="veterinarioNombre" class="form-control" readonly
+                                        th:value="${cita.veterinario != null ? cita.veterinario.nombre : 'Se asigna según el horario'}">
+                                </div>
+                            </div>
+
+                            <!-- Motivo -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-dark">Motivo de la Consulta <span
+                                        class="text-danger">*</span></label>
+                                <textarea name="motivo" class="form-control" rows="3" required
+                                    placeholder="Ej. Vacunación, control general, dolor de estómago..."
+                                    th:text="${cita.motivo}"></textarea>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <!-- Botones -->
+                            <div class="d-flex justify-content-end gap-3">
+                                <a href="/recepcionista/citas" class="btn btn-light border btn-lg px-4">Cancelar</a>
+                                <button type="submit" class="btn btn-primary btn-lg px-4">
+                                    <i
+                                        th:class="${cita.id != null} ? 'fas fa-save me-2' : 'fas fa-calendar-check me-2'"></i>
+                                    <span th:text="${cita.id != null} ? 'Guardar Cambios' : 'Agendar Cita'">Agendar
+                                        Cita</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/js/citas.js}"></script>
+    </div>
+</body>
+
+</html>
