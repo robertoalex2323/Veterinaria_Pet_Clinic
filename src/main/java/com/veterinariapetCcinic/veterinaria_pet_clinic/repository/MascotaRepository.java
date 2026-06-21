@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
 
 @Repository
 public interface MascotaRepository extends JpaRepository<Mascota, Long> {

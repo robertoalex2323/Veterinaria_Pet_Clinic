@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
 
 @Repository
 public interface CitaRepository extends JpaRepository<Cita, Long> {

@@ -1,14 +1,14 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.MascotaRepository;
 

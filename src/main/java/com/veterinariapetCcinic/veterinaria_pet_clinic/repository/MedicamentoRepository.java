@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Medicamento;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Medicamento;
 
 @Repository
 public interface MedicamentoRepository extends JpaRepository<Medicamento, Long> {
@@ -15,4 +15,8 @@ public interface MedicamentoRepository extends JpaRepository<Medicamento, Long> 
     List<Medicamento> findBajoStock();
     
     List<Medicamento> findByNombreContainingIgnoreCase(String nombre);
+    
+    List<Medicamento> findByStockLessThan(Integer stock);
+    
+    List<Medicamento> findByPresentacion(String presentacion);
 }

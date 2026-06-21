@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Vacuna;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Vacuna;
 
 @Repository
 public interface VacunaRepository extends JpaRepository<Vacuna, Long> {

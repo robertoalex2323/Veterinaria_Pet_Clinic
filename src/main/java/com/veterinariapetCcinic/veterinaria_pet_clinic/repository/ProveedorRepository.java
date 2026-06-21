@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Proveedor;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Proveedor;
 
 @Repository
 public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {

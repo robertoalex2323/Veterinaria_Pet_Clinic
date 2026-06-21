@@ -78,3 +78,4 @@ El proyecto sigue un patrón **MVC (Model-View-Controller)** estructurado de la 
 2. **Configurar DB: Ajustar application.properties con tus credenciales locales.**
 
 3. **Ejecutar: ./mvnw spring-boot:run**
+

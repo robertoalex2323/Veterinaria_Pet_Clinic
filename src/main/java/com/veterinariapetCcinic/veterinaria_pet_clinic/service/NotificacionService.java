@@ -19,10 +19,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Venta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
 
 import jakarta.mail.internet.MimeMessage;
@@ -266,6 +266,16 @@ public class NotificacionService {
         log.info("📝 Mensaje:\n{}", informe);
 
         enviarEmail(cliente.getEmail(), "Informe Veterinario", informe);
+    }
+
+    public void enviarNotificacionUI(String type, String message) {
+        addUINotification(type, message);
+    }
+
+    public void enviarNotificacionNuevaReceta(String pacienteNombre, String veterinarioNombre, Long recetaId) {
+        String mensaje = "📋 Nueva receta #" + recetaId + " creada para " + pacienteNombre + " por " + veterinarioNombre;
+        addUINotification("info", mensaje);
+        log.info("📋 Notificación de nueva receta: {}", mensaje);
     }
 
     public void enviarConfirmacionPago(Cliente cliente, Double monto, String metodoPago) {

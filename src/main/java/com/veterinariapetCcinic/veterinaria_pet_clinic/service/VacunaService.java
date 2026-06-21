@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Vacuna;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Vacuna;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.VacunaRepository;
 
 import jakarta.persistence.EntityNotFoundException;

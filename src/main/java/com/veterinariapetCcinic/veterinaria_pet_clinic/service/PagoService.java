@@ -9,7 +9,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Pago;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Pago;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.PagoRepository;
 
 @Service
