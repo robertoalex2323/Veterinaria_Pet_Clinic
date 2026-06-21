@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_farmaceutico::layout(~{::div#content}, 'reportes')}">
+<head>
+    <title>Reportes y Stock - Farmacéutico</title>
+</head>
+<body>
+<div id="content">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0 text-dark"><i class="fas fa-chart-line me-2 text-primary"></i>Reportes y Stock</h2>
+            <p class="text-muted">Visualiza reportes de ventas, stock crítico y descarga documentos en PDF.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-lg shadow-sm" id="btnRefrescar">
+                <i class="fas fa-sync-alt me-2"></i>Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Resumen stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card bg-soft-success">
+                <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Ventas Hoy</span>
+                    <span class="stat-value" id="statVentasHoy">S/ 0.00</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-soft-primary">
+                <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Ventas</span>
+                    <span class="stat-value" id="statTotalVentas">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-soft-warning">
+                <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Stock Crítico</span>
+                    <span class="stat-value" th:text="${bajoStockCount}">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-soft-info">
+                <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Ingresos</span>
+                    <span class="stat-value" id="statTotalIngresos">S/ 0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===========================
+         SECCIÓN: REPORTE DE VENTAS
+         =========================== -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="fw-bold mb-0"><i class="fas fa-chart-bar me-2 text-primary"></i>Reporte de Ventas</h5>
+            <button class="btn btn-danger btn-lg shadow-sm" onclick="descargarReporteVentasPDF()">
+                <i class="fas fa-file-pdf me-2"></i>Descargar PDF
+            </button>
+        </div>
+        <div class="card-body">
+            <!-- Filtros de fecha -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold"><i class="fas fa-calendar-alt me-1 text-primary"></i>Desde</label>
+                    <input type="date" id="filtroFechaDesde" class="form-control form-control-lg shadow-sm border-0 bg-light">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold"><i class="fas fa-calendar-alt me-1 text-primary"></i>Hasta</label>
+                    <input type="date" id="filtroFechaHasta" class="form-control form-control-lg shadow-sm border-0 bg-light">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold"><i class="fas fa-filter me-1 text-primary"></i>Método Pago</label>
+                    <select id="filtroMetodoPagoReporte" class="form-select form-select-lg shadow-sm border-0 bg-light">
+                        <option value="">Todos</option>
+                        <option value="EFECTIVO">Efectivo</option>
+                        <option value="TARJETA">Tarjeta</option>
+                        <option value="YAPE">Yape</option>
+                        <option value="PLIN">Plin</option>
+                        <option value="TRANSFERENCIA">Transferencia</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button class="btn btn-primary btn-lg w-100" onclick="aplicarFiltrosVentas()">
+                        <i class="fas fa-search me-1"></i>Filtrar
+                    </button>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="limpiarFiltrosVentas()" title="Limpiar filtros">
+                        <i class="fas fa-eraser"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de ventas -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="reporteVentasTable">
+                    <thead class="table-light">
+                    <tr>
+                        <th>N° Venta</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Método Pago</th>
+                        <th>Subtotal</th>
+                        <th>IGV</th>
+                        <th>Total</th>
+                    </tr>
+                    </thead>
+                    <tbody id="reporteVentasBody">
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+                            <br><span class="text-muted">Cargando ventas...</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tfoot id="reporteVentasFoot" class="table-light d-none">
+                        <tr>
+                            <th colspan="4" class="text-end">TOTALES:</th>
+                            <th class="text-end" id="footSubtotal">S/ 0.00</th>
+                            <th class="text-end" id="footIgv">S/ 0.00</th>
+                            <th class="text-end text-success" id="footTotal">S/ 0.00</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===========================
+         SECCIÓN: STOCK CRÍTICO
+         =========================== -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="fw-bold mb-0"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Medicamentos con Stock Crítico</h5>
+            <button class="btn btn-warning btn-lg shadow-sm" onclick="descargarReporteStockPDF()">
+                <i class="fas fa-file-pdf me-2"></i>Descargar PDF
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="stockBajoTable">
+                <thead class="table-light">
+                <tr>
+                    <th>Medicamento</th>
+                    <th>Presentación</th>
+                    <th>Stock Actual</th>
+                    <th>Stock Mínimo</th>
+                    <th>Estado</th>
+                </tr>
+                </thead>
+                <tbody id="stockBajoBody">
+                <tr>
+                    <td colspan="5" class="text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+                        <br><span class="text-muted">Cargando stock crítico...</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===========================
+         SECCIÓN: TOP MEDICAMENTOS VENDIDOS
+         =========================== -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="fas fa-trophy me-2 text-success"></i>Top Medicamentos Más Vendidos</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="topMedicamentosTable">
+                <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Medicamento</th>
+                    <th>Unidades Vendidas</th>
+                    <th>Ingresos Generados</th>
+                </tr>
+                </thead>
+                <tbody id="topMedicamentosBody">
+                <tr>
+                    <td colspan="4" class="text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+                        <br><span class="text-muted">Calculando top medicamentos...</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/reportes-farmaceutico.js}"></script>
+</body>
+</html>

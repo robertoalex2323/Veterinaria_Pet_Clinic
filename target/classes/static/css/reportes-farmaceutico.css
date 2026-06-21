@@ -1,0 +1,346 @@
+/* ===========================
+   REPORTES FARMACÉUTICO
+   Estilo Cartoon Brutalist
+   ========================== */
+
+/* ---- STAT CARDS ---- */
+.stat-card {
+    border: 3px solid #111;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 5px 5px 0 #111;
+    transition: all 0.15s ease;
+    cursor: default;
+    min-height: 100px;
+}
+
+.stat-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 #111;
+}
+
+.stat-icon {
+    width: 54px;
+    height: 54px;
+    border: 3px solid #111;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: #fff;
+    box-shadow: 3px 3px 0 #111;
+    flex-shrink: 0;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6B7280;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #111;
+}
+
+/* Background tints */
+.bg-soft-success { background: #D1FAE5; border-color: #065F46; }
+.bg-soft-success .stat-icon { border-color: #065F46; color: #065F46; }
+.bg-soft-success .stat-value { color: #065F46; }
+
+.bg-soft-primary { background: #DBEAFE; border-color: #1E40AF; }
+.bg-soft-primary .stat-icon { border-color: #1E40AF; color: #1E40AF; }
+.bg-soft-primary .stat-value { color: #1E40AF; }
+
+.bg-soft-warning { background: #FEF3C7; border-color: #92400E; }
+.bg-soft-warning .stat-icon { border-color: #92400E; color: #92400E; }
+.bg-soft-warning .stat-value { color: #92400E; }
+
+.bg-soft-info { background: #E0F2FE; border-color: #0369A1; }
+.bg-soft-info .stat-icon { border-color: #0369A1; color: #0369A1; }
+.bg-soft-info .stat-value { color: #0369A1; }
+
+/* ---- ENCABEZADO ---- */
+.btn-lg {
+    border-width: 3px;
+    font-weight: 700;
+    border-radius: 12px;
+    transition: all 0.15s ease;
+}
+
+.btn-lg:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 #111;
+}
+
+.btn-outline-primary.btn-lg {
+    border-color: #2563EB;
+    color: #2563EB;
+    box-shadow: 4px 4px 0 #2563EB;
+}
+
+.btn-outline-primary.btn-lg:hover {
+    background: #2563EB;
+    color: #fff;
+}
+
+.btn-danger.btn-lg {
+    background: #DC2626;
+    border-color: #991B1B;
+    color: #fff;
+    box-shadow: 4px 4px 0 #991B1B;
+}
+
+.btn-danger.btn-lg:hover {
+    background: #B91C1C;
+}
+
+.btn-warning.btn-lg {
+    background: #F59E0B;
+    border-color: #92400E;
+    color: #fff;
+    box-shadow: 4px 4px 0 #92400E;
+}
+
+.btn-warning.btn-lg:hover {
+    background: #D97706;
+}
+
+.btn-primary.btn-lg {
+    background: #2563EB;
+    border-color: #1E40AF;
+    color: #fff;
+    box-shadow: 4px 4px 0 #1E40AF;
+}
+
+.btn-primary.btn-lg:hover {
+    background: #1D4ED8;
+}
+
+.btn-outline-secondary.btn-lg {
+    border-color: #6B7280;
+    color: #6B7280;
+    box-shadow: 4px 4px 0 #6B7280;
+}
+
+.btn-outline-secondary.btn-lg:hover {
+    background: #6B7280;
+    color: #fff;
+}
+
+/* ---- FILTROS ---- */
+.form-control:focus,
+.form-select:focus {
+    border-color: #2563EB !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+.form-control-lg,
+.form-select-lg {
+    border-radius: 12px !important;
+    border-width: 2px;
+    font-weight: 600;
+}
+
+/* ---- CARDS ---- */
+.card {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.card-header.bg-white {
+    border-bottom: 3px solid #E5E7EB;
+}
+
+/* ---- TABLAS ---- */
+#reporteVentasTable,
+#stockBajoTable,
+#topMedicamentosTable {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+#reporteVentasTable thead,
+#stockBajoTable thead,
+#topMedicamentosTable thead {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#reporteVentasTable thead th,
+#stockBajoTable thead th,
+#topMedicamentosTable thead th {
+    padding: 0.85rem 1rem;
+    background: #F3F4F6;
+    border-bottom: 3px solid #111;
+    font-weight: 700;
+}
+
+#reporteVentasTable td,
+#stockBajoTable td,
+#topMedicamentosTable td {
+    vertical-align: middle;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+}
+
+#reporteVentasTable tbody tr,
+#stockBajoTable tbody tr,
+#topMedicamentosTable tbody tr {
+    transition: background 0.15s ease;
+    border-bottom: 2px solid #E5E7EB;
+}
+
+#reporteVentasTable tbody tr:hover,
+#stockBajoTable tbody tr:hover,
+#topMedicamentosTable tbody tr:hover {
+    background: #F9FAFB;
+}
+
+/* ---- TFOOT TOTALES ---- */
+#reporteVentasFoot th {
+    font-size: 1rem;
+    font-weight: 800;
+    padding: 1rem;
+    border-top: 3px solid #111;
+    background: #F9FAFB;
+}
+
+/* ---- BADGES DE ESTADO STOCK ---- */
+.badge-stock {
+    border-radius: 8px;
+    padding: 0.35em 0.6em;
+    font-weight: 700;
+    font-size: 0.78rem;
+    border: 2px solid;
+    box-shadow: 2px 2px 0 #111;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-stock.agotado {
+    background: #FEE2E2;
+    border-color: #991B1B;
+    color: #991B1B;
+}
+
+.badge-stock.critico {
+    background: #FED7AA;
+    border-color: #9A3412;
+    color: #9A3412;
+}
+
+.badge-stock.bajo {
+    background: #FEF3C7;
+    border-color: #92400E;
+    color: #92400E;
+}
+
+/* ---- BADGES MÉTODO PAGO ---- */
+.badge-metodo {
+    border-radius: 8px;
+    padding: 0.35em 0.6em;
+    font-weight: 600;
+    font-size: 0.78rem;
+    border: 2px solid;
+    box-shadow: 2px 2px 0 #111;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-metodo.efectivo { background: #D1FAE5; border-color: #065F46; color: #065F46; }
+.badge-metodo.tarjeta { background: #DBEAFE; border-color: #1E40AF; color: #1E40AF; }
+.badge-metodo.yape { background: #E0F2FE; border-color: #0369A1; color: #0369A1; }
+.badge-metodo.plin { background: #FEF3C7; border-color: #92400E; color: #92400E; }
+.badge-metodo.transferencia { background: #F3F4F6; border-color: #4B5563; color: #4B5563; }
+.badge-metodo.otro { background: #F3F4F6; border-color: #6B7280; color: #6B7280; }
+
+/* ---- BADGE PRIMARY SOFT (top medicamentos) ---- */
+.bg-primary-soft {
+    background-color: rgba(37, 99, 235, 0.12);
+    border: 2px solid #2563EB;
+    border-radius: 8px;
+    padding: 0.3em 0.65em;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #1E40AF;
+    box-shadow: 2px 2px 0 #2563EB;
+}
+
+/* ---- TOP RANKING ---- */
+.rank-badge {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #111;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1rem;
+    box-shadow: 2px 2px 0 #111;
+}
+
+.rank-badge.rank-1 { background: #FEF3C7; color: #92400E; border-color: #92400E; }
+.rank-badge.rank-2 { background: #F3F4F6; color: #4B5563; border-color: #4B5563; }
+.rank-badge.rank-3 { background: #FED7AA; color: #9A3412; border-color: #9A3412; }
+.rank-badge.rank-other { background: #DBEAFE; color: #1E40AF; border-color: #1E40AF; }
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 768px) {
+    .stat-card {
+        min-height: 80px;
+        padding: 1rem;
+    }
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+    .stat-value {
+        font-size: 1.35rem;
+    }
+    #reporteVentasTable,
+    #stockBajoTable,
+    #topMedicamentosTable {
+        font-size: 0.8rem;
+    }
+    #reporteVentasTable td,
+    #stockBajoTable td,
+    #topMedicamentosTable td {
+        padding: 0.5rem 0.65rem;
+    }
+    .badge-metodo,
+    .badge-stock {
+        font-size: 0.7rem;
+        padding: 0.25em 0.45em;
+    }
+}
+
+/* ---- ANIMACIONES ---- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#reporteVentasTable tbody tr,
+#stockBajoTable tbody tr,
+#topMedicamentosTable tbody tr {
+    animation: fadeIn 0.3s ease;
+}

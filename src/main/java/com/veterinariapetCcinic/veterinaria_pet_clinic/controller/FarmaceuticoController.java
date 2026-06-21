@@ -337,6 +337,40 @@ public class FarmaceuticoController {
         return "farmaceutico/perfil";
     }
 
+    // ===========================
+    // REPORTES - Página principal
+    // ===========================
+    @GetMapping("/reportes")
+    public String reportes(Model model) {
+        model.addAttribute("currentPage", "reportes");
+        model.addAttribute("bajoStockCount", medicamentoService.listarBajoStock().size());
+        model.addAttribute("ventasHoy", ventaService.calcularVentasHoy());
+        return "farmaceutico/reportes";
+    }
+
+    // ===========================
+    // API: Stock bajo (JSON)
+    // ===========================
+    @GetMapping("/api/reportes/stock-bajo")
+    @ResponseBody
+    public List<Medicamento> reporteStockBajoApi() {
+        return medicamentoService.listarBajoStock();
+    }
+
+    // ===========================
+    // API: Ventas para reportes (JSON)
+    // ===========================
+    @GetMapping("/api/reportes/ventas")
+    @ResponseBody
+    public List<Venta> reporteVentasApi(@RequestParam(required = false) String desde,
+                                        @RequestParam(required = false) String hasta) {
+        List<Venta> ventas = ventaService.listarVentas();
+        return filtrarVentasPorRango(ventas, desde, hasta);
+    }
+
+    // ===========================
+    // PDF: Reporte de stock bajo (con logo)
+    // ===========================
     @GetMapping("/reportes/stock-bajo")
     public ResponseEntity<byte[]> descargarReporteStock() {
         byte[] pdfData = pdfService.generarReporteStockBajo(medicamentoService.listarBajoStock());
@@ -344,6 +378,57 @@ public class FarmaceuticoController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=reporte_stock_bajo.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdfData);
+    }
+
+    // ===========================
+    // PDF: Reporte de ventas por rango (con logo)
+    // ===========================
+    @GetMapping("/reportes/ventas/pdf")
+    public ResponseEntity<byte[]> descargarReporteVentas(@RequestParam(required = false) String desde,
+                                                         @RequestParam(required = false) String hasta) {
+        List<Venta> ventas = filtrarVentasPorRango(ventaService.listarVentas(), desde, hasta);
+
+        LocalDateTime fechaDesde = parseFecha(desde);
+        LocalDateTime fechaHasta = parseFecha(hasta);
+
+        byte[] pdfData = pdfService.generarReporteVentas(ventas, fechaDesde, fechaHasta);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=reporte_ventas.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfData);
+    }
+
+    // ===========================
+    // HELPERS: Filtrado y parseo de fechas
+    // ===========================
+    private List<Venta> filtrarVentasPorRango(List<Venta> ventas, String desde, String hasta) {
+        LocalDateTime fechaDesde = parseFecha(desde);
+        LocalDateTime fechaHasta = parseFecha(hasta);
+
+        if (fechaDesde == null && fechaHasta == null) {
+            return ventas;
+        }
+
+        return ventas.stream()
+                .filter(v -> {
+                    if (v.getFecha() == null) return false;
+                    if (fechaDesde != null && v.getFecha().isBefore(fechaDesde)) return false;
+                    if (fechaHasta != null && v.getFecha().isAfter(fechaHasta)) return false;
+                    return true;
+                })
+                .toList();
+    }
+
+    private LocalDateTime parseFecha(String fecha) {
+        if (fecha == null || fecha.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            // Formato esperado: yyyy-MM-dd (input type=date)
+            return java.time.LocalDate.parse(fecha).atStartOfDay();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @GetMapping("/ventas/comprobante/{id}")

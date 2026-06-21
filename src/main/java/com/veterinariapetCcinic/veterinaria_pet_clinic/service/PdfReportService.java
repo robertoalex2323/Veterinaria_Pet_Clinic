@@ -4,8 +4,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,39 +43,198 @@ public class PdfReportService {
     private static final Font FONT_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
     private static final Font FONT_TOTAL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
     private static final Font FONT_HEADER = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
+    private static final Font FONT_SMALL = FontFactory.getFont(FontFactory.HELVETICA, 8);
 
     private static final String LOGO_PATH = "/static/Imagen/Iconos/logo.png";
 
+    /**
+     * Reporte de medicamentos con stock crítico (incluye logo).
+     */
     public byte[] generarReporteStockBajo(List<Medicamento> items) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document documento = new Document(PageSize.A4);
         PdfWriter.getInstance(documento, out);
 
         documento.open();
-        Font fuenteTitulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-        Paragraph titulo = new Paragraph("Reporte de Medicamentos - Stock Crítico", fuenteTitulo);
+
+        // --- LOGO + ENCABEZADO ---
+        addLogo(documento, 90, 90);
+
+        Paragraph titulo = new Paragraph("Reporte de Medicamentos - Stock Crítico", FONT_TITLE);
         titulo.setAlignment(Element.ALIGN_CENTER);
         documento.add(titulo);
+
+        Paragraph subtitulo = new Paragraph("Veterinaria Pet Clinic", FONT_SUBTITLE);
+        subtitulo.setAlignment(Element.ALIGN_CENTER);
+        documento.add(subtitulo);
+
+        Paragraph rucLine = new Paragraph("RUC: 20612345678", FONT_NORMAL);
+        rucLine.setAlignment(Element.ALIGN_CENTER);
+        documento.add(rucLine);
+
+        Paragraph fechaGen = new Paragraph(
+                "Generado el: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                FONT_NORMAL);
+        fechaGen.setAlignment(Element.ALIGN_CENTER);
+        documento.add(fechaGen);
+
         documento.add(Chunk.NEWLINE);
 
-        PdfPTable tabla = new PdfPTable(4);
+        // --- RESUMEN ---
+        PdfPTable resumen = new PdfPTable(2);
+        resumen.setWidthPercentage(100);
+        resumen.setWidths(new float[]{70, 30});
+        resumen.setSpacingAfter(10f);
+        addField(resumen, "Total de medicamentos en stock crítico:", String.valueOf(items.size()));
+        documento.add(resumen);
+
+        // --- TABLA ---
+        PdfPTable tabla = new PdfPTable(5);
         tabla.setWidthPercentage(100);
+        tabla.setWidths(new float[]{30, 20, 15, 15, 20});
         addHeaderCell(tabla, "Medicamento");
         addHeaderCell(tabla, "Presentación");
         addHeaderCell(tabla, "Stock Actual");
         addHeaderCell(tabla, "Stock Mínimo");
+        addHeaderCell(tabla, "Estado");
 
         for (Medicamento m : items) {
             tabla.addCell(new Phrase(m.getNombre(), FONT_NORMAL));
-            tabla.addCell(new Phrase(m.getPresentacion(), FONT_NORMAL));
-            tabla.addCell(new Phrase(String.valueOf(m.getStock()), FONT_NORMAL));
+            tabla.addCell(new Phrase(m.getPresentacion() != null ? m.getPresentacion() : "---", FONT_NORMAL));
+            tabla.addCell(new Phrase(String.valueOf(m.getStock()), FONT_BOLD));
             tabla.addCell(new Phrase(String.valueOf(m.getStockMinimo()), FONT_NORMAL));
+
+            int stock = m.getStock() != null ? m.getStock() : 0;
+            int min = m.getStockMinimo() != null ? m.getStockMinimo() : 0;
+            String estado = stock <= 0 ? "AGOTADO" : (stock <= min ? "CRÍTICO" : "BAJO");
+            tabla.addCell(new Phrase(estado, FONT_BOLD));
         }
 
         documento.add(tabla);
-        documento.add(new Paragraph("\nGenerado automáticamente por el Sistema Pet Clinic"));
-        documento.close();
+        documento.add(Chunk.NEWLINE);
+        documento.add(new Paragraph("Generado automáticamente por el Sistema Pet Clinic", FONT_SMALL));
 
+        documento.close();
+        return out.toByteArray();
+    }
+
+    /**
+     * Reporte general de ventas en un rango de fechas (incluye logo).
+     */
+    public byte[] generarReporteVentas(List<Venta> ventas, LocalDateTime desde, LocalDateTime hasta) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Document documento = new Document(PageSize.A4.rotate());
+        PdfWriter.getInstance(documento, out);
+
+        documento.open();
+
+        // --- LOGO + ENCABEZADO ---
+        addLogo(documento, 90, 90);
+
+        Paragraph titulo = new Paragraph("Reporte de Ventas", FONT_TITLE);
+        titulo.setAlignment(Element.ALIGN_CENTER);
+        documento.add(titulo);
+
+        Paragraph subtitulo = new Paragraph("Veterinaria Pet Clinic", FONT_SUBTITLE);
+        subtitulo.setAlignment(Element.ALIGN_CENTER);
+        documento.add(subtitulo);
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        String rango = "Periodo: " + (desde != null ? desde.format(dtf) : "Inicio") +
+                "  -  " + (hasta != null ? hasta.format(dtf) : "Ahora");
+        Paragraph rangoLine = new Paragraph(rango, FONT_NORMAL);
+        rangoLine.setAlignment(Element.ALIGN_CENTER);
+        documento.add(rangoLine);
+
+        documento.add(Chunk.NEWLINE);
+
+        // --- KPIs ---
+        BigDecimal totalSubtotal = BigDecimal.ZERO;
+        BigDecimal totalIgv = BigDecimal.ZERO;
+        BigDecimal totalTotal = BigDecimal.ZERO;
+        Map<String, Integer> contadorMetodos = new HashMap<>();
+
+        for (Venta v : ventas) {
+            totalSubtotal = totalSubtotal.add(v.getSubtotal() != null ? v.getSubtotal() : BigDecimal.ZERO);
+            totalIgv = totalIgv.add(v.getIgv() != null ? v.getIgv() : BigDecimal.ZERO);
+            totalTotal = totalTotal.add(v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO);
+            String mp = v.getMetodoPago() != null ? v.getMetodoPago() : "SIN_ESPECIFICAR";
+            contadorMetodos.merge(mp, 1, Integer::sum);
+        }
+
+        PdfPTable kpiTable = new PdfPTable(4);
+        kpiTable.setWidthPercentage(100);
+        kpiTable.setWidths(new float[]{25, 25, 25, 25});
+        kpiTable.setSpacingAfter(10f);
+        addField(kpiTable, "N° Ventas:", String.valueOf(ventas.size()));
+        addField(kpiTable, "Subtotal:", "S/ " + totalSubtotal.setScale(2, RoundingMode.HALF_UP).toString());
+        addField(kpiTable, "IGV (18%):", "S/ " + totalIgv.setScale(2, RoundingMode.HALF_UP).toString());
+        addField(kpiTable, "Total:", "S/ " + totalTotal.setScale(2, RoundingMode.HALF_UP).toString());
+        documento.add(kpiTable);
+
+        // --- TABLA DE VENTAS ---
+        PdfPTable tabla = new PdfPTable(7);
+        tabla.setWidthPercentage(100);
+        tabla.setWidths(new float[]{12, 15, 22, 15, 12, 12, 12});
+        addHeaderCell(tabla, "N° VENTA");
+        addHeaderCell(tabla, "FECHA");
+        addHeaderCell(tabla, "CLIENTE");
+        addHeaderCell(tabla, "MÉTODO PAGO");
+        addHeaderCell(tabla, "SUBTOTAL");
+        addHeaderCell(tabla, "IGV");
+        addHeaderCell(tabla, "TOTAL");
+
+        for (Venta v : ventas) {
+            String numVenta = "VTA-" + String.format("%05d", v.getId());
+            String fecha = v.getFecha() != null ? v.getFecha().format(dtf) : "---";
+            String cliente = v.getCliente() != null ? v.getCliente().getNombre() : "---";
+            String metodo = v.getMetodoPago() != null ? v.getMetodoPago() : "---";
+            String subtotal = "S/ " + (v.getSubtotal() != null ? v.getSubtotal().setScale(2, RoundingMode.HALF_UP).toString() : "0.00");
+            String igv = "S/ " + (v.getIgv() != null ? v.getIgv().setScale(2, RoundingMode.HALF_UP).toString() : "0.00");
+            String total = "S/ " + (v.getTotal() != null ? v.getTotal().setScale(2, RoundingMode.HALF_UP).toString() : "0.00");
+
+            tabla.addCell(new Phrase(numVenta, FONT_BOLD));
+            tabla.addCell(new Phrase(fecha, FONT_NORMAL));
+            tabla.addCell(new Phrase(cliente, FONT_NORMAL));
+            tabla.addCell(new Phrase(metodo, FONT_NORMAL));
+            tabla.addCell(new Phrase(subtotal, FONT_NORMAL));
+            tabla.addCell(new Phrase(igv, FONT_NORMAL));
+            tabla.addCell(new Phrase(total, FONT_BOLD));
+        }
+
+        documento.add(tabla);
+        documento.add(Chunk.NEWLINE);
+
+        // --- RESUMEN POR MÉTODO DE PAGO ---
+        if (!contadorMetodos.isEmpty()) {
+            Paragraph subResumen = new Paragraph("Resumen por Método de Pago", FONT_SUBTITLE);
+            documento.add(subResumen);
+            documento.add(Chunk.NEWLINE);
+
+            PdfPTable metodosTable = new PdfPTable(2);
+            metodosTable.setWidthPercentage(50);
+            metodosTable.setWidths(new float[]{70, 30});
+            addHeaderCell(metodosTable, "Método de Pago");
+            addHeaderCell(metodosTable, "N° Ventas");
+
+            // Ordenar por cantidad descendente
+            Map<String, Integer> ordenado = new LinkedHashMap<>();
+            contadorMetodos.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .forEach(e -> ordenado.put(e.getKey(), e.getValue()));
+
+            for (Map.Entry<String, Integer> entry : ordenado.entrySet()) {
+                metodosTable.addCell(new Phrase(entry.getKey(), FONT_NORMAL));
+                metodosTable.addCell(new Phrase(String.valueOf(entry.getValue()), FONT_BOLD));
+            }
+            documento.add(metodosTable);
+            documento.add(Chunk.NEWLINE);
+        }
+
+        documento.add(new Paragraph("Generado automáticamente por el Sistema Pet Clinic - " +
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")), FONT_SMALL));
+
+        documento.close();
         return out.toByteArray();
     }
 
@@ -83,17 +246,7 @@ public class PdfReportService {
         documento.open();
 
         // --- LOGO ---
-        try {
-            InputStream is = getClass().getClassLoader().getResourceAsStream("static/Imagen/Iconos/logo.png");
-            if (is != null) {
-                Image logo = Image.getInstance(is.readAllBytes());
-                logo.scaleToFit(80, 80);
-                logo.setAlignment(Element.ALIGN_CENTER);
-                documento.add(logo);
-            }
-        } catch (Exception e) {
-            log.warn("No se pudo cargar el logo para el PDF: {}", e.getMessage());
-        }
+        addLogo(documento, 80, 80);
 
         // --- ENCABEZADO ---
         Paragraph titulo = new Paragraph("COMPROBANTE DE VENTA", FONT_TITLE);
@@ -191,6 +344,25 @@ public class PdfReportService {
     }
 
     // --- HELPERS ---
+
+    /**
+     * Agrega el logo de la veterinaria al documento PDF (centrado).
+     */
+    private void addLogo(Document documento, float width, float height) {
+        try {
+            InputStream is = getClass().getClassLoader().getResourceAsStream("static/Imagen/Iconos/logo.png");
+            if (is != null) {
+                Image logo = Image.getInstance(is.readAllBytes());
+                logo.scaleToFit(width, height);
+                logo.setAlignment(Element.ALIGN_CENTER);
+                documento.add(logo);
+            } else {
+                log.warn("No se encontró el recurso del logo: static/Imagen/Iconos/logo.png");
+            }
+        } catch (Exception e) {
+            log.warn("No se pudo cargar el logo para el PDF: {}", e.getMessage());
+        }
+    }
 
     private void addHeaderCell(PdfPTable table, String text) {
         PdfPCell cell = new PdfPCell(new Phrase(text, FONT_HEADER));
