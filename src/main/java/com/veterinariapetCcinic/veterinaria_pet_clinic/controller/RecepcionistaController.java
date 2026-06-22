@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,29 +37,35 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PagoService;
 @RequestMapping("/recepcionista")
 public class RecepcionistaController {
 
-    @Autowired
-    private ClienteService clienteService;
+    private static final Logger log = LoggerFactory.getLogger(RecepcionistaController.class);
 
-    @Autowired
-    private MascotaService mascotaService;
+    private final ClienteService clienteService;
+    private final MascotaService mascotaService;
+    private final CitaService citaService;
+    private final PagoService pagoService;
+    private final AgendaService agendaService;
+    private final NotificacionService notificacionService;
+    private final UsuarioRepository usuarioRepository;
+    private final org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired
-    private CitaService citaService;
-
-    @Autowired
-    private PagoService pagoService;
-
-    @Autowired
-    private AgendaService agendaService;
-
-    @Autowired
-    private NotificacionService notificacionService;
-
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
+    // Constructor con inyección de dependencias
+    public RecepcionistaController(ClienteService clienteService,
+                                   MascotaService mascotaService,
+                                   CitaService citaService,
+                                   PagoService pagoService,
+                                   AgendaService agendaService,
+                                   NotificacionService notificacionService,
+                                   UsuarioRepository usuarioRepository,
+                                   org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder) {
+        this.clienteService = clienteService;
+        this.mascotaService = mascotaService;
+        this.citaService = citaService;
+        this.pagoService = pagoService;
+        this.agendaService = agendaService;
+        this.notificacionService = notificacionService;
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     private String getNombreUsuario() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -72,7 +78,6 @@ public class RecepcionistaController {
         String username = getNombreUsuario();
         model.addAttribute("nombreUsuario", username);
 
-        // Cargar datos del usuario para el nombre completo
         usuarioRepository.findByUsername(username).ifPresent(usuario -> {
             model.addAttribute("nombreCompleto", usuario.getNombre());
         });
@@ -86,11 +91,23 @@ public class RecepcionistaController {
             model.addAttribute("ingresosHoy", ingresosHoy != null ? ingresosHoy : 0.0);
 
             List<Cita> proximasCitas = citaService.obtenerCitasDelDia(LocalDate.now());
+            // Inicializar relaciones para evitar LazyInitializationException
+            if (proximasCitas != null) {
+                for (Cita c : proximasCitas) {
+                    if (c.getMascota() != null) {
+                        c.getMascota().getNombre();
+                        if (c.getMascota().getCliente() != null) {
+                            c.getMascota().getCliente().getNombre();
+                        }
+                    }
+                }
+            }
             model.addAttribute("proximasCitas", proximasCitas != null ? proximasCitas : new ArrayList<>());
 
             List<Pago> ultimosPagos = pagoService.obtenerPagosDelDia();
             model.addAttribute("ultimosPagos", ultimosPagos != null ? ultimosPagos : new ArrayList<>());
         } catch (Exception e) {
+            log.error("Error al cargar dashboard: {}", e.getMessage(), e);
             model.addAttribute("error", "Error al cargar datos del dashboard: " + e.getMessage());
             model.addAttribute("totalClientes", 0L);
             model.addAttribute("totalMascotas", 0L);
@@ -132,6 +149,7 @@ public class RecepcionistaController {
             clienteService.guardar(cliente);
             redirectAttributes.addFlashAttribute("success", "Cliente guardado exitosamente");
         } catch (Exception e) {
+            log.error("Error al guardar cliente: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/recepcionista/clientes";
@@ -144,6 +162,7 @@ public class RecepcionistaController {
             Cliente cliente = clienteService.buscarPorId(id);
             model.addAttribute("cliente", cliente);
         } catch (Exception e) {
+            log.error("Error al editar cliente {}: {}", id, e.getMessage(), e);
             model.addAttribute("error", "Cliente no encontrado");
             return "redirect:/recepcionista/clientes";
         }
@@ -158,6 +177,7 @@ public class RecepcionistaController {
             clienteService.actualizar(cliente);
             redirectAttributes.addFlashAttribute("success", "Cliente actualizado exitosamente");
         } catch (Exception e) {
+            log.error("Error al actualizar cliente {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/recepcionista/clientes";
@@ -169,6 +189,7 @@ public class RecepcionistaController {
             clienteService.eliminar(id);
             redirectAttributes.addFlashAttribute("success", "Cliente eliminado exitosamente");
         } catch (Exception e) {
+            log.error("Error al eliminar cliente {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/recepcionista/clientes";
@@ -181,6 +202,7 @@ public class RecepcionistaController {
             Cliente cliente = clienteService.obtenerClienteConMascotas(id);
             model.addAttribute("cliente", cliente);
         } catch (Exception e) {
+            log.error("Error al ver cliente {}: {}", id, e.getMessage(), e);
             model.addAttribute("error", "Cliente no encontrado");
             return "redirect:/recepcionista/clientes";
         }
@@ -211,6 +233,7 @@ public class RecepcionistaController {
             mascotaService.registrarMascota(clienteId, mascota);
             redirectAttributes.addFlashAttribute("success", "Mascota registrada exitosamente");
         } catch (Exception e) {
+            log.error("Error al guardar mascota: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/recepcionista/mascotas";
@@ -224,6 +247,7 @@ public class RecepcionistaController {
             model.addAttribute("mascota", mascota);
             model.addAttribute("clientes", clienteService.listarTodos());
         } catch (Exception e) {
+            log.error("Error al editar mascota {}: {}", id, e.getMessage(), e);
             model.addAttribute("error", "Mascota no encontrada");
             return "redirect:/recepcionista/mascotas";
         }
@@ -238,6 +262,7 @@ public class RecepcionistaController {
             mascotaService.actualizar(mascota);
             redirectAttributes.addFlashAttribute("success", "Mascota actualizada exitosamente");
         } catch (Exception e) {
+            log.error("Error al actualizar mascota {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/recepcionista/mascotas";
@@ -249,6 +274,7 @@ public class RecepcionistaController {
             mascotaService.eliminar(id);
             redirectAttributes.addFlashAttribute("success", "Mascota eliminada exitosamente");
         } catch (Exception e) {
+            log.error("Error al eliminar mascota {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/recepcionista/mascotas";
@@ -266,6 +292,17 @@ public class RecepcionistaController {
         }
 
         List<Cita> citas = citaService.obtenerCitasDelDia(fecha);
+        // Inicializar relaciones
+        if (citas != null) {
+            for (Cita c : citas) {
+                if (c.getMascota() != null) {
+                    c.getMascota().getNombre();
+                    if (c.getMascota().getCliente() != null) {
+                        c.getMascota().getCliente().getNombre();
+                    }
+                }
+            }
+        }
         model.addAttribute("citas", citas != null ? citas : new ArrayList<>());
         model.addAttribute("fecha", fecha);
         return "Recepcionista/citas";
@@ -319,6 +356,7 @@ public class RecepcionistaController {
 
             redirectAttributes.addFlashAttribute("success", "Cita agendada exitosamente");
         } catch (Exception e) {
+            log.error("Error al guardar cita: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Error al agendar cita: " + e.getMessage());
         }
         return "redirect:/recepcionista/citas";
@@ -333,6 +371,7 @@ public class RecepcionistaController {
             model.addAttribute("mascotas", mascotaService.listarTodos());
             return "Recepcionista/cita-form";
         } catch (Exception e) {
+            log.error("Error al editar cita {}: {}", id, e.getMessage(), e);
             model.addAttribute("error", "Cita no encontrada");
             return "redirect:/recepcionista/citas";
         }
@@ -361,6 +400,7 @@ public class RecepcionistaController {
             citaService.actualizar(cita);
             redirectAttributes.addFlashAttribute("success", "Cita actualizada exitosamente");
         } catch (Exception e) {
+            log.error("Error al actualizar cita {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Error al actualizar cita: " + e.getMessage());
         }
         return "redirect:/recepcionista/citas";
@@ -374,6 +414,7 @@ public class RecepcionistaController {
             citaService.cancelarCita(id, motivoCancelacion);
             redirectAttributes.addFlashAttribute("success", "Cita cancelada exitosamente");
         } catch (Exception e) {
+            log.error("Error al cancelar cita {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/recepcionista/citas";
@@ -384,19 +425,46 @@ public class RecepcionistaController {
     public String verAgenda(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
             Model model) {
-        model.addAttribute("nombreUsuario", getNombreUsuario());
-
+        log.info("==> Entrando a verAgenda con fecha: {}", fecha);
+        
+        // Atributos para el fragmento
+        String username = getNombreUsuario();
+        model.addAttribute("nombreUsuario", username);
+        
+        usuarioRepository.findByUsername(username).ifPresent(usuario -> {
+            model.addAttribute("nombreCompleto", usuario.getNombre());
+            model.addAttribute("usuario", usuario);
+            model.addAttribute("nombre", usuario.getNombre()); // por si acaso
+        });
+        
+        // Atributos de la página
         if (fecha == null) {
             fecha = LocalDate.now();
         }
-
-        List<Cita> citasDelDia = citaService.obtenerCitasDelDia(fecha);
-        model.addAttribute("citas", citasDelDia != null ? citasDelDia : new ArrayList<>());
         model.addAttribute("fecha", fecha);
+        
+        try {
+            List<Cita> citasDelDia = citaService.obtenerCitasDelDia(fecha);
+            // Inicializar relaciones
+            for (Cita c : citasDelDia) {
+                if (c.getMascota() != null) {
+                    c.getMascota().getNombre();
+                    if (c.getMascota().getCliente() != null) {
+                        c.getMascota().getCliente().getNombre();
+                    }
+                }
+            }
+            model.addAttribute("citas", citasDelDia);
+        } catch (Exception e) {
+            log.error("Error al obtener citas", e);
+            model.addAttribute("citas", new ArrayList<>());
+            model.addAttribute("error", "Error al cargar citas: " + e.getMessage());
+        }
+        
+        log.info("<== Saliendo de verAgenda");
         return "Recepcionista/agenda";
     }
-
-    // ============ GESTIÓN DE PAGOS (ACTUALIZADO) ============
+    // ============ GESTIÓN DE PAGOS ============
     @GetMapping("/pagos")
     public String listarPagos(Model model) {
         model.addAttribute("nombreUsuario", getNombreUsuario());
@@ -405,15 +473,14 @@ public class RecepcionistaController {
             List<Pago> pagos = pagoService.listarTodos();
             model.addAttribute("pagos", pagos != null ? pagos : new ArrayList<>());
 
-            // Datos adicionales para la vista (opcionales pero útiles)
             model.addAttribute("totalPagos", pagoService.getTotalPagos());
             model.addAttribute("totalHoy", pagoService.getTotalPagosDelDia());
             model.addAttribute("pendientes", pagoService.contarPagosPendientes());
 
-            // Para el modal de nuevo pago
             model.addAttribute("clientes", clienteService.listarTodos());
 
         } catch (Exception e) {
+            log.error("Error al listar pagos: {}", e.getMessage(), e);
             model.addAttribute("error", "Error al cargar los pagos: " + e.getMessage());
             model.addAttribute("pagos", new ArrayList<>());
             model.addAttribute("totalPagos", 0.0);
@@ -458,6 +525,7 @@ public class RecepcionistaController {
             redirectAttributes.addFlashAttribute("success", "Pago registrado exitosamente");
             return "redirect:/recepcionista/pagos/ver/" + pago.getId();
         } catch (Exception e) {
+            log.error("Error al guardar pago: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Error al registrar el pago: " + e.getMessage());
             return "redirect:/recepcionista/pagos";
         }
@@ -471,6 +539,7 @@ public class RecepcionistaController {
             model.addAttribute("pago", pago);
             return "Recepcionista/pago-detalle";
         } catch (Exception e) {
+            log.error("Error al ver pago {}: {}", id, e.getMessage(), e);
             model.addAttribute("error", "Pago no encontrado");
             return "redirect:/recepcionista/pagos";
         }
@@ -484,6 +553,7 @@ public class RecepcionistaController {
             pagoService.actualizarEstado(id, estado);
             redirectAttributes.addFlashAttribute("success", "Estado del pago actualizado a: " + estado);
         } catch (Exception e) {
+            log.error("Error al actualizar estado de pago {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Error al actualizar el estado: " + e.getMessage());
         }
         return "redirect:/recepcionista/pagos";
@@ -495,7 +565,6 @@ public class RecepcionistaController {
         String username = getNombreUsuario();
         model.addAttribute("nombreUsuario", username);
 
-        // Fetch actual user from DB
         usuarioRepository.findByUsername(username).ifPresent(usuario -> {
             model.addAttribute("usuario", usuario);
             model.addAttribute("nombreCompleto", usuario.getNombre());
@@ -528,6 +597,7 @@ public class RecepcionistaController {
             usuarioRepository.save(usuario);
             redirectAttributes.addFlashAttribute("success", "Perfil actualizado correctamente");
         } catch (Exception e) {
+            log.error("Error al actualizar perfil: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Error al actualizar perfil: " + e.getMessage());
         }
         return "redirect:/recepcionista/perfil";
@@ -541,4 +611,4 @@ public class RecepcionistaController {
         model.addAttribute("mascotas", mascotas != null ? mascotas : new ArrayList<>());
         return "Recepcionista/diagnostico";
     }
-}
+}    

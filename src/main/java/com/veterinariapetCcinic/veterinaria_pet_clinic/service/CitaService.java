@@ -105,8 +105,10 @@ public class CitaService {
     public List<Cita> obtenerCitasDelDia(LocalDate fecha) {
         LocalDateTime inicio = fecha.atStartOfDay();
         LocalDateTime fin = fecha.atTime(LocalTime.MAX);
-        return citaRepository.findByFechaHoraBetween(inicio, fin);
+        // Usar query con JOIN FETCH para evitar LazyInitializationException al renderizar la vista
+        return citaRepository.findCitasDelDiaConDatos(inicio, fin);
     }
+
     
     public List<Cita> obtenerCitasPorEstado(String estado) {
         return citaRepository.findByEstado(estado);

@@ -48,11 +48,40 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Autocompletar info de cita desde la Agenda (botón “Pagar esta cita”)
+    const modalPago = document.getElementById('modalPago');
+    if (modalPago) {
+        modalPago.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            if (!button) return;
+
+            const citaId = button.getAttribute('data-cita-id');
+            const citaFecha = button.getAttribute('data-cita-fecha');
+            const citaMascota = button.getAttribute('data-cita-mascota');
+
+            const citaIdInput = document.querySelector('input[name="citaId"]');
+            const citaIdLabel = document.getElementById('citaIdLabel');
+            const citaFechaHora = document.getElementById('citaFechaHora');
+            const citaMascotaEl = document.getElementById('citaMascota');
+            const citaEstadoBadge = document.getElementById('citaEstadoBadge');
+
+            if (citaIdInput && citaId) {
+                citaIdInput.value = citaId;
+            }
+
+            if (citaIdLabel) citaIdLabel.textContent = citaId ? citaId : '-';
+            if (citaFechaHora) citaFechaHora.textContent = citaFecha ? citaFecha : '-';
+            if (citaMascotaEl) citaMascotaEl.textContent = citaMascota ? citaMascota : '-';
+            if (citaEstadoBadge) citaEstadoBadge.textContent = citaId ? 'Cita seleccionada' : 'Sin asignar';
+        });
+    }
+
     // Lógica para campos dinámicos de Método de Pago
     const metodoPagoSelect = document.getElementById('metodoPago');
     const tarjetaFields = document.getElementById('tarjetaFields');
     const transferenciaFields = document.getElementById('transferenciaFields');
     const yapeFields = document.getElementById('yapeFields');
+
 
     function hideAllDynamicFields() {
         if(tarjetaFields) tarjetaFields.classList.add('d-none');

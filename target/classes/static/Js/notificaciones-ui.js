@@ -85,9 +85,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 2. Recuperar pendientes del servidor (por ejemplo, después de refrescar por cancelar una cita)
     const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/agenda/api/ui-notifications';
-    fetch(apiUrl, { method: 'GET', cache: 'no-store' })
+
+    // Importante: no queremos que un fallo del endpoint rompa el render de la página.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+    fetch(apiUrl, { method: 'GET', cache: 'no-store', signal: controller.signal })
         .then(res => {
-            if (!res.ok) throw new Error("Error al obtener notificaciones");
+            if (!res.ok) throw new Error("Error al obtener notificaciones: " + res.status);
             return res.json();
         })
         .then(data => {
@@ -96,7 +101,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             // No llamamos a updateUI() aquí porque handleNewNotif ya lo hace
         })
-        .catch(err => console.warn("No hay notificaciones nuevas pendientes en el servidor."));
+        .catch(err => {
+            if (err && err.name === 'AbortError') {
+                console.warn("Timeout al cargar notificaciones; se ignora para no romper la UI.");
+            } else {
+                console.warn("No hay notificaciones nuevas pendientes en el servidor.");
+            }
+        })
+        .finally(() => clearTimeout(timeoutId));
+
 
     connectWS();
 });

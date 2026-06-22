@@ -48,8 +48,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             dayDiv.addEventListener('click', () => {
+                // En el controlador se parsea como LocalDate con @DateTimeFormat(iso = ISO.DATE)
+                // Por eso enviamos el formato yyyy-MM-dd.
                 window.location.href = `/recepcionista/agenda?fecha=${isoDate}`;
             });
+
+            // Si el día es el seleccionado, también actualizamos la URL sin depender del click.
+            if (isoDate === selectedIsoDate) {
+                // No redirigimos si ya estamos en esa fecha.
+                // (Esto evita inconsistencias cuando se carga inicialmente con fecha distinta)
+                const current = new URLSearchParams(window.location.search).get('fecha');
+                if (current !== isoDate) {
+                    window.history.replaceState({}, '', `/recepcionista/agenda?fecha=${isoDate}`);
+                }
+            }
 
             calendarGrid.appendChild(dayDiv);
         }
