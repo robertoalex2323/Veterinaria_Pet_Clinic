@@ -1,10 +1,19 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.VentaService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,11 +23,14 @@ import java.util.Map;
 public class VendedorController {
 
     private final VentaService ventaService;
+    private final ProductoService productoService; 
 
-    // Inyección de dependencias por constructor en lugar de @Autowired
-    public VendedorController(VentaService ventaService) {
+    public VendedorController(VentaService ventaService, ProductoService productoService) {
         this.ventaService = ventaService;
+        this.productoService = productoService;
     }
+
+    // ===== ENDPOINTS EXISTENTES =====
 
     @PostMapping("/ventas")
     public ResponseEntity<Venta> registrarVenta(@RequestBody Venta nuevaVenta) {
@@ -28,7 +40,6 @@ public class VendedorController {
 
     @PatchMapping("/pedidos/{id}/completar")
     public ResponseEntity<Map<String, String>> atenderPedido(@PathVariable Long id) {
-        // Mejor devolver un JSON en lugar de un String plano
         return ResponseEntity.ok(Map.of("mensaje", "Pedido #" + id + " ha sido marcado como COMPLETADO y ENTREGADO."));
     }
 
@@ -46,5 +57,93 @@ public class VendedorController {
             "Descuento especial en Camas para mascotas por fin de temporada 2026"
         );
         return ResponseEntity.ok(promociones);
+    }
+
+    // ===== NUEVOS ENDPOINTS PARA EL FRONTEND =====
+
+    /**
+     * Listar todas las ventas (para el historial)
+     */
+    @GetMapping("/ventas")
+    public ResponseEntity<List<Venta>> listarVentas() {
+        return ResponseEntity.ok(ventaService.listarVentas());
+    }
+
+    /**
+     * Obtener ventas de hoy (para el dashboard)
+     */
+    @GetMapping("/ventas/hoy")
+    public ResponseEntity<Map<String, Object>> ventasHoy() {
+        List<Venta> ventas = ventaService.listarVentasHoy();
+        BigDecimal total = ventaService.calcularVentasHoy();
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("total", total != null ? total : BigDecimal.ZERO);
+        response.put("cantidad", ventas != null ? ventas.size() : 0);
+        response.put("ventas", ventas != null ? ventas : List.of());
+        
+        return ResponseEntity.ok(response);
+    }
+    /**
+ * Obtener ventas de los últimos 7 días para la gráfica
+ */
+@GetMapping("/ventas/ultimos-7-dias")
+public ResponseEntity<Map<String, Object>> ventasUltimos7Dias() {
+    Map<String, Object> response = new HashMap<>();
+    List<String> labels = new ArrayList<>();
+    List<Double> values = new ArrayList<>();
+    
+    LocalDateTime hoy = LocalDateTime.now();
+    
+    for (int i = 6; i >= 0; i--) {
+        LocalDateTime fecha = hoy.minusDays(i);
+        LocalDateTime inicio = fecha.withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime fin = fecha.withHour(23).withMinute(59).withSecond(59);
+        
+        // Formatear fecha para mostrar (ej: "22 jun")
+        String label = fecha.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM"));
+        labels.add(label);
+        
+        // Calcular total de ventas del día
+        BigDecimal totalDia = ventaService.calcularVentasEntreFechas(inicio, fin);
+        values.add(totalDia != null ? totalDia.doubleValue() : 0.0);
+    }
+    
+    response.put("labels", labels);
+    response.put("values", values);
+    
+    return ResponseEntity.ok(response);
+}
+
+    /**
+     * Listar todos los productos
+     */
+    @GetMapping("/productos")
+    public ResponseEntity<List<Producto>> listarProductos() {
+        return ResponseEntity.ok(productoService.listarTodos());
+    }
+
+    // ===== NUEVO ENDPOINT PARA GENERAR BOLETA EN PDF REAL =====
+
+    /**
+     * Generar boleta en PDF real para una venta específica
+     */
+    @GetMapping("/ventas/{id}/boleta-pdf")
+    public ResponseEntity<byte[]> generarBoletaPDF(@PathVariable Long id) {
+        try {
+            // Generar el PDF real usando iText
+            byte[] pdf = ventaService.generarBoletaPDFReal(id);
+            
+            // Configurar headers para descarga como PDF
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Boleta_Venta_" + id + ".pdf");
+            
+            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
