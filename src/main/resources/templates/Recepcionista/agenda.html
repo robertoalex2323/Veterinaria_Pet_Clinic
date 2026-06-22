@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::div#content}, 'agenda')}">
+
+<head>
+    <title>Agenda Interactiva - Recepcionista</title>
+    <link rel="stylesheet" th:href="@{/css/agenda.css}">
+</head>
+
+<body>
+    <div id="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0"><i class="fas fa-calendar-day text-primary"></i> Agenda Veterinaria</h2>
+                <p class="text-muted mb-0">Vista de calendario mensual y programación diaria</p>
+            </div>
+            <div>
+                <a href="/recepcionista/citas/nueva" class="btn btn-primary shadow-sm">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> Nueva Cita
+                </a>
+            </div>
+        </div>
+
+        <!-- Hidden input to pass selected date to JS -->
+        <input type="hidden" id="selectedDate" th:value="${fecha}">
+
+        <div class="agenda-container">
+            <!-- CALENDARIO (JS) -->
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <button id="prevMonth" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h4 id="monthYearDisplay" class="mb-0">Mes Año</h4>
+                    <button id="nextMonth" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="calendar-days-row">
+                    <div>Dom</div>
+                    <div>Lun</div>
+                    <div>Mar</div>
+                    <div>Mié</div>
+                    <div>Jue</div>
+                    <div>Vie</div>
+                    <div>Sáb</div>
+                </div>
+
+                <div id="calendarGrid" class="calendar-grid">
+                    <!-- Se llena con JS -->
+                </div>
+            </div>
+
+            <!-- LISTA DE CITAS DEL DIA SELECCIONADO -->
+            <div class="schedule-section">
+                <div class="schedule-header d-flex justify-content-between align-items-center">
+                    <h5>Citas del Día</h5>
+                    <span class="badge bg-primary rounded-pill" th:text="|${#lists.size(citas)} citas|">0</span>
+                </div>
+                <p class="text-muted small fw-bold mb-3">
+                    <i class="far fa-calendar-check text-primary"></i>
+                    <span
+                        th:text="${#temporals.format(fecha, 'EEEE, d MMMM yyyy', new java.util.Locale('es', 'ES'))}">Fecha</span>
+                </p>
+
+                <div class="schedule-list">
+                    <!-- Si hay citas -->
+                    <div th:each="cita : ${citas}" class="agenda-cita-card"
+                        th:classappend="${cita.estado == 'CANCELADA' ? 'cancelada' : (cita.estado == 'COMPLETADA' ? 'completada' : '')}">
+
+                        <div class="cita-time">
+                            <i class="far fa-clock"></i>
+                            <strong th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">10:00</strong>
+                            <span class="badge ms-2"
+                                th:classappend="${cita.estado == 'AGENDADA' ? 'bg-warning text-dark' : (cita.estado == 'CANCELADA' ? 'bg-danger' : 'bg-success')}"
+                                th:text="${cita.estado}" style="font-size: 0.6rem;">ESTADO</span>
+                        </div>
+
+                        <div class="cita-details">
+                            <p class="mb-1"><strong>Paciente:</strong>
+                                <span th:text="${cita.mascota?.nombre} + ' (' + ${cita.mascota?.especie} + ')'">Max
+                                    (Perro)</span>
+                            </p>
+                            <p class="mb-1"><strong>Dueño:</strong>
+                                <span th:text="${cita.mascota?.cliente?.nombre}">Juan Perez</span>
+                            </p>
+                            <p th:if="${cita.motivo != null and !cita.motivo.empty}" class="mb-0 small text-muted">
+                                <i class="fas fa-stethoscope text-primary opacity-50"></i>
+                                <span th:text="${cita.motivo}">Revisión</span>
+                            </p>
+                        </div>
+
+                        <div class="mt-2 text-end" th:if="${cita.estado == 'AGENDADA'}">
+                            <a th:href="@{/recepcionista/citas/cancelar/{id}(id=${cita.id})}"
+                                class="btn btn-sm btn-outline-danger" style="font-size: 0.7rem;"
+                                onclick="return confirm('¿Estás seguro de cancelar esta cita?')">
+                                Cancelar Cita
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Si no hay citas -->
+                    <div th:if="${#lists.isEmpty(citas)}" class="empty-schedule text-center py-5">
+                        <i class="fas fa-mug-hot fa-2x text-muted mb-2"></i>
+                        <h6 class="text-muted">Día libre</h6>
+                        <p class="small text-muted">No hay citas programadas para esta fecha.</p>
+                        <a href="/recepcionista/citas/nueva" class="btn btn-sm btn-primary mt-2">Agendar Cita</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/js/agenda.js}"></script>
+    </div>
+</body>
+
+</html>

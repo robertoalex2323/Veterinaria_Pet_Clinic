@@ -1,0 +1,277 @@
+.reportes-page {
+    background: #fbf7fc;
+}
+
+.reportes-header-card,
+.report-card,
+.report-preview-card {
+    background: rgba(255,255,255,0.92);
+    border: 1px solid #edf0f7;
+    border-radius: 26px;
+    box-shadow: 0 16px 34px rgba(34,42,70,0.09);
+}
+
+.reportes-header-card {
+    padding: 24px 28px;
+    margin-bottom: 22px;
+}
+
+.reportes-header-card h2,
+.report-card h3,
+.preview-head h3 {
+    margin: 0 0 8px;
+    color: #243044;
+}
+
+.reportes-header-card p {
+    margin: 0;
+    color: #667085;
+}
+
+.reportes-layout {
+    display: grid;
+    grid-template-columns: 0.42fr 0.58fr;
+    gap: 22px;
+}
+
+.reportes-left {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.report-card {
+    padding: 20px;
+}
+
+.report-card select {
+    width: 100%;
+    border: 1.5px solid #e3e8f2;
+    border-radius: 14px;
+    padding: 13px 14px;
+    font-family: inherit;
+    color: #243044;
+    margin: 12px 0;
+}
+
+.selected-pet {
+    display: grid;
+    grid-template-columns: 48px 1fr 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+    border: 1px solid #f1ddff;
+    background: linear-gradient(90deg, #f7efff, #fffbe8);
+    border-radius: 16px;
+    padding: 14px;
+}
+
+.pet-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    background: #ffd7e4;
+    display: grid;
+    place-items: center;
+    color: #b8336a;
+}
+
+.selected-pet strong,
+.selected-pet span,
+.pet-mini label,
+.pet-mini b {
+    display: block;
+}
+
+.selected-pet span,
+.pet-mini label {
+    color: #667085;
+    font-size: 12px;
+}
+
+.pet-mini {
+    background: rgba(255,255,255,0.62);
+    border-radius: 12px;
+    padding: 10px;
+}
+
+.report-type {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid #e3e8f2;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.report-type input {
+    display: none;
+}
+
+.report-type i {
+    color: #a78bfa;
+}
+
+.report-type b,
+.report-type small {
+    display: block;
+}
+
+.report-type small {
+    color: #667085;
+}
+
+.report-type.active {
+    background: #eadcff;
+    border-color: #b78af0;
+}
+
+.btn-generar,
+.preview-head button {
+    width: 100%;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    background: #b99be3;
+    color: white;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 12px;
+}
+
+.report-preview-card {
+    padding: 26px;
+    min-height: 560px;
+}
+
+.preview-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.preview-head button {
+    width: auto;
+    margin: 0;
+    padding: 11px 16px;
+}
+
+.report-document {
+    background: white;
+    border: 1px dashed #d7dce8;
+    border-radius: 18px;
+    padding: 28px;
+    min-height: 500px;
+}
+
+.doc-header {
+    border-bottom: 2px solid #edf0f7;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+}
+
+.doc-header h2 {
+    margin: 0;
+    color: #172033;
+}
+
+.doc-header p {
+    margin: 6px 0 0;
+    color: #667085;
+}
+
+.doc-section {
+    margin-bottom: 18px;
+}
+
+.doc-section h3 {
+    color: #243044;
+    margin-bottom: 10px;
+}
+
+.doc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+}
+
+.doc-grid p,
+.doc-section p {
+    margin: 4px 0;
+    color: #475467;
+}
+
+.doc-alert {
+    background: #fff1f2;
+    border: 1px solid #fb7185;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+
+.doc-alert b {
+    color: #be123c;
+    margin-right: 8px;
+}
+
+.doc-consulta {
+    border: 1px solid #edf0f7;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.preview-empty {
+    min-height: 500px;
+    border: 1px dashed #d7dce8;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: #98a2b3;
+}
+
+.preview-empty i {
+    font-size: 48px;
+}
+
+@media print {
+    .sidebar,
+    .hero,
+    .reportes-header-card,
+    .reportes-left,
+    .preview-head,
+    .header {
+        display: none !important;
+    }
+
+    .main {
+        padding: 0;
+    }
+
+    .reportes-layout {
+        display: block;
+    }
+
+    .report-preview-card {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+    }
+
+    .report-document {
+        border: none;
+    }
+}
+
+@media (max-width: 1000px) {
+    .reportes-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .selected-pet {
+        grid-template-columns: 48px 1fr;
+    }
+}

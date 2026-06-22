@@ -1,0 +1,101 @@
+.admin-sidebar {
+    background: linear-gradient(180deg, #123C69 0%, #0B2545 100%);
+}
+
+.admin-sidebar .nav-link.active {
+    background: #F7C948;
+    color: #0B2545;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.admin-header h2 {
+    margin: 0;
+    font-weight: 700;
+    color: #1F2937;
+}
+
+.admin-header p {
+    margin: 4px 0 0;
+    color: #6B7280;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.admin-stat-card {
+    display: grid;
+    gap: 10px;
+    min-height: 150px;
+    padding: 22px;
+    border-radius: 8px;
+    color: #FFFFFF;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.admin-stat-card:hover {
+    color: #FFFFFF;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+}
+
+.admin-stat-card i {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+
+.admin-stat-card span {
+    font-size: 0.95rem;
+    opacity: 0.85;
+}
+
+.admin-stat-card strong {
+    font-size: 2.3rem;
+    line-height: 1;
+}
+
+.stat-users {
+    background: linear-gradient(135deg, #123C69, #2563EB);
+}
+
+.stat-clients {
+    background: linear-gradient(135deg, #0F766E, #14B8A6);
+}
+
+.stat-pets {
+    background: linear-gradient(135deg, #7C3AED, #A855F7);
+}
+
+.stat-citas {
+    background: linear-gradient(135deg, #B45309, #F59E0B);
+}
+
+.stat-payments {
+    background: linear-gradient(135deg, #047857, #22C55E);
+}
+
+.stat-agenda {
+    background: linear-gradient(135deg, #BE123C, #F43F5E);
+}
+
+@media (max-width: 768px) {
+    .admin-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-stats {
+        grid-template-columns: 1fr;
+    }
+}

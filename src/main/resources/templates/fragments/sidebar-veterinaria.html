@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="sidebar">
+<aside class="sidebar">
+    <div class="logo">
+        <img th:src="@{/Imagen/Iconos/logo.png}" alt="Logo" style="width:36px;height:36px;border-radius:10px;object-fit:cover;" onerror="this.style.display='none'">
+        <i class="fas fa-paw" style="display:none; color:white; font-size:20px;"></i>
+    </div>
+    <nav class="sidebar-nav">
+        <!-- Dashboard -->
+        <a href="/veterinaria/dashboard" class="nav-link"
+           th:classappend="${currentPage == 'dashboard' ? ' active' : ''}"
+           title="Dashboard">
+            <i class="fas fa-home"></i>
+        </a>
+        <!-- Pacientes (Ingresos del día) -->
+        <a href="/veterinaria/pacientes" class="nav-link"
+           th:classappend="${currentPage == 'pacientes' ? ' active' : ''}"
+           title="Pacientes / Ingresos del Día">
+            <i class="fas fa-user-friends"></i>
+        </a>
+        <!-- Historial Clínico -->
+        <a href="/veterinaria/historial" class="nav-link"
+           th:classappend="${currentPage == 'historial' ? ' active' : ''}"
+           title="Historial Clínico">
+            <i class="fas fa-file-medical-alt"></i>
+        </a>
+        <!-- Diagnóstico IA -->
+        <a href="/veterinaria/diagnostico-ia" class="nav-link"
+           th:classappend="${currentPage == 'diagnostico' ? ' active' : ''}"
+           title="Diagnóstico IA">
+            <i class="fas fa-heartbeat"></i>
+        </a>
+        <a href="/veterinaria/alertas" class="nav-link"
+   th:classappend="${currentPage == 'alertas' ? ' active' : ''}"
+   title="Alertas">
+    <i class="fas fa-bell"></i>
+</a>
+
+
+
+        <!-- Agenda -->
+        <a href="/veterinaria/agenda" class="nav-link"
+           th:classappend="${currentPage == 'agenda' ? ' active' : ''}"
+           title="Agenda">
+            <i class="fas fa-calendar-alt"></i>
+        </a>
+
+
+        <a href="/veterinaria/reportes" class="nav-link"
+   th:classappend="${currentPage == 'reportes' ? ' active' : ''}"
+   title="Reportes">
+    <i class="fas fa-file-prescription"></i>
+</a>
+    </nav>
+    <div style="flex-grow: 1"></div>
+    <div class="sidebar-user">
+        <a href="/veterinaria/settings" class="nav-link" title="Configuración">
+            <i class="fas fa-cog"></i>
+        </a>
+    </div>
+</aside>
+</html>

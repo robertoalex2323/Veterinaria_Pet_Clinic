@@ -1,0 +1,114 @@
+/* ============ PERFIL CSS ============ */
+
+.perfil-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    background-color: #ffffff;
+    overflow: hidden;
+}
+
+.perfil-header-bg {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    padding: 3rem 1.5rem;
+    text-align: center;
+    position: relative;
+}
+
+.avatar-container {
+    position: absolute;
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    background: #fff;
+    border-radius: 50%;
+    padding: 5px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-container img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #eaecf4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #4e73df;
+}
+
+.perfil-info-section {
+    margin-top: 60px;
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eaecf4;
+}
+
+.nav-pills .nav-link {
+    color: #5a5c69;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #f8f9fc;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #4e73df;
+    color: white;
+}
+
+.nav-pills .nav-link i {
+    width: 20px;
+    text-align: center;
+}
+
+.form-control {
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    border: 1px solid #d1d3e2;
+}
+
+.form-control:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.input-group-text {
+    border-radius: 8px 0 0 8px;
+    background-color: #f8f9fc;
+    border: 1px solid #d1d3e2;
+    color: #858796;
+}
+
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+    border-radius: 8px;
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+}
+
+.password-toggle {
+    cursor: pointer;
+    border-radius: 0 8px 8px 0;
+}
