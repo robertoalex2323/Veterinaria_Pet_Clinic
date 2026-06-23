@@ -376,7 +376,7 @@ public Venta procesarVenta(Venta venta) {
             table.setWidthPercentage(100);
             table.setWidths(new float[]{3f, 1f, 1.5f, 1.5f});
             
-            String[] headers = {"Producto", "Cant.", "Precio Unit.", "Subtotal"};
+            String[] headers = {"Producto/Servicio", "Cant.", "Precio Unit.", "Subtotal"};
             for (String h : headers) {
                 PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
                 cell.setBackgroundColor(verdePet);
