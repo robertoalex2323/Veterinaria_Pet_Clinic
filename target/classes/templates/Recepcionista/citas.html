@@ -81,10 +81,10 @@
 
                     <div class="cita-actions">
                         <button th:if="${cita.estado == 'AGENDADA'}" class="btn btn-outline-danger btn-sm"
-                            title="Cancelar Cita" th:onclick="'confirmarCancelacion(' + ${cita.id} + ')'">
+                            title="Cancelar o Reprogramar" th:onclick="'confirmarCancelacionOReprogramar(' + ${cita.id} + ')'">
                             <i class="fas fa-times"></i>
                         </button>
-                        <!-- Si está completada o cancelada no muestra acción o muestra otra -->
+                        <!-- Si está completada o cancelada no muestra acción -->
                         <button th:unless="${cita.estado == 'AGENDADA'}" class="btn btn-light btn-sm text-muted border"
                             disabled>
                             <i class="fas fa-ban"></i>
@@ -109,3 +109,4 @@
 </body>
 
 </html>
+

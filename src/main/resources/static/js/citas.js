@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const fechaInput = document.getElementById('fechaFiltro');
     if (fechaInput) {
         fechaInput.addEventListener('change', function () {
-            document.getElementById('filtroCitasForm').submit();
+            const form = document.getElementById('filtroCitasForm');
+            if (form) form.submit();
         });
     }
 
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (slot.veterinarioNombre) opt.dataset.veterinarioNombre = slot.veterinarioNombre;
                 horaCita.appendChild(opt);
             }
+
             horaCita.disabled = false;
         } catch (e) {
             horaCita.innerHTML = '<option value="">Error al cargar horarios</option>';
@@ -71,17 +73,50 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize Select2 if available for better pet searching in forms
     if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
-        $('#mascotaId').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Busca una mascota o cliente...'
-        });
+        const mascotaSelect = document.getElementById('mascotaId');
+        if (mascotaSelect) {
+            $('#mascotaId').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Busca una mascota o cliente...'
+            });
+        }
     }
 });
 
 function confirmarCancelacion(id) {
     const motivo = prompt('Por favor, ingrese el motivo de cancelación:');
-    if (motivo !== null) {
-        // Enviar con motivo
+    if (motivo !== null && motivo.trim().length > 0) {
         window.location.href = `/recepcionista/citas/cancelar/${id}?motivo=${encodeURIComponent(motivo)}`;
     }
 }
+
+function confirmarCancelacionOReprogramar(id) {
+    // Menú simple: Aceptar => Reprogramar, Cancelar => Cancelar
+    const quiereReprogramar = confirm('¿Desea REPROGRAMAR esta cita?\n\nAceptar: reprogramar\nCancelar: cancelar');
+
+    if (!quiereReprogramar) {
+        const motivoCancel = prompt('Motivo de cancelación:');
+        if (motivoCancel !== null && motivoCancel.trim().length > 0) {
+            window.location.href = `/recepcionista/citas/cancelar/${id}?motivo=${encodeURIComponent(motivoCancel)}`;
+        }
+        return;
+    }
+
+    // Reprogramar: pide fecha/hora nueva
+    const fechaNueva = prompt('Ingrese la NUEVA FECHA (YYYY-MM-DD):');
+    if (!fechaNueva) return;
+    const horaNueva = prompt('Ingrese la NUEVA HORA (HH:mm):');
+    if (!horaNueva) return;
+
+    const motivo = prompt('Motivo de la reprogramación (opcional):') || '';
+
+    // Navega al formulario de nueva cita con parámetros para precargar
+    const params = new URLSearchParams();
+    params.set('reprogramarDesdeId', String(id));
+    params.set('fechaNueva', fechaNueva);
+    params.set('horaNueva', horaNueva);
+    if (motivo.trim().length > 0) params.set('motivo', motivo.trim());
+
+    window.location.href = `/recepcionista/citas/nueva?${params.toString()}`;
+}
+

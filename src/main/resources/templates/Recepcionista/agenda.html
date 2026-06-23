@@ -60,33 +60,29 @@
 
                 <div class="schedule-list">
                     <!-- ====== CITAS ====== -->
-                    <div th:each="cita : ${citas}"
-                         class="agenda-cita-card"
-                         th:classappend="${cita.estado == 'CANCELADA'} ? 'cita-cancelada' :
-                                         (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')}) ? 'cita-vacunacion' :
-                                         (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')}) ? 'cita-emergencia' :
-                                         'cita-consulta-general'">
+            <div th:each="cita : ${citas}"
+                class="agenda-cita-card"
+                th:with="citaClass=${cita.estado != null && cita.estado == 'CANCELADA'} ? 'cita-cancelada' : (cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')) ? 'cita-vacunacion' : (cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')) ? 'cita-emergencia' : 'cita-consulta-general'"
+                th:classappend="${citaClass}">
 
-                        <div class="cita-time">
-                            <i class="far fa-clock"></i>
-                            <strong th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">10:00</strong>
-                            <span class="badge ms-2"
-                                  th:classappend="${cita.estado == 'CANCELADA'} ? 'cita-cancelada-badge' :
-                                                  (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')}) ? 'cita-vacunacion-badge' :
-                                                  (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')}) ? 'cita-emergencia-badge' :
-                                                  'cita-consulta-general-badge'"
-                                  th:text="${cita.estado}"
-                                  style="font-size: 0.6rem;">ESTADO</span>
-                        </div>
+                <div class="cita-time">
+                    <i class="far fa-clock"></i>
+                    <strong th:text="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'HH:mm') : '--:--'}">10:00</strong>
+                    <span class="badge ms-2"
+                        th:with="badgeClass=${cita.estado != null && cita.estado == 'CANCELADA'} ? 'cita-cancelada-badge' : (cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')) ? 'cita-vacunacion-badge' : (cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')) ? 'cita-emergencia-badge' : 'cita-consulta-general-badge'"
+                        th:classappend="${badgeClass}"
+                        th:text="${cita.estado != null ? cita.estado : 'DESCONOCIDO'}"
+                        style="font-size: 0.6rem;">ESTADO</span>
+                </div>
 
                         <!-- Botón Registrar Pago (autocompleta cita + mascota + fecha) -->
-                        <div class="mt-2 text-end" th:if="${cita.estado == 'AGENDADA'}">
+                        <div class="mt-2 text-end" th:if="${cita.estado != null and cita.estado == 'AGENDADA'}">
                             <button type="button"
                                     class="btn btn-sm btn-success"
                                     style="font-size: 0.7rem;"
                                     data-bs-toggle="modal"
                                     data-bs-target="#modalPago"
-                                    th:attr="data-cita-id=${cita.id}, data-cita-fecha=${#temporals.format(cita.fechaHora, 'yyyy-MM-dd HH:mm')}, data-cita-mascota=${cita.mascota != null ? cita.mascota.nombre : 'Sin mascota'}">
+                                    th:attr="data-cita-id=${cita.id}, data-cita-fecha=${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'yyyy-MM-dd HH:mm') : ''}, data-cita-mascota=${cita.mascota != null ? cita.mascota.nombre : 'Sin mascota'}">
                                 <i class="fas fa-money-bill-wave me-1"></i>
                                 Pagar esta cita
                             </button>
@@ -107,7 +103,7 @@
                         </div>
 
                         <!-- Botón Cancelar (solo si está AGENDADA) -->
-                        <div class="mt-2 text-end" th:if="${cita.estado == 'AGENDADA'}">
+                        <div class="mt-2 text-end" th:if="${cita.estado != null and cita.estado == 'AGENDADA'}">
                             <a th:href="@{/recepcionista/citas/cancelar/{id}(id=${cita.id})}"
                                class="btn btn-sm btn-outline-danger"
                                style="font-size: 0.7rem;"

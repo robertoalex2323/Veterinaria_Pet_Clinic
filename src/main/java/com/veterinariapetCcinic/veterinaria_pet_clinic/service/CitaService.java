@@ -178,4 +178,21 @@ public class CitaService {
         citaRepository.deleteById(id);
     }
 
+    @Transactional
+    public Cita reprogramarCita(Long citaId, LocalDateTime nuevaFechaHora, String motivoReprogramacion) {
+        Cita citaOriginal = buscarPorId(citaId);
+
+        // 1. Cancelar la cita original (libera la agenda automáticamente)
+        cancelarCita(citaId, "Reprogramada: " + motivoReprogramacion);
+
+        // 2. Crear la nueva cita con los mismos datos básicos
+        Cita nuevaCita = new Cita();
+        nuevaCita.setMascota(citaOriginal.getMascota());
+        nuevaCita.setMotivo(citaOriginal.getMotivo());          
+        nuevaCita.setFechaHora(nuevaFechaHora);
+        nuevaCita.setObservaciones("Reprogramada desde cita ID " + citaId + ". Motivo: " + motivoReprogramacion);
+        // 3. Guardar (pasa por validación de disponibilidad, bloqueo de agenda, notificaciones)
+        return guardar(nuevaCita);
+    }
+
 }

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -322,18 +323,31 @@ public class RecepcionistaController {
             @RequestParam String hora,
             @RequestParam(required = false) Long veterinarioId,
             @RequestParam(required = false) String motivo,
+            @RequestParam(required = false) Long reprogramarDesdeId,          // ← nuevo
+            @RequestParam(required = false) String motivoReprogramacion,      // ← nuevo
             RedirectAttributes redirectAttributes) {
         try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            LocalDateTime nuevaFechaHora = LocalDateTime.parse(fecha + " " + hora, formatter);
+
+            // --- Flujo de reprogramación ---
+            if (reprogramarDesdeId != null) {
+                if (motivoReprogramacion == null || motivoReprogramacion.isBlank()) {
+                    motivoReprogramacion = "Reprogramada por recepcionista";
+                }
+                citaService.reprogramarCita(reprogramarDesdeId, nuevaFechaHora, motivoReprogramacion);
+                redirectAttributes.addFlashAttribute("success", "Cita reprogramada exitosamente");
+                return "redirect:/recepcionista/citas";
+            }
+
+            // --- Flujo normal de agendar ---
             Mascota mascota = mascotaService.buscarPorId(mascotaId);
 
             Cita cita = new Cita();
             cita.setMascota(mascota);
             cita.setMotivo(motivo);
             cita.setEstado("AGENDADA");
-
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            LocalDateTime fechaHora = LocalDateTime.parse(fecha + " " + hora, formatter);
-            cita.setFechaHora(fechaHora);
+            cita.setFechaHora(nuevaFechaHora);
 
             if (veterinarioId == null) {
                 throw new RuntimeException("Debe seleccionar un horario que tenga veterinario asignado.");
@@ -343,7 +357,7 @@ public class RecepcionistaController {
             cita.setVeterinario(veterinario);
 
             com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agendaDisponible = agendaService
-                    .buscarAgendaDisponible(fechaHora.toLocalDate(), fechaHora.toLocalTime());
+                    .buscarAgendaDisponible(nuevaFechaHora.toLocalDate(), nuevaFechaHora.toLocalTime());
             if (agendaDisponible == null) {
                 throw new RuntimeException("El horario seleccionado no existe en la agenda o ya no está disponible.");
             }
@@ -353,7 +367,6 @@ public class RecepcionistaController {
             }
 
             citaService.guardar(cita);
-
             redirectAttributes.addFlashAttribute("success", "Cita agendada exitosamente");
         } catch (Exception e) {
             log.error("Error al guardar cita: {}", e.getMessage(), e);
@@ -361,7 +374,7 @@ public class RecepcionistaController {
         }
         return "redirect:/recepcionista/citas";
     }
-
+    
     @GetMapping("/citas/editar/{id}")
     public String editarCitaForm(@PathVariable Long id, Model model) {
         model.addAttribute("nombreUsuario", getNombreUsuario());
@@ -419,48 +432,69 @@ public class RecepcionistaController {
         }
         return "redirect:/recepcionista/citas";
     }
-
     // ============ GESTIÓN DE AGENDA ============
+
     @GetMapping("/agenda")
     public String verAgenda(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
             Model model) {
         log.info("==> Entrando a verAgenda con fecha: {}", fecha);
-        
+
         // Atributos para el fragmento
         String username = getNombreUsuario();
         model.addAttribute("nombreUsuario", username);
-        
+
         usuarioRepository.findByUsername(username).ifPresent(usuario -> {
             model.addAttribute("nombreCompleto", usuario.getNombre());
             model.addAttribute("usuario", usuario);
-            model.addAttribute("nombre", usuario.getNombre()); // por si acaso
+            model.addAttribute("nombre", usuario.getNombre());
         });
-        
+
         // Atributos de la página
         if (fecha == null) {
             fecha = LocalDate.now();
         }
         model.addAttribute("fecha", fecha);
-        
+
         try {
             List<Cita> citasDelDia = citaService.obtenerCitasDelDia(fecha);
-            // Inicializar relaciones
+
             for (Cita c : citasDelDia) {
                 if (c.getMascota() != null) {
                     c.getMascota().getNombre();
+                    c.getMascota().getEspecie();
                     if (c.getMascota().getCliente() != null) {
                         c.getMascota().getCliente().getNombre();
+                        c.getMascota().getCliente().getTelefono();
                     }
                 }
+                if (c.getVeterinario() != null) {
+                    c.getVeterinario().getNombre();
+                }
+                c.getObservaciones();
+                c.getMotivo();
+
+                // 🔥 CRÍTICO: evitar nulls que rompen la vista
+                if (c.getFechaHora() == null) {
+                    log.warn("Cita ID {} tiene fechaHora null, se asignará now()", c.getId());
+                    c.setFechaHora(LocalDateTime.now());
+                }
+                if (c.getEstado() == null) {
+                    log.warn("Cita ID {} tiene estado null, se asignará 'AGENDADA'", c.getId());
+                    c.setEstado("AGENDADA");
+                }
+                if (c.getMotivo() == null) {
+                    c.setMotivo("");
+                }
             }
-            model.addAttribute("citas", citasDelDia);
+
+            model.addAttribute("citas", citasDelDia != null ? citasDelDia : new ArrayList<>());
         } catch (Exception e) {
             log.error("Error al obtener citas", e);
             model.addAttribute("citas", new ArrayList<>());
             model.addAttribute("error", "Error al cargar citas: " + e.getMessage());
         }
-        
+
         log.info("<== Saliendo de verAgenda");
         return "Recepcionista/agenda";
     }
@@ -602,6 +636,7 @@ public class RecepcionistaController {
         }
         return "redirect:/recepcionista/perfil";
     }
+    
 
     // ============ MACHINE LEARNING ============
     @GetMapping("/diagnostico")
