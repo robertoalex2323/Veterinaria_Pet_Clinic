@@ -4,19 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Ventas - Pet Clinic</title>
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
     <link rel="stylesheet" th:href="@{/css/vendedor.css}">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Favicon -->
     <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}" />
 </head>
 <body>
 
-    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">
@@ -65,14 +60,12 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
         <div class="top-bar">
             <h1 class="page-title">Panel de Ventas</h1>
             <div class="date-display" id="currentDate">--</div>
         </div>
 
-        <!-- ========== DASHBOARD PANEL ========== -->
         <div id="dashboardPanel" class="panel-container active">
             <div class="stats-grid" style="margin-bottom: 2rem;">
                 <div class="glass-panel stat-card">
@@ -117,7 +110,6 @@
                 </div>
             </div>
 
-            <!-- SALES CHART -->
             <div class="glass-panel chart-container" style="margin-top: 2rem;">
                 <div class="panel-header">
                     <h2 style="font-size: 1.1rem; font-weight: 600;"><i class="fa-solid fa-chart-line" style="color: var(--primary-color);"></i> Ventas - Últimos 7 Días</h2>
@@ -128,41 +120,34 @@
                         <canvas id="salesChart"></canvas>
                     </div>
                     <div id="chartStats" style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                        <!-- Stats inyectadas por JS -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ========== NEW SALE PANEL ========== -->
-<!-- NEW SALE PANEL -->
 <div id="new-salePanel" class="panel-container">
     <div class="glass-panel">
         <div class="panel-header">
             <h2><i class="fa-solid fa-cart-plus"></i> Registrar Nueva Venta</h2>
         </div>
         <div class="panel-body">
-            <!-- FILA 1: Producto (con stock debajo) -->
             <div class="form-row">
                 <div class="form-group" style="flex: 2;">
                     <label for="saleProduct">Producto o Servicio</label>
                     <div class="product-select-wrapper">
                         <select id="saleProduct" onchange="updatePrice()">
                             <option value="" data-price="0" data-stock="0" data-id="">Seleccione un producto...</option>
-                            <!-- ALIMENTOS -->
                             <optgroup label="--Alimentos--">
                                 <option value="ricocan_40kg" data-price="150.00" data-stock="25" data-id="1">Alimento Ricocan para Perro 40kg</option>
                                 <option value="purina_gato_40kg" data-price="120.00" data-stock="20" data-id="2">Alimento Purina para Gato 40kg</option>
                                 <option value="ricocan_10kg" data-price="40.00" data-stock="15" data-id="3">Alimento Ricocan para Perro 10kg</option>
                                 <option value="purina_gato_10kg" data-price="30.00" data-stock="12" data-id="4">Alimento Purina para Gato 10kg</option>
                             </optgroup>
-                            <!-- ANTIPULGAS -->
                             <optgroup label="--Antipulgas--">
                                 <option value="bravecto" data-price="20.00" data-stock="15" data-id="5">Antipulgas Bravecto</option>
                                 <option value="simparica" data-price="25.00" data-stock="20" data-id="6">Antipulgas Simparica</option>
                                 <option value="shampoo_antipulgas" data-price="32.00" data-stock="35" data-id="7">Shampoo Antipulgas</option>
                             </optgroup>
-                            <!-- ACCESORIOS -->
                             <optgroup label="--Accesorios--">
                                 <option value="correa_perro" data-price="25.00" data-stock="30" data-id="8">Correa para Perros</option>
                                 <option value="correa_gato" data-price="20.00" data-stock="20" data-id="9">Correa para Gatos</option>
@@ -173,7 +158,6 @@
                                 <option value="comedero" data-price="65.00" data-stock="12" data-id="14">Comedero Automático</option>
                                 <option value="bebedero" data-price="35.00" data-stock="15" data-id="15">Bebedero Automático</option>
                             </optgroup>
-                            <!-- SERVICIOS -->
                             <optgroup label="--Servicios--">
                                 <option value="bano_pequeno" data-price="45.00" data-stock="999" data-id="16">Baño y Corte (Raza Pequeña)</option>
                                 <option value="bano_mediano" data-price="55.00" data-stock="999" data-id="17">Baño y Corte (Raza Mediana)</option>
@@ -184,7 +168,6 @@
                             </optgroup>
                         </select>
                     </div>
-                    <!-- Stock debajo del select -->
                     <div class="stock-indicator" id="stockIndicator">Seleccione un producto</div>
                     <input type="hidden" id="salePrice" value="0.00">
                 </div>
@@ -195,7 +178,6 @@
                 </div>
             </div>
 
-            <!-- FILA 2: Cliente y Teléfono -->
             <div class="form-row" style="margin-top: 1.5rem;">
                 <div class="form-group" style="flex: 2;">
                     <label for="clientName">Nombre del Cliente</label>
@@ -209,21 +191,19 @@
                 </div>
             </div>
 
-            <!-- FILA 3: Método de Pago -->
             <div class="form-row" style="margin-top: 0.5rem;">
                 <div class="form-group" style="flex: 1;">
                     <label for="paymentMethod">Método de Pago</label>
                     <select id="paymentMethod">
-                        <option value="Efectivo">💵 Efectivo</option>
-                        <option value="Tarjeta de Crédito/Débito">💳 Tarjeta</option>
-                        <option value="Yape">📱 Yape</option>
-                        <option value="Plin">📱 Plin</option>
-                        <option value="Transferencia Bancaria">🏦 Transferencia</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta de Crédito/Débito">Tarjeta</option>
+                        <option value="Yape"> Yape</option>
+                        <option value="Plin">Plin</option>
+                        <option value="Transferencia Bancaria"> Transferencia</option>
                     </select>
                 </div>
             </div>
 
-            <!-- FILA 4: Total con IGV -->
             <div class="sale-total-detalle" style="margin-top: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
@@ -253,7 +233,6 @@
         </div>
     </div>
 </div>
-       <!-- HISTORY PANEL -->
 <div id="historyPanel" class="panel-container">
     <div class="glass-panel">
         <div class="panel-header">
@@ -265,9 +244,7 @@
                 <button class="btn btn-primary" onclick="exportarPDF()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
                     <i class="fa-solid fa-file-pdf"></i> Exportar PDF
                 </button>
-                <button class="btn btn-primary" onclick="exportarHistorial()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
-                    <i class="fa-solid fa-file-excel"></i> Exportar Excel
-                </button>
+                
             </div>
         </div>
         <div class="panel-body">
@@ -311,7 +288,6 @@
     </div>
 </div>
 
-        <!-- ========== PROMOTIONS PANEL ========== -->
         <div id="promotionsPanel" class="panel-container">
             <div class="glass-panel">
                 <div class="panel-header">
@@ -327,13 +303,11 @@
 
     </main>
 
-    <!-- Toast Notification -->
     <div id="toast" class="alert-toast">
         <i class="fa-solid fa-circle-check"></i>
         <span id="toastMessage">Operación exitosa</span>
     </div>
 
-    <!-- Custom JS -->
     <script th:src="@{/js/vendedor.js}"></script>
 </body>
 </html>

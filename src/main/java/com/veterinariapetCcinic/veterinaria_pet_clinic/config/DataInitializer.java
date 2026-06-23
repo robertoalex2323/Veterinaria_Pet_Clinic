@@ -79,7 +79,7 @@ public class DataInitializer implements CommandLineRunner {
             vendedor.setActivo(true);
             vendedor.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(vendedor);
-            System.out.println("✅ Usuario VENDEDOR creado exitosamente");
+            System.out.println(" Usuario VENDEDOR creado exitosamente");
         }
 
         // 5. FARMACÉUTICO
@@ -93,7 +93,7 @@ public class DataInitializer implements CommandLineRunner {
             farmaceutico.setActivo(true);
             farmaceutico.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(farmaceutico);
-            System.out.println("✅ Usuario FARMACEUTICO creado exitosamente");
+            System.out.println(" Usuario FARMACEUTICO creado exitosamente");
         }
         // 6. Generar Agenda Base
         Usuario veterinarioObj = null;
@@ -106,9 +106,9 @@ public class DataInitializer implements CommandLineRunner {
         
         if (veterinarioObj != null) {
             agendaService.generarAgendaBaseSiVacia(veterinarioObj);
-            System.out.println("✅ Agenda base generada o verificada exitosamente");
+            System.out.println(" Agenda base generada o verificada exitosamente");
         }
         
-        System.out.println("🎉 Todos los usuarios iniciales han sido creados");
+        System.out.println(" Todos los usuarios iniciales han sido creados");
     }
 }

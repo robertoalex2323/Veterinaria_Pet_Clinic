@@ -15,8 +15,6 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 @Repository
 public interface VentaRepository extends JpaRepository<Venta, Long> {
     
-    // ===== MÉTODOS EXISTENTES =====
-    
     List<Venta> findByOrderByFechaDesc();
 
     @Query("SELECT SUM(v.total) FROM Venta v WHERE v.fecha >= :inicio")

@@ -43,7 +43,7 @@ public class Venta {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     @JsonIgnoreProperties({"password", "email", "hibernateLazyInitializer", "handler"})
-    private Usuario usuario; // Farmacéutico que realizó la venta
+    private Usuario usuario; 
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal = BigDecimal.ZERO;
@@ -69,7 +69,6 @@ public class Venta {
 @JsonIgnoreProperties({"venta", "hibernateLazyInitializer", "handler"})
 private List<DetalleVenta> detalles = new ArrayList<>();
 
-    // IGV Perú: 18%
     public static final BigDecimal IGV_TASA = new BigDecimal("0.18");
 
     public void addDetalle(DetalleVenta detalle) {
@@ -97,7 +96,6 @@ private List<DetalleVenta> detalles = new ArrayList<>();
         return fecha != null ? fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
 
-    // ===== GETTERS Y SETTERS =====
     public Long getId() { return id; }
     public void setId(Long idVenta) { this.id = idVenta; }
 

@@ -61,17 +61,13 @@ public class VentaService {
         this.clienteRepository = clienteRepository;
     }
 
-    // ============================================
-    // 1. PROCESAR VENTA DESDE PRODUCTO (VENDEDOR)
-    // ============================================
-
+    
 @Transactional
 public Venta procesarVenta(Venta venta) {
     System.out.println("📦 Procesando venta...");
     
-    // 1. CREAR O BUSCAR CLIENTE
     if (venta.getCliente() == null || venta.getCliente().getNombre() == null) {
-        throw new RuntimeException("❌ El nombre del cliente es obligatorio");
+        throw new RuntimeException(" El nombre del cliente es obligatorio");
     }
     
     String nombreCliente = venta.getCliente().getNombre().trim();
@@ -95,40 +91,40 @@ public Venta procesarVenta(Venta venta) {
             venta.getCliente().getDireccion() : "No registrada");
         
         clienteExistente = clienteRepository.save(nuevoCliente);
-        System.out.println("✅ Cliente creado: " + nombreCliente + " (Tel: " + telefonoCliente + ")");
+        System.out.println("Cliente creado: " + nombreCliente + " (Tel: " + telefonoCliente + ")");
     } else {
-        System.out.println("✅ Cliente existente: " + clienteExistente.getNombre() + " (ID: " + clienteExistente.getId() + ")");
+        System.out.println(" Cliente existente: " + clienteExistente.getNombre() + " (ID: " + clienteExistente.getId() + ")");
     }
     venta.setCliente(clienteExistente);
     
-    // 2. PROCESAR DETALLES
     if (venta.getDetalles() == null || venta.getDetalles().isEmpty()) {
-        throw new RuntimeException("❌ La venta debe tener al menos un producto");
+        throw new RuntimeException("La venta debe tener al menos un producto");
     }
     
-    System.out.println("📦 Cantidad de detalles recibidos: " + venta.getDetalles().size());
+    System.out.println(" Cantidad de detalles recibidos: " + venta.getDetalles().size());
     
-    // ✅ GUARDAR DETALLES ORIGINALES
     List<DetalleVenta> detallesOriginales = new ArrayList<>(venta.getDetalles());
+    
     venta.getDetalles().clear();
     
     for (DetalleVenta detalle : detallesOriginales) {
-        System.out.println("  🔍 Procesando detalle...");
+        System.out.println("   Procesando detalle...");
         System.out.println("     Producto ID: " + (detalle.getProducto() != null ? detalle.getProducto().getId() : "NULL"));
         System.out.println("     Medicamento ID: " + (detalle.getMedicamento() != null ? detalle.getMedicamento().getId() : "NULL"));
         System.out.println("     Cantidad: " + detalle.getCantidad());
         System.out.println("     Precio: " + detalle.getPrecioUnitario());
         
-        // ✅ VERIFICAR SI ES PRODUCTO
         if (detalle.getProducto() != null && detalle.getProducto().getId() != null) {
             Long productoId = detalle.getProducto().getId();
             Producto producto = productoRepository.findById(productoId)
-                    .orElseThrow(() -> new RuntimeException("❌ Producto no encontrado con ID: " + productoId));
+                    .orElseThrow(() -> new RuntimeException(" Producto no encontrado con ID: " + productoId));
             
-            System.out.println("  ✅ Producto encontrado: " + producto.getNombre() + " (ID: " + producto.getId() + ")");
+            System.out.println("   Producto encontrado: " + producto.getNombre() + " (ID: " + producto.getId() + ")");
+            System.out.println("     Stock actual: " + producto.getStock() + ", Cantidad solicitada: " + detalle.getCantidad());
             
             if (producto.getStock() < detalle.getCantidad() && producto.getStock() < 999) {
-                throw new RuntimeException("❌ Stock insuficiente para: " + producto.getNombre());
+                throw new RuntimeException(" Stock insuficiente para: " + producto.getNombre() + 
+                    ". Disponible: " + producto.getStock());
             }
             
             DetalleVenta nuevoDetalle = new DetalleVenta();
@@ -138,22 +134,24 @@ public Venta procesarVenta(Venta venta) {
                 detalle.getPrecioUnitario() : producto.getPrecio());
             nuevoDetalle.calcularSubtotal();
             
-            // ✅ USAR addDetalle PARA AGREGAR A LA VENTA
+            nuevoDetalle.setVenta(venta);
+            
             venta.addDetalle(nuevoDetalle);
-            System.out.println("  ✅ Detalle agregado con producto: " + producto.getNombre());
             
             if (producto.getStock() < 999) {
                 producto.setStock(producto.getStock() - detalle.getCantidad());
                 productoRepository.save(producto);
+                System.out.println("     Nuevo stock: " + producto.getStock());
             }
+            
+            System.out.println("  Detalle agregado correctamente");
         } 
-        // ✅ VERIFICAR SI ES MEDICAMENTO
         else if (detalle.getMedicamento() != null && detalle.getMedicamento().getId() != null) {
             Long medicamentoId = detalle.getMedicamento().getId();
             Medicamento medicamento = medicamentoRepository.findById(medicamentoId)
-                    .orElseThrow(() -> new RuntimeException("❌ Medicamento no encontrado con ID: " + medicamentoId));
+                    .orElseThrow(() -> new RuntimeException(" Medicamento no encontrado con ID: " + medicamentoId));
             
-            System.out.println("  ✅ Medicamento encontrado: " + medicamento.getNombre() + " (ID: " + medicamento.getId() + ")");
+            System.out.println("   Medicamento encontrado: " + medicamento.getNombre() + " (ID: " + medicamento.getId() + ")");
             
             DetalleVenta nuevoDetalle = new DetalleVenta();
             nuevoDetalle.setMedicamento(medicamento);
@@ -162,40 +160,47 @@ public Venta procesarVenta(Venta venta) {
                 detalle.getPrecioUnitario() : medicamento.getPrecio());
             nuevoDetalle.calcularSubtotal();
             
+            nuevoDetalle.setVenta(venta);
+            
             venta.addDetalle(nuevoDetalle);
-            System.out.println("  ✅ Detalle agregado con medicamento: " + medicamento.getNombre());
+            
+            System.out.println("   Detalle agregado correctamente");
         } 
         else {
-            System.out.println("  ❌ Producto y Medicamento son NULL o no tienen ID!");
-            throw new RuntimeException("❌ Producto o Medicamento no especificado correctamente");
+            System.out.println("   ERROR: Producto y Medicamento son NULL o no tienen ID!");
+            throw new RuntimeException(" Producto o Medicamento no especificado correctamente");
         }
     }
     
-    // 3. RECALCULAR Y GUARDAR
     venta.setFecha(LocalDateTime.now());
     venta.recalcularTotales();
-    
-    System.out.println("📦 Total calculado: S/ " + venta.getTotal());
-    System.out.println("📦 Detalles en venta antes de guardar: " + venta.getDetalles().size());
+
+    System.out.println(" Total calculado: S/ " + venta.getTotal());
+    System.out.println(" Detalles en venta ANTES de guardar: " + venta.getDetalles().size());
     for (DetalleVenta d : venta.getDetalles()) {
         System.out.println("  - Producto: " + (d.getProducto() != null ? d.getProducto().getNombre() : "NULL"));
         System.out.println("    Cantidad: " + d.getCantidad());
         System.out.println("    Precio: " + d.getPrecioUnitario());
+        System.out.println("    Subtotal: " + d.getSubtotal());
     }
     
-    System.out.println("💾 Guardando venta...");
+    System.out.println(" Guardando venta en base de datos...");
     Venta ventaGuardada = ventaRepository.save(venta);
-    System.out.println("✅ Venta guardada con ID: " + ventaGuardada.getId());
+    System.out.println(" Venta guardada con ID: " + ventaGuardada.getId());
     
-    // ✅ VERIFICAR QUE LOS DETALLES SE GUARDARON
+    System.out.println(" Verificando detalles guardados...");
     Venta verificada = ventaRepository.findByIdWithDetalles(ventaGuardada.getId()).orElse(null);
+    
     if (verificada != null && verificada.getDetalles() != null) {
-        System.out.println("📦 DESPUÉS DE GUARDAR - Detalles: " + verificada.getDetalles().size());
+        System.out.println("Detalles DESPUÉS de guardar: " + verificada.getDetalles().size());
         for (DetalleVenta d : verificada.getDetalles()) {
             System.out.println("  - Producto: " + (d.getProducto() != null ? d.getProducto().getNombre() : "NULL"));
             System.out.println("    Cantidad: " + d.getCantidad());
             System.out.println("    Precio: " + d.getPrecioUnitario());
+            System.out.println("    Subtotal: " + d.getSubtotal());
         }
+    } else {
+        System.out.println(" ERROR: No se encontraron detalles guardados!");
     }
     
     return ventaGuardada;
@@ -267,9 +272,7 @@ public Venta procesarVenta(Venta venta) {
                 .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
     }
 
-    // ============================================
-    // 3. GENERAR BOLETA DIGITAL (JSON)
-    // ============================================
+ 
     public Map<String, Object> generarBoletaDigital(Long id) {
         Venta venta = ventaRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Venta no encontrada con ID: " + id));
@@ -308,11 +311,8 @@ public Venta procesarVenta(Venta venta) {
         return boleta;
     }
 
-    // ============================================
-    // 4. GENERAR BOLETA EN PDF CON iText (CON LOGO)
-    // ============================================
+    
     public byte[] generarBoletaPDFReal(Long id) {
-    // ✅ USAR EL NUEVO MÉTODO CON FETCH
     Venta venta = ventaRepository.findByIdWithDetalles(id)
             .orElseThrow(() -> new RuntimeException("Venta no encontrada con ID: " + id));
         
@@ -322,7 +322,6 @@ public Venta procesarVenta(Venta venta) {
             PdfWriter.getInstance(document, baos);
             document.open();
             
-            // ===== FUENTES =====
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA, 20, Font.BOLD);
             Font headerFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Font.BOLD);
             Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Font.NORMAL);
@@ -332,7 +331,6 @@ public Venta procesarVenta(Venta venta) {
             Font estadoFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Font.BOLD, verdePet);
             Font footerFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Font.NORMAL);
             
-            // ===== AGREGAR LOGO =====
             try {
                 String imagePath = "src/main/resources/static/Imagen/Iconos/logo.png";
                 Image logo = Image.getInstance(imagePath);
@@ -340,10 +338,9 @@ public Venta procesarVenta(Venta venta) {
                 logo.scaleToFit(80, 80);
                 document.add(logo);
             } catch (Exception e) {
-                System.out.println("⚠️ Logo no encontrado, continuando sin logo: " + e.getMessage());
+                System.out.println(" Logo no encontrado, continuando sin logo: " + e.getMessage());
             }
             
-            // Título
             Paragraph title = new Paragraph("🏥 Pet Clinic", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
@@ -356,7 +353,6 @@ public Venta procesarVenta(Venta venta) {
             document.add(new Paragraph("Fecha: " + venta.getFechaFormateada(), normalFont));
             document.add(new Paragraph(" "));
             
-            // Línea separadora
             PdfPTable separator = new PdfPTable(1);
             separator.setWidthPercentage(100);
             PdfPCell sepCell = new PdfPCell();
@@ -368,7 +364,6 @@ public Venta procesarVenta(Venta venta) {
             document.add(separator);
             document.add(new Paragraph(" "));
             
-            // Datos del cliente
             String clienteNombre = venta.getCliente() != null ? venta.getCliente().getNombre() : "N/A";
             String clienteTelefono = venta.getCliente() != null ? venta.getCliente().getTelefono() : "N/A";
             
@@ -377,7 +372,6 @@ public Venta procesarVenta(Venta venta) {
             document.add(new Paragraph("Método de Pago: " + venta.getMetodoPago(), normalFont));
             document.add(new Paragraph(" "));
             
-            // Tabla de productos
             PdfPTable table = new PdfPTable(4);
             table.setWidthPercentage(100);
             table.setWidths(new float[]{3f, 1f, 1.5f, 1.5f});
@@ -409,7 +403,6 @@ public Venta procesarVenta(Venta venta) {
             document.add(table);
             document.add(new Paragraph(" "));
             
-            // Línea separadora
             PdfPTable separator2 = new PdfPTable(1);
             separator2.setWidthPercentage(100);
             PdfPCell sepCell2 = new PdfPCell();
@@ -421,7 +414,6 @@ public Venta procesarVenta(Venta venta) {
             document.add(separator2);
             document.add(new Paragraph(" "));
             
-            // ===== TOTALES =====
             Paragraph subtotalPara = new Paragraph("Subtotal: S/ " + venta.getSubtotal(), normalFont);
             subtotalPara.setAlignment(Element.ALIGN_RIGHT);
             document.add(subtotalPara);
@@ -436,19 +428,17 @@ public Venta procesarVenta(Venta venta) {
             
             document.add(new Paragraph(" "));
             
-            // Estado
-            Paragraph estadoPara = new Paragraph("✅ PAGADO", estadoFont);
+            Paragraph estadoPara = new Paragraph(" PAGADO", estadoFont);
             estadoPara.setAlignment(Element.ALIGN_CENTER);
             document.add(estadoPara);
             
             document.add(new Paragraph(" "));
             
-            // Footer
             Paragraph footer = new Paragraph("¡Gracias por su compra!", normalFont);
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
             
-            Paragraph footer2 = new Paragraph("Pet Clinic - Cuidando a tu mejor amigo 🐾", footerFont);
+            Paragraph footer2 = new Paragraph("Pet Clinic - Cuidando a tu mejor amigo ", footerFont);
             footer2.setAlignment(Element.ALIGN_CENTER);
             document.add(footer2);
             
