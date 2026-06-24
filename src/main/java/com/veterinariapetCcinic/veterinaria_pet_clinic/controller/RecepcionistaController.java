@@ -435,10 +435,11 @@ public class RecepcionistaController {
     // ============ GESTIÓN DE AGENDA ============
 
     @GetMapping("/agenda")
-    public String verAgenda(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
-            Model model) {
-        log.info("==> Entrando a verAgenda con fecha: {}", fecha);
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)  
+        public String verAgenda(
+                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                Model model) {
+            log.info("==> Entrando a verAgenda con fecha: {}", fecha);
 
         // Atributos para el fragmento
         String username = getNombreUsuario();
@@ -458,37 +459,54 @@ public class RecepcionistaController {
 
         try {
             List<Cita> citasDelDia = citaService.obtenerCitasDelDia(fecha);
+            if (citasDelDia == null) {
+                citasDelDia = new ArrayList<>();
+            }
 
             for (Cita c : citasDelDia) {
+                if (c == null) {
+                    continue;
+                }
+
                 if (c.getMascota() != null) {
                     c.getMascota().getNombre();
                     c.getMascota().getEspecie();
+
                     if (c.getMascota().getCliente() != null) {
                         c.getMascota().getCliente().getNombre();
                         c.getMascota().getCliente().getTelefono();
                     }
                 }
+
                 if (c.getVeterinario() != null) {
                     c.getVeterinario().getNombre();
                 }
-                c.getObservaciones();
-                c.getMotivo();
 
-                // 🔥 CRÍTICO: evitar nulls que rompen la vista
+                // Forzar defaults para que Thymeleaf no choque con nulls
                 if (c.getFechaHora() == null) {
                     log.warn("Cita ID {} tiene fechaHora null, se asignará now()", c.getId());
                     c.setFechaHora(LocalDateTime.now());
                 }
+
                 if (c.getEstado() == null) {
                     log.warn("Cita ID {} tiene estado null, se asignará 'AGENDADA'", c.getId());
                     c.setEstado("AGENDADA");
                 }
+
                 if (c.getMotivo() == null) {
                     c.setMotivo("");
                 }
+
+                if (c.getObservaciones() == null) {
+                    c.setObservaciones("");
+                }
+
+                // tocar getters para inicializar relaciones (si aplica)
+                c.getMotivo();
+                c.getObservaciones();
             }
 
-            model.addAttribute("citas", citasDelDia != null ? citasDelDia : new ArrayList<>());
+            model.addAttribute("citas", citasDelDia);
         } catch (Exception e) {
             log.error("Error al obtener citas", e);
             model.addAttribute("citas", new ArrayList<>());

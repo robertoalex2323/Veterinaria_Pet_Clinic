@@ -102,11 +102,46 @@ public class CitaService {
         return citaRepository.findAll();
     }
     
+    @Transactional(readOnly = true)
     public List<Cita> obtenerCitasDelDia(LocalDate fecha) {
         LocalDateTime inicio = fecha.atStartOfDay();
         LocalDateTime fin = fecha.atTime(LocalTime.MAX);
-        // Usar query con JOIN FETCH para evitar LazyInitializationException al renderizar la vista
-        return citaRepository.findCitasDelDiaConDatos(inicio, fin);
+        
+        List<Cita> citas = citaRepository.findByFechaHoraBetween(inicio, fin);
+        
+        for (Cita cita : citas) {
+            // Inicializar mascota y sus relaciones
+            if (cita.getMascota() != null) {
+                cita.getMascota().getNombre();
+                cita.getMascota().getEspecie();
+                cita.getMascota().getRaza();
+                
+                // Inicializar cliente
+                if (cita.getMascota().getCliente() != null) {
+                    cita.getMascota().getCliente().getNombre();
+                    cita.getMascota().getCliente().getTelefono();
+                    cita.getMascota().getCliente().getEmail();
+                }
+            }
+            
+            // Inicializar veterinario
+            if (cita.getVeterinario() != null) {
+                cita.getVeterinario().getNombre();
+                cita.getVeterinario().getEmail();
+            }
+            
+            // Inicializar otros campos
+            cita.getMotivo();
+            cita.getEstado();
+            if (cita.getObservaciones() == null) {
+                cita.setObservaciones("");
+            }
+            if (cita.getMotivo() == null) {
+                cita.setMotivo("");
+            }
+        }
+        
+        return citas;
     }
 
     

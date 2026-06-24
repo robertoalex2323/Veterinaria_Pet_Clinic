@@ -5,10 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextMonthBtn = document.getElementById('nextMonth');
     const selectedDateInput = document.getElementById('selectedDate');
 
-    let currentDate = new Date(selectedDateInput.value + 'T12:00:00');
+    const rawDate = selectedDateInput ? selectedDateInput.value : '';
+    let currentDate = rawDate ? new Date(rawDate + 'T12:00:00') : new Date();
     if (isNaN(currentDate.getTime())) {
         currentDate = new Date();
-    }
+}
 
     let currentMonth = currentDate.getMonth();
     let currentYear = currentDate.getFullYear();

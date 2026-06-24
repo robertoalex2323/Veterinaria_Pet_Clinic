@@ -83,18 +83,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // 2. Recuperar pendientes del servidor (por ejemplo, después de refrescar por cancelar una cita)
-    const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/agenda/api/ui-notifications';
+         // 2. Recuperar pendientes del servidor 
+        const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/api/ui-notifications';
 
-    // Importante: no queremos que un fallo del endpoint rompa el render de la página.
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // ✅ un poco más de margen
 
-    fetch(apiUrl, { method: 'GET', cache: 'no-store', signal: controller.signal })
-        .then(res => {
-            if (!res.ok) throw new Error("Error al obtener notificaciones: " + res.status);
-            return res.json();
-        })
+        fetch(apiUrl, { method: 'GET', cache: 'no-store', signal: controller.signal })
+            .then(res => {
+                if (!res.ok) return [];  // ✅ No lanzar excepción, retornar vacío silenciosamente
+                return res.json();
+            })
         .then(data => {
             if (Array.isArray(data) && data.length > 0) {
                 data.forEach(notif => handleNewNotif(notif, true));

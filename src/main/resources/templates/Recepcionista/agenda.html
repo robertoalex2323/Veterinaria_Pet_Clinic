@@ -60,22 +60,20 @@
 
                 <div class="schedule-list">
                     <!-- ====== CITAS ====== -->
-            <div th:each="cita : ${citas}"
-                class="agenda-cita-card"
-                th:with="citaClass=${cita.estado != null && cita.estado == 'CANCELADA'} ? 'cita-cancelada' : (cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')) ? 'cita-vacunacion' : (cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')) ? 'cita-emergencia' : 'cita-consulta-general'"
-                th:classappend="${citaClass}">
+                    <div th:each="cita : ${citas}"
+                         class="agenda-cita-card"
+                         th:classappend="${cita.estado != null and cita.estado == 'CANCELADA'} ? 'cita-cancelada' : (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')} ? 'cita-vacunacion' : (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')} ? 'cita-emergencia' : 'cita-consulta-general'))">
 
-                <div class="cita-time">
-                    <i class="far fa-clock"></i>
-                    <strong th:text="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'HH:mm') : '--:--'}">10:00</strong>
-                    <span class="badge ms-2"
-                        th:with="badgeClass=${cita.estado != null && cita.estado == 'CANCELADA'} ? 'cita-cancelada-badge' : (cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')) ? 'cita-vacunacion-badge' : (cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')) ? 'cita-emergencia-badge' : 'cita-consulta-general-badge'"
-                        th:classappend="${badgeClass}"
-                        th:text="${cita.estado != null ? cita.estado : 'DESCONOCIDO'}"
-                        style="font-size: 0.6rem;">ESTADO</span>
-                </div>
+                        <div class="cita-time">
+                            <i class="far fa-clock"></i>
+                            <strong th:text="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'HH:mm') : '--:--'}">10:00</strong>
+                            <span class="badge ms-2"
+                                  th:classappend="${cita.estado != null and cita.estado == 'CANCELADA'} ? 'cita-cancelada-badge' : (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')} ? 'cita-vacunacion-badge' : (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')} ? 'cita-emergencia-badge' : 'cita-consulta-general-badge'))"
+                                  th:text="${cita.estado != null ? cita.estado : 'DESCONOCIDO'}"
+                                  style="font-size: 0.6rem;">ESTADO</span>
+                        </div>
 
-                        <!-- Botón Registrar Pago (autocompleta cita + mascota + fecha) -->
+                        <!-- Botón Registrar Pago (solo si está AGENDADA) -->
                         <div class="mt-2 text-end" th:if="${cita.estado != null and cita.estado == 'AGENDADA'}">
                             <button type="button"
                                     class="btn btn-sm btn-success"
@@ -96,7 +94,7 @@
                             <p class="mb-1"><strong>Dueño:</strong>
                                 <span th:text="${(cita.mascota != null and cita.mascota.cliente != null) ? cita.mascota.cliente.nombre : 'Sin dueño'}"></span>
                             </p>
-                            <p th:if="${cita.motivo != null and !cita.motivo.empty}" class="mb-0 small text-muted">
+                            <p th:if="${cita.motivo != null and !#strings.isEmpty(cita.motivo)}" class="mb-0 small text-muted">
                                 <i class="fas fa-stethoscope text-primary opacity-50"></i>
                                 <span th:text="${cita.motivo}">Revisión</span>
                             </p>
