@@ -49,15 +49,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Autocompletar info de cita desde la Agenda (botón “Pagar esta cita”)
+    // Nota: La pantalla de pago-form.html NO tiene #modalPago, así que este bloque no debe ejecutarse allí.
     const modalPago = document.getElementById('modalPago');
     if (modalPago) {
         modalPago.addEventListener('show.bs.modal', function (event) {
+
             const button = event.relatedTarget;
             if (!button) return;
 
             const citaId = button.getAttribute('data-cita-id');
             const citaFecha = button.getAttribute('data-cita-fecha');
             const citaMascota = button.getAttribute('data-cita-mascota');
+            // Cita no tiene monto en el modelo actual; el monto se ingresa manualmente.
+
 
             const citaIdInput = document.querySelector('input[name="citaId"]');
             const citaIdLabel = document.getElementById('citaIdLabel');

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,17 @@ public class RecepcionistaController {
 
     private static final Logger log = LoggerFactory.getLogger(RecepcionistaController.class);
 
+    // Regex para validación de formato de correo electrónico
+    private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
+
+    // Regex para validación de teléfono (solo dígitos)
+    private static final String PHONE_REGEX = "^[0-9]+$";
+    private static final Pattern PHONE_PATTERN = Pattern.compile(PHONE_REGEX);
+    
+    // Longitud mínima para el teléfono
+    private static final int MIN_PHONE_LENGTH = 9;
+
     private final ClienteService clienteService;
     private final MascotaService mascotaService;
     private final CitaService citaService;
@@ -71,6 +83,40 @@ public class RecepcionistaController {
     private String getNombreUsuario() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? auth.getName() : "Recepcionista";
+    }
+
+    /**
+     * Valida el formato de un correo electrónico
+     * @param email Correo a validar
+     * @return true si el formato es válido, false en caso contrario
+     */
+    private boolean isValidEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+        return EMAIL_PATTERN.matcher(email.trim()).matches();
+    }
+
+    /**
+     * Valida el formato de un número de teléfono
+     * @param telefono Teléfono a validar
+     * @return true si el formato es válido, false en caso contrario
+     */
+    private boolean isValidPhone(String telefono) {
+        // Validar que no sea null o vacío
+        if (telefono == null || telefono.trim().isEmpty()) {
+            return false;
+        }
+        
+        String phoneTrimmed = telefono.trim();
+        
+        // Validar que solo contenga números
+        if (!PHONE_PATTERN.matcher(phoneTrimmed).matches()) {
+            return false;
+        }
+        
+        // Validar longitud mínima
+        return phoneTrimmed.length() >= MIN_PHONE_LENGTH;
     }
 
     // ============ DASHBOARD ============
@@ -147,7 +193,44 @@ public class RecepcionistaController {
     @PostMapping("/clientes/guardar")
     public String guardarCliente(@ModelAttribute Cliente cliente, RedirectAttributes redirectAttributes) {
         try {
+            // ===== VALIDACIÓN DE EMAIL =====
+            if (cliente.getEmail() != null && !cliente.getEmail().isEmpty()) {
+                if (!isValidEmail(cliente.getEmail())) {
+                    log.warn("Intento de guardar cliente con email inválido: {}", cliente.getEmail());
+                    redirectAttributes.addFlashAttribute("error", "Formato de correo electrónico inválido. Por favor, ingrese un email válido.");
+                    return "redirect:/recepcionista/clientes/nuevo";
+                }
+            }
+            
+            // ===== VALIDACIÓN DE TELÉFONO =====
+            String telefono = cliente.getTelefono();
+            
+            // Validar que el teléfono no esté vacío
+            if (telefono == null || telefono.trim().isEmpty()) {
+                log.warn("Intento de guardar cliente sin teléfono");
+                redirectAttributes.addFlashAttribute("error", "El teléfono no puede estar vacío.");
+                return "redirect:/recepcionista/clientes/nuevo";
+            }
+            
+            // Validar que solo contenga números
+            if (!isValidPhone(telefono)) {
+                String telefonoTrimmed = telefono.trim();
+                // Determinar el mensaje de error específico
+                if (!PHONE_PATTERN.matcher(telefonoTrimmed).matches()) {
+                    log.warn("Intento de guardar cliente con teléfono que contiene caracteres no numéricos: {}", telefono);
+                    redirectAttributes.addFlashAttribute("error", "El teléfono solo debe contener números.");
+                    return "redirect:/recepcionista/clientes/nuevo";
+                }
+                if (telefonoTrimmed.length() < MIN_PHONE_LENGTH) {
+                    log.warn("Intento de guardar cliente con teléfono muy corto ({} dígitos): {}", telefonoTrimmed.length(), telefono);
+                    redirectAttributes.addFlashAttribute("error", "El teléfono debe tener al menos " + MIN_PHONE_LENGTH + " dígitos.");
+                    return "redirect:/recepcionista/clientes/nuevo";
+                }
+            }
+            
+            // Si todas las validaciones pasan, guardar el cliente
             clienteService.guardar(cliente);
+            log.info("Cliente guardado exitosamente con teléfono: {}", cliente.getTelefono());
             redirectAttributes.addFlashAttribute("success", "Cliente guardado exitosamente");
         } catch (Exception e) {
             log.error("Error al guardar cliente: {}", e.getMessage(), e);
@@ -174,8 +257,45 @@ public class RecepcionistaController {
     public String actualizarCliente(@PathVariable Long id, @ModelAttribute Cliente cliente,
             RedirectAttributes redirectAttributes) {
         try {
+            // ===== VALIDACIÓN DE EMAIL =====
+            if (cliente.getEmail() != null && !cliente.getEmail().isEmpty()) {
+                if (!isValidEmail(cliente.getEmail())) {
+                    log.warn("Intento de actualizar cliente con email inválido: {}", cliente.getEmail());
+                    redirectAttributes.addFlashAttribute("error", "Formato de correo electrónico inválido. Por favor, ingrese un email válido.");
+                    return "redirect:/recepcionista/clientes/editar/" + id;
+                }
+            }
+            
+            // ===== VALIDACIÓN DE TELÉFONO =====
+            String telefono = cliente.getTelefono();
+            
+            // Validar que el teléfono no esté vacío
+            if (telefono == null || telefono.trim().isEmpty()) {
+                log.warn("Intento de actualizar cliente sin teléfono");
+                redirectAttributes.addFlashAttribute("error", "El teléfono no puede estar vacío.");
+                return "redirect:/recepcionista/clientes/editar/" + id;
+            }
+            
+            // Validar que solo contenga números
+            if (!isValidPhone(telefono)) {
+                String telefonoTrimmed = telefono.trim();
+                // Determinar el mensaje de error específico
+                if (!PHONE_PATTERN.matcher(telefonoTrimmed).matches()) {
+                    log.warn("Intento de actualizar cliente con teléfono que contiene caracteres no numéricos: {}", telefono);
+                    redirectAttributes.addFlashAttribute("error", "El teléfono solo debe contener números.");
+                    return "redirect:/recepcionista/clientes/editar/" + id;
+                }
+                if (telefonoTrimmed.length() < MIN_PHONE_LENGTH) {
+                    log.warn("Intento de actualizar cliente con teléfono muy corto ({} dígitos): {}", telefonoTrimmed.length(), telefono);
+                    redirectAttributes.addFlashAttribute("error", "El teléfono debe tener al menos " + MIN_PHONE_LENGTH + " dígitos.");
+                    return "redirect:/recepcionista/clientes/editar/" + id;
+                }
+            }
+            
+            // Si todas las validaciones pasan, actualizar el cliente
             cliente.setId(id);
             clienteService.actualizar(cliente);
+            log.info("Cliente actualizado exitosamente con teléfono: {}", cliente.getTelefono());
             redirectAttributes.addFlashAttribute("success", "Cliente actualizado exitosamente");
         } catch (Exception e) {
             log.error("Error al actualizar cliente {}: {}", id, e.getMessage(), e);
@@ -323,8 +443,8 @@ public class RecepcionistaController {
             @RequestParam String hora,
             @RequestParam(required = false) Long veterinarioId,
             @RequestParam(required = false) String motivo,
-            @RequestParam(required = false) Long reprogramarDesdeId,          // ← nuevo
-            @RequestParam(required = false) String motivoReprogramacion,      // ← nuevo
+            @RequestParam(required = false) Long reprogramarDesdeId,
+            @RequestParam(required = false) String motivoReprogramacion,
             RedirectAttributes redirectAttributes) {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -374,7 +494,7 @@ public class RecepcionistaController {
         }
         return "redirect:/recepcionista/citas";
     }
-    
+
     @GetMapping("/citas/editar/{id}")
     public String editarCitaForm(@PathVariable Long id, Model model) {
         model.addAttribute("nombreUsuario", getNombreUsuario());
@@ -432,14 +552,14 @@ public class RecepcionistaController {
         }
         return "redirect:/recepcionista/citas";
     }
-    // ============ GESTIÓN DE AGENDA ============
 
+    // ============ GESTIÓN DE AGENDA ============
     @GetMapping("/agenda")
-        @org.springframework.transaction.annotation.Transactional(readOnly = true)  
-        public String verAgenda(
-                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
-                Model model) {
-            log.info("==> Entrando a verAgenda con fecha: {}", fecha);
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public String verAgenda(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+            Model model) {
+        log.info("==> Entrando a verAgenda con fecha: {}", fecha);
 
         // Atributos para el fragmento
         String username = getNombreUsuario();
@@ -516,6 +636,7 @@ public class RecepcionistaController {
         log.info("<== Saliendo de verAgenda");
         return "Recepcionista/agenda";
     }
+
     // ============ GESTIÓN DE PAGOS ============
     @GetMapping("/pagos")
     public String listarPagos(Model model) {
@@ -632,29 +753,72 @@ public class RecepcionistaController {
             @RequestParam(required = false) String newPassword,
             RedirectAttributes redirectAttributes) {
         String username = getNombreUsuario();
+        
         try {
+            // ===== VALIDACIONES DE EMAIL =====
+            // 1. Validar que el email no esté vacío
+            if (email == null || email.trim().isEmpty()) {
+                log.warn("Intento de actualizar perfil con email vacío para usuario: {}", username);
+                redirectAttributes.addFlashAttribute("error", "El correo electrónico no puede estar vacío. Por favor, ingrese un email válido.");
+                return "redirect:/recepcionista/perfil";
+            }
+
+            // 2. Validar formato del email usando regex
+            if (!isValidEmail(email)) {
+                log.warn("Intento de actualizar perfil con email inválido: {} para usuario: {}", email, username);
+                redirectAttributes.addFlashAttribute("error", "Formato de correo electrónico inválido. Por favor, ingrese un email válido (ejemplo: usuario@dominio.com).");
+                return "redirect:/recepcionista/perfil";
+            }
+
+            // 3. Obtener el usuario actual
             Usuario usuario = usuarioRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-            usuario.setNombre(nombre);
-            usuario.setEmail(email);
+            // 4. Verificar que el email no esté siendo usado por otro usuario
+            usuarioRepository.findByEmail(email.trim()).ifPresent(existingUser -> {
+                if (!existingUser.getId().equals(usuario.getId())) {
+                    throw new RuntimeException("El correo electrónico '" + email.trim() + "' ya está registrado por otro usuario.");
+                }
+            });
 
+            // 5. Actualizar datos del usuario
+            usuario.setNombre(nombre);
+            usuario.setEmail(email.trim());
+
+            // 6. Cambio de contraseña (si se proporciona)
             if (newPassword != null && !newPassword.trim().isEmpty()) {
+                // Validar longitud mínima de contraseña
+                if (newPassword.length() < 6) {
+                    throw new RuntimeException("La nueva contraseña debe tener al menos 6 caracteres.");
+                }
+                
                 if (currentPassword == null || !passwordEncoder.matches(currentPassword, usuario.getPassword())) {
                     throw new RuntimeException("La contraseña actual es incorrecta.");
                 }
                 usuario.setPassword(passwordEncoder.encode(newPassword));
+                log.info("Contraseña actualizada para usuario: {}", username);
             }
 
+            // 7. Guardar cambios
             usuarioRepository.save(usuario);
+            log.info("Perfil actualizado exitosamente para usuario: {} con email: {}", username, email.trim());
             redirectAttributes.addFlashAttribute("success", "Perfil actualizado correctamente");
+            
         } catch (Exception e) {
-            log.error("Error al actualizar perfil: {}", e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("error", "Error al actualizar perfil: " + e.getMessage());
+            log.error("Error al actualizar perfil para usuario {}: {}", username, e.getMessage(), e);
+            String errorMessage = e.getMessage();
+            if (errorMessage.contains("ya está registrado")) {
+                redirectAttributes.addFlashAttribute("error", errorMessage);
+            } else if (errorMessage.contains("contraseña")) {
+                redirectAttributes.addFlashAttribute("error", "Error de seguridad: " + errorMessage);
+            } else if (errorMessage.contains("formato")) {
+                redirectAttributes.addFlashAttribute("error", errorMessage);
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Error al actualizar el perfil. Por favor, verifique los datos ingresados.");
+            }
         }
         return "redirect:/recepcionista/perfil";
     }
-    
 
     // ============ MACHINE LEARNING ============
     @GetMapping("/diagnostico")
@@ -664,4 +828,4 @@ public class RecepcionistaController {
         model.addAttribute("mascotas", mascotas != null ? mascotas : new ArrayList<>());
         return "Recepcionista/diagnostico";
     }
-}    
+}
