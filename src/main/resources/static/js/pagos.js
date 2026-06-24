@@ -48,19 +48,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Autocompletar info de cita desde la Agenda (botón “Pagar esta cita”)
+    // Si abres el formulario desde una cita, validamos que no esté pagada (protección extra frontend)
+    // (se usa también para el input manual de citaId)
+function mostrarModalYaPagada(mensaje) {
+        // Si existe modal bootstrap usamos el primero con id=modalInfo (si tu layout lo tiene), si no usamos alert
+        const modal = document.getElementById('modalInfo');
+        if (modal && window.bootstrap) {
+            const body = modal.querySelector('.modal-body');
+            if (body) body.textContent = mensaje;
+            const instance = window.bootstrap.Modal.getOrCreateInstance(modal);
+            instance.show();
+            return;
+        }
+        alert(mensaje);
+    }
+
+
+    function validarCitaPagadaYDesbloquearUI(citaId) {
+        if (!citaId || parseInt(citaId) <= 0) return Promise.resolve(false);
+        return fetch(`/recepcionista/pagos/estado-cita/${citaId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.ok && data.pagada) {
+                    mostrarModalYaPagada('Usted ya ha pagado esta cita.');
+                    return true;
+                }
+                return false;
+            })
+            .catch(() => false);
+    }
+
+    // Si existe modalPago en esta página, dejamos la lógica anterior intacta
     const modalPago = document.getElementById('modalPago');
     if (modalPago) {
         modalPago.addEventListener('show.bs.modal', function (event) {
-
             const button = event.relatedTarget;
             if (!button) return;
-
             const citaId = button.getAttribute('data-cita-id');
             const citaFecha = button.getAttribute('data-cita-fecha');
             const citaMascota = button.getAttribute('data-cita-mascota');
-            // Cita no tiene monto en el modelo actual; el monto se ingresa manualmente.
-
 
             const citaIdInput = document.querySelector('input[name="citaId"]');
             const citaIdLabel = document.getElementById('citaIdLabel');
@@ -68,16 +94,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const citaMascotaEl = document.getElementById('citaMascota');
             const citaEstadoBadge = document.getElementById('citaEstadoBadge');
 
-            if (citaIdInput && citaId) {
-                citaIdInput.value = citaId;
-            }
-
+            if (citaIdInput && citaId) citaIdInput.value = citaId;
             if (citaIdLabel) citaIdLabel.textContent = citaId ? citaId : '-';
             if (citaFechaHora) citaFechaHora.textContent = citaFecha ? citaFecha : '-';
             if (citaMascotaEl) citaMascotaEl.textContent = citaMascota ? citaMascota : '-';
             if (citaEstadoBadge) citaEstadoBadge.textContent = citaId ? 'Cita seleccionada' : 'Sin asignar';
+
+            // Bloquear abrir si está pagada
+            if (citaId) {
+                validarCitaPagadaYDesbloquearUI(citaId).then(pagada => {
+                    if (pagada && window.bootstrap) {
+                        // Cierra el modal si se llegó a abrir
+                        const instance = window.bootstrap.Modal.getOrCreateInstance(modalPago);
+                        instance.hide();
+                    }
+                });
+            }
         });
     }
+
 
     // Lógica para campos dinámicos de Método de Pago
     const metodoPagoSelect = document.getElementById('metodoPago');

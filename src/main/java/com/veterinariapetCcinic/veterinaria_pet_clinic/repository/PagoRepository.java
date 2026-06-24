@@ -18,6 +18,11 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     List<Pago> findByClienteId(Long clienteId);
     
     List<Pago> findByMetodoPago(String metodoPago);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Pago p WHERE p.cita.id = :citaId AND p.estado = 'PAGADO'")
+    boolean existsPagoPagadoPorCita(@Param("citaId") Long citaId);
+
+
     
     @Query("SELECT p FROM Pago p WHERE p.fechaPago BETWEEN :inicio AND :fin")
     List<Pago> findPagosByFechaRange(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);

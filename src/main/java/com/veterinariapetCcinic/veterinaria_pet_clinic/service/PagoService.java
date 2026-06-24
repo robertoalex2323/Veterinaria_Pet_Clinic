@@ -68,6 +68,14 @@ public class PagoService {
         return pagoRepository.countByEstado("PENDIENTE");
     }
 
+    public boolean estaPagadaLaCita(Long citaId) {
+        if (citaId == null) {
+            return false;
+        }
+        return pagoRepository.existsPagoPagadoPorCita(citaId);
+    }
+
+
     /**
      * Obtiene el comprobante máximo con prefijo PET2026- (ej: PET2026-00001).
      */

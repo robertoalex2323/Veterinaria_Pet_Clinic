@@ -670,13 +670,18 @@ public class RecepcionistaController {
     }
 
     @GetMapping("/pagos/nuevo")
-    public String nuevoPagoForm(@RequestParam(required = false) Long citaId, Model model) {
+    public String nuevoPagoForm(@RequestParam(required = false) Long citaId, Model model, RedirectAttributes redirectAttributes) {
         model.addAttribute("nombreUsuario", getNombreUsuario());
         model.addAttribute("pago", new Pago());
         model.addAttribute("clientes", clienteService.listarTodos());
 
         if (citaId != null) {
             try {
+                if (pagoService.estaPagadaLaCita(citaId)) {
+                    redirectAttributes.addFlashAttribute("error", "Usted ya ha pagado esta cita. No se puede registrar otro pago.");
+                    return "redirect:/recepcionista/citas";
+                }
+
                 Cita cita = citaService.buscarPorId(citaId);
                 model.addAttribute("citaPreId", citaId);
                 model.addAttribute("citaPreMascota",
@@ -701,9 +706,26 @@ public class RecepcionistaController {
         return "Recepcionista/pago-form";
     }
 
+
+    @GetMapping("/pagos/estado-cita/{citaId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> estadoCitaPagada(@PathVariable Long citaId) {
+        Map<String, Object> resp = new HashMap<>();
+        try {
+            boolean pagada = pagoService.estaPagadaLaCita(citaId);
+            resp.put("ok", true);
+            resp.put("pagada", pagada);
+        } catch (Exception e) {
+            resp.put("ok", false);
+            resp.put("error", e.getMessage());
+        }
+        return ResponseEntity.ok(resp);
+    }
+
     @GetMapping("/pagos/info-cita/{citaId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> infoCita(@PathVariable Long citaId) {
+
         Map<String, Object> info = new HashMap<>();
         try {
             Cita cita = citaService.buscarPorId(citaId);
@@ -726,16 +748,24 @@ public class RecepcionistaController {
         return ResponseEntity.ok(info);
     }
   
-   @PostMapping("/pagos/guardar")
+    @PostMapping("/pagos/guardar")
     public String guardarPago(@RequestParam Long clienteId,
             @RequestParam Double monto,
             @RequestParam String metodoPago,
             @RequestParam(required = false) Long citaId,
             RedirectAttributes redirectAttributes) {
         try {
+            if (citaId != null && citaId > 0) {
+                if (pagoService.estaPagadaLaCita(citaId)) {
+                    redirectAttributes.addFlashAttribute("error", "Usted ya ha pagado esta cita. No se puede registrar otro pago.");
+                    return "redirect:/recepcionista/citas";
+                }
+            }
+
             Cliente cliente = clienteService.buscarPorId(clienteId);
 
             Pago pago = new Pago();
+
             pago.setCliente(cliente);
             pago.setMonto(monto);
             pago.setMetodoPago(metodoPago);
