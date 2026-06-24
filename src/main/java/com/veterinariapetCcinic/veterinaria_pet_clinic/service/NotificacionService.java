@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -72,12 +71,22 @@ public class NotificacionService {
 
     public void enviarConfirmacionCita(Cita cita) {
         String mensaje = String.format("""
-                ✅ Su cita ha sido agendada exitosamente.
-                📅 Fecha: %s
-                🐕 Mascota: %s
-                🏥 Motivo: %s
+                Hola %s,
 
-                Gracias por confiar en nosotros.""",
+                Hemos agendado su cita exitosamente en Pet Clinic.
+
+                Fecha: %s
+                Mascota: %s
+                Motivo: %s
+
+                Si necesita modificar o cancelar su cita, contáctenos por este medio.
+
+                Atentamente,
+                Veterinaria Pet Clinic
+                """,
+                cita.getMascota().getCliente() != null && cita.getMascota().getCliente().getNombre() != null
+                        ? cita.getMascota().getCliente().getNombre().trim()
+                        : "Cliente",
                 cita.getFechaHora().format(FORMATTER),
                 cita.getMascota().getNombre(),
                 cita.getMotivo());
@@ -134,26 +143,65 @@ public class NotificacionService {
     }
 
     private void enviarEmail(String email, String asunto, String mensaje) {
-        if (email != null && !email.trim().isEmpty() && mailSender != null) {
-            try {
-                SimpleMailMessage mailMessage = new SimpleMailMessage();
-                mailMessage.setTo(email);
-                mailMessage.setSubject(asunto);
-                mailMessage.setText(mensaje);
-                mailSender.send(mailMessage);
-                log.info("✅ Correo enviado a: {}", email);
-            } catch (Exception e) {
-                log.error("❌ Error al enviar correo a {}: {}", email, e.getMessage());
+        if (email == null || email.trim().isEmpty()) {
+            log.warn("⚠️ Cliente sin email registrado");
+            return;
+        }
+        if (mailSender == null) {
+            log.warn("⚠️ Servicio de correo no configurado");
+            return;
+        }
+
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(email);
+            helper.setSubject(asunto);
+
+            // Convertir el mensaje (texto plano) a HTML y agregar logo embebido.
+            String safeText = mensaje == null ? "" : mensaje
+                    .replace("&", "&amp;")
+                    .replace("<", "<")
+                    .replace(">", ">")
+                    .replace("\r\n", "\n")
+                    .replace("\r", "\n")
+                    .replace("\n", "<br/>");
+
+            String html = """
+                <div style='font-family: Arial, Helvetica, sans-serif; color:#1f2937;'>
+                  <div style='text-align:center; margin-bottom:18px;'>
+                    <img src='cid:logoPetClinic' style='max-width:160px;' alt='Pet Clinic'/>
+                  </div>
+                  <div style='white-space:normal; font-size:14px; line-height:1.5;'>
+                    %s
+                  </div>
+                  <div style='margin-top:20px; font-size:12px; color:#6b7280;'>
+                    Veterinaria Pet Clinic
+                  </div>
+                </div>
+            """.formatted(safeText);
+
+            helper.setText(html, true);
+
+            // Adjuntar el logo embebido por CID
+            try (java.io.InputStream is = getClass().getClassLoader()
+                    .getResourceAsStream("static/Imagen/Iconos/logo.png")) {
+                if (is != null) {
+                    byte[] bytes = is.readAllBytes();
+                    helper.addInline("logoPetClinic", new ByteArrayResource(bytes), "image/png");
+                } else {
+                    log.warn("No se encontró el logo para el correo (static/Imagen/Iconos/logo.png)");
+                }
             }
-        } else {
-            if (email == null || email.trim().isEmpty()) {
-                log.warn("⚠️ Cliente sin email registrado");
-            }
-            if (mailSender == null) {
-                log.warn("⚠️ Servicio de correo no configurado");
-            }
+
+            mailSender.send(mimeMessage);
+            log.info("✅ Correo enviado a: {}", email);
+        } catch (Exception e) {
+            log.error("❌ Error al enviar correo a {}: {}", email, e.getMessage());
         }
     }
+
 
     public void enviarEmailConAdjunto(String email, String asunto, String mensaje, byte[] adjunto, String nombreArchivo) {
         if (email != null && !email.trim().isEmpty() && mailSender != null) {
@@ -279,17 +327,32 @@ public class NotificacionService {
     }
 
     public void enviarConfirmacionPago(Cliente cliente, Double monto, String metodoPago) {
+        String nombreCliente = (cliente.getNombre() != null && !cliente.getNombre().trim().isEmpty())
+                ? cliente.getNombre().trim()
+                : "Cliente";
+
+        String email = cliente.getEmail();
+        String metodo = (metodoPago != null && !metodoPago.trim().isEmpty()) ? metodoPago.trim() : "No especificado";
+        double montoSafe = (monto != null) ? monto : 0.0;
+
         String mensaje = String.format("""
-                💰 PAGO REGISTRADO
+                Estimado(a) %s,
 
-                Cliente: %s
+                Le informamos que hemos registrado su pago en Pet Clinic.
+
+                Detalle del pago
+                -----------------
                 Monto: S/ %.2f
-                Método: %s
+                Método de pago: %s
 
-                Gracias por su pago.""",
-                cliente.getNombre(),
-                monto,
-                metodoPago);
+                Si tiene alguna consulta, por favor contáctenos.
+
+                Atentamente,
+                Veterinaria Pet Clinic
+                """,
+                nombreCliente,
+                montoSafe,
+                metodo);
         log.info("📧 Confirmación de pago para: {}", cliente.getTelefono());
         log.info("📝 Mensaje:\n{}", mensaje);
 

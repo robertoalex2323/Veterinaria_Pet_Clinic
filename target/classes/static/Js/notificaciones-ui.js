@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
          // 2. Recuperar pendientes del servidor 
-        const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/agenda/api/ui-notifications';
+        const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/api/ui-notifications';
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000); // ✅ un poco más de margen
