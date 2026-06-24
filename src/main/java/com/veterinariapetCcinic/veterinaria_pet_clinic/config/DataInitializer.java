@@ -65,7 +65,7 @@ public class DataInitializer implements CommandLineRunner {
             recep.setActivo(true);
             recep.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(recep);
-            System.out.println("✅ Usuario RECEPCIONISTA creado exitosamente");
+            System.out.println(" Usuario RECEPCIONISTA creado exitosamente");
         }
 
         // 4. VENDEDOR
