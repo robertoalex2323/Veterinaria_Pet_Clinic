@@ -7,6 +7,7 @@ C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\FarmaceuticoController.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\FarmaceuticoNotificationController.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\LoginController.java
+C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\PdfPagoController.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\RecepcionistaAgendaController.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\RecepcionistaController.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\RecepcionistaNotificationController.java
@@ -58,6 +59,7 @@ C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\AlertaCriticaService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\CitaService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\ClienteService.java
+C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\ComprobantePagoPdfService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\ConsultaService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\FarmaceuticoService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\MascotaService.java

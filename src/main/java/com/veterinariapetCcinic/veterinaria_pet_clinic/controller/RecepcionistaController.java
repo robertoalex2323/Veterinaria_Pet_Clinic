@@ -35,6 +35,7 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioReposit
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ClienteService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ComprobantePagoPdfService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PagoService;
@@ -64,6 +65,7 @@ public class RecepcionistaController {
     private final NotificacionService notificacionService;
     private final UsuarioRepository usuarioRepository;
     private final org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
+    private final ComprobantePagoPdfService comprobantePagoPdfService;
 
     // Constructor con inyección de dependencias
     public RecepcionistaController(ClienteService clienteService,
@@ -73,7 +75,11 @@ public class RecepcionistaController {
                                    AgendaService agendaService,
                                    NotificacionService notificacionService,
                                    UsuarioRepository usuarioRepository,
-                                   org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder) {
+                                   org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder,
+                                   ComprobantePagoPdfService comprobantePagoPdfService) {
+        this.comprobantePagoPdfService = comprobantePagoPdfService;
+
+
         this.clienteService = clienteService;
         this.mascotaService = mascotaService;
         this.citaService = citaService;
@@ -735,15 +741,33 @@ public class RecepcionistaController {
             pago.setMetodoPago(metodoPago);
             pago.setEstado("PAGADO");
 
+            // Generar comprobante PET2026-00000X (único por pago)
+            // Nota: se calcula con el máximo comprobante existente y se incrementa.
+            // Si no hay pagos previos, empieza en 1.
+            String ultimoMax = pagoService.obtenerMaxComprobantePet2026();
+            long consecutivo = 1;
+            if (ultimoMax != null && !ultimoMax.isBlank() && ultimoMax.contains("PET2026-")) {
+                try {
+                    String sufijo = ultimoMax.substring("PET2026-".length());
+                    consecutivo = Long.parseLong(sufijo);
+                    consecutivo = consecutivo + 1;
+                } catch (Exception ignore) {
+                    consecutivo = 1;
+                }
+            }
+            String comprobante = String.format("PET2026-%05d", consecutivo);
+            pago.setComprobante(comprobante);
+
             if (citaId != null && citaId > 0) {
                 Cita cita = citaService.buscarPorId(citaId);
-                pago.setCita(cita);          
+                pago.setCita(cita);
                 pagoService.guardar(pago);
             } else {
                 pagoService.guardar(pago);
             }
 
             notificacionService.enviarConfirmacionPago(cliente, monto, metodoPago);
+
             redirectAttributes.addFlashAttribute("success", "Pago registrado exitosamente");
             return "redirect:/recepcionista/pagos/ver/" + pago.getId();
         } catch (Exception e) {
@@ -756,6 +780,11 @@ public class RecepcionistaController {
     @GetMapping("/pagos/ver/{id}")
     public String verDetallePago(@PathVariable Long id, Model model) {
         model.addAttribute("nombreUsuario", getNombreUsuario());
+        // Para mostrar el responsable de atención (rol recepcionista)
+        usuarioRepository.findByUsername(getNombreUsuario())
+                .ifPresent(u -> model.addAttribute("nombreUsuarioCompleto", u.getNombre()));
+
+
         try {
             Pago pago = pagoService.buscarPorId(id);
             model.addAttribute("pago", pago);

@@ -29,4 +29,11 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     Double sumPagosByFechaRange(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
     
     long countByEstado(String estado);
+
+    // Consecutivo para comprobante PET2026-00000X
+    @Query("SELECT p FROM Pago p WHERE p.comprobante LIKE 'PET2026-%' ORDER BY p.fechaPago DESC")
+    List<Pago> findTopByComprobantePet2026();
+
+    @Query("SELECT COALESCE(MAX(p.comprobante), 'PET2026-00000') FROM Pago p WHERE p.comprobante LIKE 'PET2026-%'")
+    String findMaxComprobantePet2026();
 }

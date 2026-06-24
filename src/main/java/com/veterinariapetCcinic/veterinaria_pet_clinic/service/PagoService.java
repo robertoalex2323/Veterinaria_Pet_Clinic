@@ -67,7 +67,14 @@ public class PagoService {
     public long contarPagosPendientes() {
         return pagoRepository.countByEstado("PENDIENTE");
     }
-    
+
+    /**
+     * Obtiene el comprobante máximo con prefijo PET2026- (ej: PET2026-00001).
+     */
+    public String obtenerMaxComprobantePet2026() {
+        return pagoRepository.findMaxComprobantePet2026();
+    }
+
     @Transactional
     public void actualizarEstado(Long id, String nuevoEstado) {
         Pago pago = buscarPorId(id);
