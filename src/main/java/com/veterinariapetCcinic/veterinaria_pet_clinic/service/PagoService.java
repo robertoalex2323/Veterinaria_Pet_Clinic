@@ -27,12 +27,6 @@ public class PagoService {
         return pagoRepository.save(pago);
     }
     
-    @Transactional
-    public Pago registrarPago(Pago pago, Long citaId) {
-        pago.setEstado("PAGADO");
-        return guardar(pago);
-    }
-    
     public Pago buscarPorId(Long id) {
         return pagoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Pago no encontrado con ID: " + id));

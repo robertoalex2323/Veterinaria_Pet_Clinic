@@ -4,12 +4,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
@@ -97,11 +101,6 @@ public class RecepcionistaController {
         return EMAIL_PATTERN.matcher(email.trim()).matches();
     }
 
-    /**
-     * Valida el formato de un número de teléfono
-     * @param telefono Teléfono a validar
-     * @return true si el formato es válido, false en caso contrario
-     */
     private boolean isValidPhone(String telefono) {
         // Validar que no sea null o vacío
         if (telefono == null || telefono.trim().isEmpty()) {
@@ -665,14 +664,63 @@ public class RecepcionistaController {
     }
 
     @GetMapping("/pagos/nuevo")
-    public String nuevoPagoForm(Model model) {
+    public String nuevoPagoForm(@RequestParam(required = false) Long citaId, Model model) {
         model.addAttribute("nombreUsuario", getNombreUsuario());
         model.addAttribute("pago", new Pago());
         model.addAttribute("clientes", clienteService.listarTodos());
+
+        if (citaId != null) {
+            try {
+                Cita cita = citaService.buscarPorId(citaId);
+                model.addAttribute("citaPreId", citaId);
+                model.addAttribute("citaPreMascota",
+                    cita.getMascota() != null ? cita.getMascota().getNombre() : "-");
+                model.addAttribute("citaPreCliente",
+                    cita.getMascota() != null && cita.getMascota().getCliente() != null
+                        ? cita.getMascota().getCliente().getId() : null);
+                model.addAttribute("citaPreFecha",
+                    cita.getFechaHora() != null
+                        ? cita.getFechaHora().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                        : "-");
+                model.addAttribute("citaPreMotivo",
+                    cita.getMotivo() != null ? cita.getMotivo() : "-");
+                model.addAttribute("citaPreEstado", cita.getEstado());
+                if (cita.getPago() != null) {
+                    model.addAttribute("citaPreMonto", cita.getPago().getMonto());
+                }
+            } catch (Exception e) {
+                model.addAttribute("errorCita", "No se encontró la cita con ID: " + citaId);
+            }
+        }
         return "Recepcionista/pago-form";
     }
 
-    @PostMapping("/pagos/guardar")
+    @GetMapping("/pagos/info-cita/{citaId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> infoCita(@PathVariable Long citaId) {
+        Map<String, Object> info = new HashMap<>();
+        try {
+            Cita cita = citaService.buscarPorId(citaId);
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            info.put("mascota", cita.getMascota() != null ? cita.getMascota().getNombre() : "-");
+            info.put("cliente", cita.getMascota() != null && cita.getMascota().getCliente() != null
+                    ? cita.getMascota().getCliente().getNombre() : "-");
+            info.put("fechaHora", cita.getFechaHora() != null ? cita.getFechaHora().format(fmt) : "-");
+            info.put("motivo", cita.getMotivo() != null ? cita.getMotivo() : "-");
+            info.put("estado", cita.getEstado());
+            // Si ya tiene pago vinculado, devuelve el monto
+            if (cita.getPago() != null) {
+                info.put("montoPrevio", cita.getPago().getMonto());
+            }
+            info.put("ok", true);
+        } catch (Exception e) {
+            info.put("ok", false);
+            info.put("error", "Cita no encontrada con ID: " + citaId);
+        }
+        return ResponseEntity.ok(info);
+    }
+  
+   @PostMapping("/pagos/guardar")
     public String guardarPago(@RequestParam Long clienteId,
             @RequestParam Double monto,
             @RequestParam String metodoPago,
@@ -688,13 +736,14 @@ public class RecepcionistaController {
             pago.setEstado("PAGADO");
 
             if (citaId != null && citaId > 0) {
-                pagoService.registrarPago(pago, citaId);
+                Cita cita = citaService.buscarPorId(citaId);
+                pago.setCita(cita);          
+                pagoService.guardar(pago);
             } else {
                 pagoService.guardar(pago);
             }
 
             notificacionService.enviarConfirmacionPago(cliente, monto, metodoPago);
-
             redirectAttributes.addFlashAttribute("success", "Pago registrado exitosamente");
             return "redirect:/recepcionista/pagos/ver/" + pago.getId();
         } catch (Exception e) {

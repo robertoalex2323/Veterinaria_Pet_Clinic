@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Autocompletar info de cita desde la Agenda (botón “Pagar esta cita”)
-    // Nota: La pantalla de pago-form.html NO tiene #modalPago, así que este bloque no debe ejecutarse allí.
     const modalPago = document.getElementById('modalPago');
     if (modalPago) {
         modalPago.addEventListener('show.bs.modal', function (event) {
@@ -140,6 +139,59 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 cardIcon.innerHTML = '<i class="fas fa-credit-card text-muted"></i>';
             }
+        });
+    }
+    // Autocompletar info de cita al escribir el ID manualmente
+    const citaIdInput = document.getElementById('citaIdInput');
+    if (citaIdInput) {
+        let citaTimer = null;
+        citaIdInput.addEventListener('input', function () {
+            clearTimeout(citaTimer);
+            const id = this.value.trim();
+
+            const citaMascotaEl   = document.getElementById('citaMascota');
+            const citaFechaHoraEl = document.getElementById('citaFechaHora');
+            const citaIdLabelEl   = document.getElementById('citaIdLabel');
+            const citaEstadoBadge = document.getElementById('citaEstadoBadge');
+            const montoInput      = document.getElementById('monto');
+
+            if (!id || parseInt(id) <= 0) {
+                if (citaMascotaEl)   citaMascotaEl.textContent   = '-';
+                if (citaFechaHoraEl) citaFechaHoraEl.textContent = '-';
+                if (citaIdLabelEl)   citaIdLabelEl.textContent   = '-';
+                if (citaEstadoBadge) { citaEstadoBadge.textContent = 'Sin asignar'; citaEstadoBadge.className = 'badge bg-light text-muted border'; }
+                return;
+            }
+
+            citaTimer = setTimeout(() => {
+                fetch(`/recepcionista/pagos/info-cita/${id}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.ok) {
+                            if (citaMascotaEl)   citaMascotaEl.textContent   = data.mascota + ' (Dueño: ' + data.cliente + ')';
+                            if (citaFechaHoraEl) citaFechaHoraEl.textContent = data.fechaHora;
+                            if (citaIdLabelEl)   citaIdLabelEl.textContent   = id;
+                            if (citaEstadoBadge) {
+                                citaEstadoBadge.textContent = data.estado;
+                                citaEstadoBadge.className = 'badge border ' +
+                                    (data.estado === 'AGENDADA' ? 'bg-primary text-white' :
+                                    data.estado === 'COMPLETADA' ? 'bg-success text-white' : 'bg-secondary text-white');
+                            }
+                            // Si la cita ya tiene un pago previo, sugerir ese monto
+                            if (data.montoPrevio && montoInput && !montoInput.value) {
+                                montoInput.value = data.montoPrevio;
+                            }
+                        } else {
+                            if (citaMascotaEl)   citaMascotaEl.textContent   = '⚠ ' + data.error;
+                            if (citaFechaHoraEl) citaFechaHoraEl.textContent = '-';
+                            if (citaIdLabelEl)   citaIdLabelEl.textContent   = '-';
+                            if (citaEstadoBadge) { citaEstadoBadge.textContent = 'No encontrada'; citaEstadoBadge.className = 'badge bg-danger text-white'; }
+                        }
+                    })
+                    .catch(() => {
+                        if (citaEstadoBadge) { citaEstadoBadge.textContent = 'Error de conexión'; citaEstadoBadge.className = 'badge bg-warning text-dark'; }
+                    });
+            }, 500); // espera 500ms después de que el usuario deja de escribir
         });
     }
 });
