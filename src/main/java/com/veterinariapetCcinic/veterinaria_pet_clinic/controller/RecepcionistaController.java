@@ -95,11 +95,6 @@ public class RecepcionistaController {
         return auth != null ? auth.getName() : "Recepcionista";
     }
 
-    /**
-     * Valida el formato de un correo electrónico
-     * @param email Correo a validar
-     * @return true si el formato es válido, false en caso contrario
-     */
     private boolean isValidEmail(String email) {
         if (email == null || email.trim().isEmpty()) {
             return false;
@@ -748,11 +743,12 @@ public class RecepcionistaController {
         return ResponseEntity.ok(info);
     }
   
-    @PostMapping("/pagos/guardar")
-    public String guardarPago(@RequestParam Long clienteId,
+   @PostMapping("/pagos/guardar")
+public String guardarPago(@RequestParam Long clienteId,
             @RequestParam Double monto,
             @RequestParam String metodoPago,
             @RequestParam(required = false) Long citaId,
+            @RequestParam(required = false) String numeroComprobanteYape,
             RedirectAttributes redirectAttributes) {
         try {
             if (citaId != null && citaId > 0) {
@@ -761,6 +757,15 @@ public class RecepcionistaController {
                     return "redirect:/recepcionista/citas";
                 }
             }
+
+            // Validación básica por método (Yape/Plin)
+            if ("Yape/Plin".equals(metodoPago)) {
+                if (numeroComprobanteYape == null || numeroComprobanteYape.isBlank()) {
+                    redirectAttributes.addFlashAttribute("error", "El comprobante de Yape/Plin es obligatorio.");
+                    return "redirect:/recepcionista/pagos";
+                }
+            }
+
 
             Cliente cliente = clienteService.buscarPorId(clienteId);
 
@@ -771,9 +776,7 @@ public class RecepcionistaController {
             pago.setMetodoPago(metodoPago);
             pago.setEstado("PAGADO");
 
-            // Generar comprobante PET2026-00000X (único por pago)
-            // Nota: se calcula con el máximo comprobante existente y se incrementa.
-            // Si no hay pagos previos, empieza en 1.
+
             String ultimoMax = pagoService.obtenerMaxComprobantePet2026();
             long consecutivo = 1;
             if (ultimoMax != null && !ultimoMax.isBlank() && ultimoMax.contains("PET2026-")) {
@@ -796,7 +799,31 @@ public class RecepcionistaController {
                 pagoService.guardar(pago);
             }
 
-            notificacionService.enviarConfirmacionPago(cliente, monto, metodoPago);
+            // Enviar confirmación con comprobante PDF adjunto (si el cliente tiene email)
+            String responsable = getNombreUsuario();
+            byte[] pdf = comprobantePagoPdfService.generarComprobantePago(pago, responsable);
+
+            String nombreArchivo = "Comprobante_PetClinic_" + pago.getId() + ".pdf";
+            notificacionService.enviarEmailConAdjunto(
+                    cliente.getEmail(),
+                    "Confirmación de Pago - Pet Clinic",
+                    String.format("""
+                            Estimado(a) %s,
+
+                            Le informamos que hemos registrado su pago.
+
+                            Detalle del pago
+                            -----------------
+                            Monto: S/ %.2f
+                            Método de pago: %s
+
+                            Adjuntamos su comprobante.
+
+                            Atentamente,
+                            Veterinaria Pet Clinic
+                            """, cliente.getNombre(), monto, metodoPago),
+                    pdf,
+                    nombreArchivo);
 
             redirectAttributes.addFlashAttribute("success", "Pago registrado exitosamente");
             return "redirect:/recepcionista/pagos/ver/" + pago.getId();
@@ -806,6 +833,7 @@ public class RecepcionistaController {
             return "redirect:/recepcionista/pagos";
         }
     }
+
 
     @GetMapping("/pagos/ver/{id}")
     public String verDetallePago(@PathVariable Long id, Model model) {

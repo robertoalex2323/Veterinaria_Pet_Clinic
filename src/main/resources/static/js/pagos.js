@@ -44,6 +44,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     e.preventDefault();
                     alert('Por favor, suba el voucher de la transferencia.');
                 }
+            } else if (metodoPago === 'Yape/Plin') {
+                // En Yape/Plin el backend exige numeroComprobanteYape
+                const numeroComprobanteYapeInput = document.getElementById('numeroComprobanteYape');
+                if (!numeroComprobanteYapeInput) {
+                    e.preventDefault();
+                    alert('No se encontró el campo de comprobante Yape/Plin.');
+                    return;
+                }
+
+                // Si no se llenó, pedir al usuario (fallback porque el QR real no retorna valor automáticamente)
+                if (!numeroComprobanteYapeInput.value || numeroComprobanteYapeInput.value.trim().length === 0) {
+                    const val = window.prompt('Ingrese el número de comprobante (Yape/Plin):');
+                    if (!val || val.trim().length === 0) {
+                        e.preventDefault();
+                        alert('Debe ingresar el número de comprobante Yape/Plin.');
+                        numeroComprobanteYapeInput.focus();
+                        return;
+                    }
+                    numeroComprobanteYapeInput.value = val.trim();
+                }
+
+                // Validación final
+                if (numeroComprobanteYapeInput.value.trim().length === 0) {
+                    e.preventDefault();
+                    alert('Debe ingresar el número de comprobante Yape/Plin.');
+                }
             }
         });
     }
