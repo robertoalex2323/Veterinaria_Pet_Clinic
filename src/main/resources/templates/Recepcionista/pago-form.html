@@ -100,6 +100,9 @@
                                             <option value="Yape/Plin">📱 Yape / Plin</option>
                                             <option value="Transferencia">🏦 Transferencia Bancaria</option>
                                         </select>
+
+                                        <!-- Hidden requerido por backend para Yape/Plin -->
+                                        <input type="hidden" name="numeroComprobanteYape" id="numeroComprobanteYape" value="">
                                     </div>
                                 </div>
 
@@ -138,7 +141,12 @@
                                         <img th:src="@{/Imagen/Iconos/qr-yape.png}" alt="QR Yape/Plin"
                                             class="img-fluid rounded border shadow-sm" style="max-width: 200px;">
                                     </div>
-                                    <div class="form-text text-muted mb-2">Una vez escaneado y pagado, haz clic en procesar pago.</div>
+                                    <div class="form-text text-muted mb-2">Una vez escaneado y pagado, ingresa el <b>Número de operación / comprobante</b> y haz clic en procesar pago.</div>
+
+                                    <div class="mb-2">
+                                        <label class="form-label fw-bold text-dark">Número de operación / comprobante Yape/Plin <span class="text-danger">*</span></label>
+                                        <input type="text" id="numeroComprobanteYapeVisible" class="form-control" placeholder="Ej. 123456789" maxlength="30">
+                                    </div>
                                 </div>
                             </div>
 

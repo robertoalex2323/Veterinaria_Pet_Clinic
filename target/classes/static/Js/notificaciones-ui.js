@@ -3,13 +3,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationBadge = document.getElementById('notificationBadge'); 
     const notificationList = document.getElementById('notificationList');   
 
+    // reset conteo visible
+    if (notificationBadge) notificationBadge.textContent = '0';
+
     let history = JSON.parse(localStorage.getItem('notificationHistory') || '[]');
 
     const updateUI = () => {
         if (!notificationList) return;
         
         if (history.length === 0) {
-            notificationList.innserHTML = '<li class="p-4 text-center text-muted small notification-empty-state"><i class="fas fa-bell-slash d-block mb-2 fa-2x opacity-25"></i>No hay notificaciones recientes</li>';
+            notificationList.innerHTML = '<li class="p-4 text-center text-muted small notification-empty-state"><i class="fas fa-bell-slash d-block mb-2 fa-2x opacity-25"></i>No hay notificaciones recientes</li>';
             if (notificationBadge) notificationBadge.classList.add('d-none');
         } else {
             if (notificationBadge) {

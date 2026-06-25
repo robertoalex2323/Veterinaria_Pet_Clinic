@@ -133,7 +133,7 @@ public class ComprobantePagoPdfService {
         documento.add(Chunk.NEWLINE);
 
         Paragraph footer = new Paragraph(
-                "Comprobante válido como respaldo de pago.\nVeterinaria Pet Clinic - Av. Principal 123 - Lima",
+                "Comprobante válido como respaldo de pago.\nVeterinaria Pet Clinic - Urb. Ignacio Merino, Mz. J, Lt. 38, II Etapa, Piura",
                 FONT_SMALL);
         footer.setAlignment(Element.ALIGN_CENTER);
         documento.add(footer);
