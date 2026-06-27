@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Farmacéutico - Pet Clinic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/farmaceutico.css}">
+</head>
+<body>
+<div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+    <div class="sidebar-logo">
+        <img th:src="@{/Imagen/Iconos/logo.png}" alt="Logo Pet Clinic" class="logo">
+    </div>
+    <div>
+        <h3>Pet Clinic</h3>
+        <p>Farmacia Veterinaria</p>
+    </div>
+</div>
+        <nav class="nav-menu">
+            <div class="nav-item active" data-tab="verify">
+                <i class="fa-solid fa-file-prescription"></i>
+                <span>Verificar Receta</span>
+            </div>
+            <div class="nav-item" data-tab="dispense">
+                <i class="fa-solid fa-capsules"></i>
+                <span>Dispensar Medicamentos</span>
+            </div>
+            <div class="nav-item" data-tab="sales">
+                <i class="fa-solid fa-cash-register"></i>
+                <span>Registrar Ventas</span>
+            </div>
+            <div class="nav-item" data-tab="inventory">
+                <i class="fa-solid fa-boxes"></i>
+                <span>Gestionar Inventario</span>
+            </div>
+            <div class="nav-item" data-tab="info">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Información Medicamentos</span>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-avatar">DR</div>
+            <div class="user-info">
+                <div class="name">Dr. Arroyo</div>
+                <div class="role">Farmacéutico</div>
+            </div>
+            <button class="logout-btn" onclick="window.location.href='/login'">
+                <i class="fa-solid fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">Panel Farmacéutico</h1>
+            <div class="date-display" id="currentDate"></div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Recetas Pendientes</span>
+                    <div class="stat-icon" style="background: var(--green-light); color: var(--green-main);">
+                        <i class="fa-solid fa-file-prescription"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="prescriptionsCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Medicamentos Dispensados</span>
+                    <div class="stat-icon" style="background: var(--blue-bg); color: var(--blue-text);">
+                        <i class="fa-solid fa-capsules"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="dispensedCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Ventas Hoy</span>
+                    <div class="stat-icon" style="background: var(--success-bg); color: var(--success-text);">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="salesCount">$0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Stock Bajo</span>
+                    <div class="stat-icon" style="background: var(--yellow-bg); color: var(--yellow-text);">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="lowStockCount">0</div>
+            </div>
+        </div>
+
+        <!-- Panel: Verificar Receta -->
+        <div id="verifyPanel" class="panel-container">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-file-prescription"></i> Verificar Receta Veterinaria</h2>
+            </div>
+            <div class="panel-body">
+                <div class="search-bar">
+                    <input type="text" id="prescriptionCode" placeholder="Código de receta o N° de identificación">
+                    <button class="btn btn-primary" onclick="verifyPrescription()">
+                        <i class="fa-solid fa-magnifying-glass"></i> Verificar
+                    </button>
+                </div>
+                <div id="prescriptionResult" style="margin-top: 1rem;"></div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Código</th><th>Paciente</th><th>Veterinario</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="prescriptionsList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel: Dispensar Medicamentos -->
+        <div id="dispensePanel" class="panel-container" style="display: none;">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-capsules"></i> Dispensar Medicamentos</h2>
+            </div>
+            <div class="panel-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Seleccionar Receta</label>
+                        <select id="dispensePrescription">
+                            <option value="">Seleccione una receta verificada...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Medicamento</label>
+                        <select id="dispenseMedicine">
+                            <option value="">Seleccione medicamento...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" id="dispenseQuantity" placeholder="Cantidad" min="1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Instrucciones</label>
+                        <textarea id="dispenseInstructions" rows="2" placeholder="Instrucciones para el paciente..."></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="dispenseMedicine()">
+                    <i class="fa-solid fa-check-circle"></i> Dispensar
+                </button>
+            </div>
+        </div>
+
+        <!-- Panel: Registrar Ventas -->
+        <div id="salesPanel" class="panel-container" style="display: none;">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-cash-register"></i> Registrar Venta</h2>
+            </div>
+            <div class="panel-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Medicamento</label>
+                        <select id="saleMedicine">
+                            <option value="">Seleccione medicamento...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" id="saleQuantity" placeholder="Cantidad" min="1" oninput="updateTotalAmount()">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Unitario</label>
+                        <input type="text" id="salePrice" readonly placeholder="--">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cliente</label>
+                        <input type="text" id="saleClient" placeholder="Nombre del cliente">
+                    </div>
+                    <div class="form-group">
+                        <label>Método de Pago</label>
+                        <select id="salePayment">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                            <option value="Transferencia">Transferencia</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="background: var(--green-light); padding: 1rem; border-radius: var(--radius-sm); margin: 1rem 0;">
+                    <strong>Total a pagar: </strong><span id="totalAmount" style="font-size: 24px; color: var(--green-main);">$0</span>
+                </div>
+                <button class="btn btn-primary" onclick="registerSale()">
+                    <i class="fa-solid fa-receipt"></i> Registrar Venta
+                </button>
+
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Historial de Ventas</h3>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Fecha</th><th>Medicamento</th><th>Cantidad</th><th>Total</th><th>Cliente</th></tr>
+                        </thead>
+                        <tbody id="salesHistory"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel: Gestionar Inventario -->
+        <div id="inventoryPanel" class="panel-container" style="display: none;">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-boxes"></i> Gestionar Inventario</h2>
+                <button class="btn btn-primary" onclick="openAddMedicineModal()">
+                    <i class="fa-solid fa-plus"></i> Agregar Medicamento
+                </button>
+            </div>
+            <div class="panel-body">
+                <div class="search-bar">
+                    <input type="text" id="inventorySearch" placeholder="Buscar medicamento..." oninput="renderInventory()">
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>ID</th><th>Medicamento</th><th>Presentación</th><th>Stock</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="inventoryList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel: Información Medicamentos -->
+        <div id="infoPanel" class="panel-container" style="display: none;">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-circle-info"></i> Información de Medicamentos</h2>
+            </div>
+            <div class="panel-body">
+                <div class="search-bar">
+                    <input type="text" id="infoSearch" placeholder="Buscar medicamento..." oninput="renderMedicinesInfo()">
+                </div>
+                <div id="medicinesInfo"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Agregar Medicamento -->
+<div id="addMedicineModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Agregar Medicamento</h3>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="newMedName">
+            </div>
+            <div class="form-group">
+                <label>Presentación</label>
+                <input type="text" id="newMedPresentation" placeholder="Ej: Tabletas 500mg">
+            </div>
+            <div class="form-group">
+                <label>Stock</label>
+                <input type="number" id="newMedStock" min="0">
+            </div>
+            <div class="form-group">
+                <label>Precio</label>
+                <input type="number" id="newMedPrice" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="newMedDescription" rows="3" placeholder="Indicaciones, contraindicaciones..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="addMedicine()">Agregar</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="alert-toast">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toastMessage"></span>
+</div>
+
+<script th:src="@{/js/farmaceutico.js}"></script>
+</body>
+</html>

@@ -1,0 +1,403 @@
+/* ===========================
+   VENTAS FARMACÉUTICO
+   Estilo Cartoon Brutalist
+   ========================== */
+
+/* ---- STAT CARDS ---- */
+.stat-card {
+    border: 3px solid #111;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 5px 5px 0 #111;
+    transition: all 0.15s ease;
+    cursor: default;
+    min-height: 100px;
+}
+
+.stat-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 #111;
+}
+
+.stat-icon {
+    width: 54px;
+    height: 54px;
+    border: 3px solid #111;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: #fff;
+    box-shadow: 3px 3px 0 #111;
+    flex-shrink: 0;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6B7280;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #111;
+}
+
+/* Background tints */
+.bg-soft-success { background: #D1FAE5; border-color: #065F46; }
+.bg-soft-success .stat-icon { border-color: #065F46; color: #065F46; }
+.bg-soft-success .stat-value { color: #065F46; }
+
+.bg-soft-primary { background: #DBEAFE; border-color: #1E40AF; }
+.bg-soft-primary .stat-icon { border-color: #1E40AF; color: #1E40AF; }
+.bg-soft-primary .stat-value { color: #1E40AF; }
+
+.bg-soft-warning { background: #FEF3C7; border-color: #92400E; }
+.bg-soft-warning .stat-icon { border-color: #92400E; color: #92400E; }
+.bg-soft-warning .stat-value { color: #92400E; }
+
+/* ---- BUSCADOR & FILTROS ---- */
+#searchVenta {
+    border-radius: 12px !important;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+#searchVenta:focus {
+    background-color: #fff;
+    border-color: #1D9E75 !important;
+    box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.15) !important;
+}
+
+#searchVenta + .input-group-text {
+    border-radius: 12px 0 0 12px !important;
+}
+
+.form-select:focus {
+    border-color: #1D9E75 !important;
+    box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.15) !important;
+}
+
+/* ---- TABLA DE VENTAS ---- */
+#ventasTable {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+#ventasTable thead {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#ventasTable thead th {
+    padding: 0.85rem 1rem;
+    background: #F3F4F6;
+    border-bottom: 3px solid #111;
+    font-weight: 700;
+}
+
+#ventasTable td {
+    vertical-align: middle;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+}
+
+#ventasTable tbody tr {
+    transition: background 0.15s ease;
+    border-bottom: 2px solid #E5E7EB;
+}
+
+#ventasTable tbody tr:hover {
+    background: #F9FAFB;
+}
+
+/* Badges medicamentos */
+.bg-primary-soft {
+    background-color: rgba(37, 99, 235, 0.12);
+    border: 2px solid #2563EB;
+    border-radius: 8px;
+    padding: 0.3em 0.65em;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #1E40AF;
+    box-shadow: 2px 2px 0 #2563EB;
+}
+
+/* ---- BADGES MÉTODO PAGO ---- */
+.badge-metodo {
+    border-radius: 8px;
+    padding: 0.35em 0.6em;
+    font-weight: 600;
+    font-size: 0.78rem;
+    border: 2px solid;
+    box-shadow: 2px 2px 0 #111;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bg-soft-success.text-success {
+    background: #D1FAE5;
+    border-color: #065F46;
+    color: #065F46 !important;
+}
+
+.bg-soft-primary.text-primary {
+    background: #DBEAFE;
+    border-color: #1E40AF;
+    color: #1E40AF !important;
+}
+
+.bg-soft-info.text-info {
+    background: #E0F2FE;
+    border-color: #0369A1;
+    color: #0369A1 !important;
+}
+
+.bg-soft-warning.text-warning {
+    background: #FEF3C7;
+    border-color: #92400E;
+    color: #92400E !important;
+}
+
+.bg-soft-secondary.text-secondary {
+    background: #F3F4F6;
+    border-color: #4B5563;
+    color: #4B5563 !important;
+}
+
+/* ---- BOTONES DE ACCIÓN EN TABLA ---- */
+#ventasTable .btn-sm {
+    border-width: 2px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+}
+
+#ventasTable .btn-sm:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 #111;
+}
+
+/* ---- BOTONES DEL ENCABEZADO ---- */
+.btn-lg {
+    border-width: 3px;
+    font-weight: 700;
+    border-radius: 12px;
+    transition: all 0.15s ease;
+}
+
+.btn-lg:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 #111;
+}
+
+.btn-success.btn-lg {
+    background: #1D9E75;
+    border-color: #065F46;
+    color: #fff;
+    box-shadow: 4px 4px 0 #065F46;
+}
+
+.btn-success.btn-lg:hover {
+    background: #15803D;
+}
+
+.btn-outline-primary.btn-lg {
+    border-color: #2563EB;
+    color: #2563EB;
+    box-shadow: 4px 4px 0 #2563EB;
+}
+
+.btn-outline-primary.btn-lg:hover {
+    background: #2563EB;
+    color: #fff;
+}
+
+/* ---- MODAL - DETALLE CARDS ---- */
+.detalle-card {
+    background: #F9FAFB;
+    border: 3px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 1rem;
+    height: 100%;
+    transition: border-color 0.2s ease;
+    box-shadow: 3px 3px 0 #E5E7EB;
+}
+
+.detalle-card:hover {
+    border-color: #1D9E75;
+    box-shadow: 3px 3px 0 #1D9E75;
+}
+
+.detalle-titulo {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6B7280;
+    margin-bottom: 0.5rem;
+}
+
+.detalle-contenido {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111;
+    margin: 0;
+}
+
+/* ---- TOTALES BOX ---- */
+.totales-box {
+    background: #F9FAFB;
+    border: 3px solid #111;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 4px 4px 0 #111;
+}
+
+.totales-box hr {
+    border: 1px solid #D1D5DB;
+    opacity: 1;
+}
+
+/* ---- TABLA EN MODALES ---- */
+.modal .table-bordered {
+    border: 2px solid #E5E7EB;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.modal .table-bordered th {
+    border: 2px solid #D1D5DB;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 0.65rem 0.75rem;
+}
+
+.modal .table-bordered td {
+    border: 2px solid #E5E7EB;
+    padding: 0.65rem 0.75rem;
+    vertical-align: middle;
+}
+
+/* ---- MODAL HEADERS ---- */
+.modal-header.bg-success {
+    background: #1D9E75 !important;
+    border-bottom: 3px solid #065F46;
+}
+
+.modal-header.bg-primary {
+    background: #2563EB !important;
+    border-bottom: 3px solid #1E40AF;
+}
+
+.modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+/* ---- MÉTODO PAGO BUTTONS ---- */
+.metodo-pago-btn {
+    border-width: 2px;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+    transition: all 0.15s ease;
+    min-width: 120px;
+}
+
+.metodo-pago-btn.active {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 #111;
+    color: #fff !important;
+}
+
+.metodo-pago-btn:not(.active):hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 #111;
+}
+
+/* ---- MODAL FOOTER ---- */
+.modal-footer .btn-lg {
+    min-width: 200px;
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 768px) {
+    .stat-card {
+        min-height: 80px;
+        padding: 1rem;
+    }
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    #ventasTable {
+        font-size: 0.8rem;
+    }
+    #ventasTable td {
+        padding: 0.5rem 0.65rem;
+    }
+    .badge-metodo {
+        font-size: 0.7rem;
+        padding: 0.25em 0.45em;
+    }
+    .detalle-card {
+        padding: 0.75rem;
+    }
+    .metodo-pago-btn {
+        min-width: 90px;
+        font-size: 0.85rem;
+        padding: 0.45rem 0.75rem;
+    }
+}
+
+/* ---- SELECT DE RECETAS ---- */
+#selectReceta {
+    border: 3px solid #D1D5DB;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+#selectReceta:focus {
+    border-color: #1D9E75;
+    box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.15);
+}
+
+/* ---- CARD HEADER ---- */
+.card-header.bg-white {
+    border-bottom: 3px solid #E5E7EB;
+}
+
+/* ---- ANIMACIONES ---- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#ventasTable tbody tr {
+    animation: fadeIn 0.3s ease;
+}

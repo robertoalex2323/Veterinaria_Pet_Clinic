@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{fragments/sidebar_recepcionista::layout(~{::div#content}, 'perfil')}">
+<head>
+    <title>Mi Perfil - Recepcionista</title>
+</head>
+<body>
+<div id="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-user-circle text-primary"></i> Mi Perfil</h2>
+            <p class="text-muted mb-0">Gestiona tu información personal y configuración de seguridad</p>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="row">
+        <!-- Tarjeta de Resumen Izquierda -->
+        <div class="col-lg-4 mb-4">
+            <div class="perfil-card h-100">
+                <div class="perfil-header-bg">
+                    <div class="avatar-container">
+                        <!-- Generar inicial de nombre si no hay foto -->
+                        <div class="avatar-placeholder fw-bold">
+                            <span th:text="${usuario != null and usuario.nombre != null and !usuario.nombre.empty ? usuario.nombre.substring(0,1).toUpperCase() : 'R'}">R</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="perfil-info-section px-4">
+                    <h4 class="fw-bold mb-1" th:text="${usuario != null ? usuario.nombre : nombreUsuario}">Nombre de Usuario</h4>
+                    <p class="text-primary fw-bold mb-0" th:text="${usuario != null ? 'Rol: ' + usuario.rol : 'RECEPCIONISTA'}">RECEPCIONISTA</p>
+                    <p class="text-muted small mt-2 mb-0"><i class="fas fa-at me-1"></i> <span th:text="${usuario != null ? usuario.username : 'usuario'}">@usuario</span></p>
+                </div>
+
+                <div class="p-4">
+                    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                        <button class="nav-link active text-start" id="v-pills-perfil-tab" data-bs-toggle="pill" data-bs-target="#v-pills-perfil" type="button" role="tab">
+                            <i class="fas fa-id-card me-2"></i> Información Personal
+                        </button>
+                        <button class="nav-link text-start" id="v-pills-seguridad-tab" data-bs-toggle="pill" data-bs-target="#v-pills-seguridad" type="button" role="tab">
+                            <i class="fas fa-shield-alt me-2"></i> Seguridad y Clave
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido Central Derecha -->
+        <div class="col-lg-8">
+            <div class="perfil-card h-100 p-4 p-md-5">
+                <div class="tab-content" id="v-pills-tabContent">
+                    
+                    <!-- TAB: INFO PERSONAL -->
+                    <div class="tab-pane fade show active" id="v-pills-perfil" role="tabpanel">
+                        <h4 class="mb-4 fw-bold text-dark"><i class="fas fa-user-edit text-primary me-2"></i> Editar Información</h4>
+                        <form th:action="@{/recepcionista/perfil/actualizar}" method="post">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">Nombre Completo <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" name="nombre" id="nombre" th:value="${usuario != null ? usuario.nombre : ''}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">Nombre de Usuario (Login)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-at"></i></span>
+                                        <input type="text" class="form-control" th:value="${usuario != null ? usuario.username : nombreUsuario}" disabled readonly>
+                                    </div>
+                                    <div class="form-text">El usuario de acceso no puede ser modificado.</div>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold text-dark">Correo Electrónico <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" name="email" id="email" th:value="${usuario != null ? usuario.email : ''}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold text-dark">Rol Asignado</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                                        <input type="text" class="form-control" th:value="${usuario != null ? usuario.rol : 'RECEPCIONISTA'}" disabled readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary shadow-sm"><i class="fas fa-save me-2"></i> Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- TAB: SEGURIDAD -->
+                    <div class="tab-pane fade" id="v-pills-seguridad" role="tabpanel">
+                        <h4 class="mb-4 fw-bold text-dark"><i class="fas fa-lock text-primary me-2"></i> Cambio de Contraseña</h4>
+                        <div class="alert alert-warning mb-4">
+                            <i class="fas fa-info-circle me-2"></i> Por razones de seguridad, asegúrate de utilizar una contraseña fuerte (combinación de letras, números y símbolos).
+                        </div>
+                        
+                        <!-- Usamos el mismo endpoint, enviando los datos requeridos por el método Java de RecepcionistaController -->
+                        <form id="formSeguridad" th:action="@{/recepcionista/perfil/actualizar}" method="post">
+                            <!-- Campos ocultos necesarios para el endpoint /actualizar que pide nombre y email -->
+                            <input type="hidden" name="nombre" id="hiddenNombre" th:value="${usuario != null ? usuario.nombre : ''}">
+                            <input type="hidden" name="email" id="hiddenEmail" th:value="${usuario != null ? usuario.email : ''}">
+
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold text-dark">Contraseña Actual</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                                        <input type="password" class="form-control" name="currentPassword" id="currentPassword" placeholder="Ingrese su clave actual">
+                                        <span class="input-group-text bg-light password-toggle"><i class="fas fa-eye text-muted"></i></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">Nueva Contraseña</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" name="newPassword" id="newPassword" placeholder="Mínimo 6 caracteres">
+                                        <span class="input-group-text bg-light password-toggle"><i class="fas fa-eye text-muted"></i></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">Confirmar Contraseña</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" id="confirmPassword" placeholder="Repita la nueva clave">
+                                        <span class="input-group-text bg-light password-toggle"><i class="fas fa-eye text-muted"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary shadow-sm"><i class="fas fa-key me-2"></i> Actualizar Contraseña</button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/perfil.js}"></script>
+</div>
+</body>
+</html>
