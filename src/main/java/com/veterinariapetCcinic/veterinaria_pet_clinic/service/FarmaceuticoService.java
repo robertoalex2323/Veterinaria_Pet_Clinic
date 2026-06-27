@@ -12,27 +12,97 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Medicamento;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Paciente;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.RecetaEstado;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.RecetaItem;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.RecetaMedica;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Veterinario;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.MascotaRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.MedicamentoRepository;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.PacienteRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.RecetaMedicaRepository;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.VeterinarioRepository;
 
 @Service
 public class FarmaceuticoService {
 
     private final RecetaMedicaRepository recetaRepository;
     private final MedicamentoRepository medicamentoRepository;
+    private final MascotaRepository mascotaRepository;
+    private final PacienteRepository pacienteRepository;
+    private final VeterinarioRepository veterinarioRepository;
 
     public FarmaceuticoService(
             RecetaMedicaRepository recetaRepository,
-            MedicamentoRepository medicamentoRepository) {
+            MedicamentoRepository medicamentoRepository,
+            MascotaRepository mascotaRepository,
+            PacienteRepository pacienteRepository,
+            VeterinarioRepository veterinarioRepository) {
 
         this.recetaRepository = recetaRepository;
         this.medicamentoRepository = medicamentoRepository;
+        this.mascotaRepository = mascotaRepository;
+        this.pacienteRepository = pacienteRepository;
+        this.veterinarioRepository = veterinarioRepository;
     }
 
+    @Transactional
+    public RecetaMedica crearSolicitudMedicamentos(Long mascotaId,
+                                                   Long veterinarioId,
+                                                   Long medicamentoId,
+                                                   Integer cantidad,
+                                                   String dosis,
+                                                   String frecuencia,
+                                                   String observaciones) {
+        Mascota mascota = mascotaRepository.findById(mascotaId)
+                .orElseThrow(() -> new NoSuchElementException("Mascota no encontrada"));
+
+        Paciente paciente = pacienteRepository.findAll().stream()
+                .filter(p -> mascota.getNombre() != null && mascota.getNombre().equals(p.getNombre()))
+                .findFirst()
+                .orElseGet(() -> {
+                    Paciente nuevoPaciente = new Paciente();
+                    nuevoPaciente.setNombre(mascota.getNombre());
+                    nuevoPaciente.setEspecie(mascota.getEspecie());
+                    nuevoPaciente.setRaza(mascota.getRaza());
+                    return pacienteRepository.save(nuevoPaciente);
+                });
+
+        Veterinario veterinario = null;
+        if (veterinarioId != null) {
+            veterinario = veterinarioRepository.findById(veterinarioId).orElse(null);
+        }
+        if (veterinario == null) {
+            veterinario = veterinarioRepository.findAll().stream().findFirst().orElseGet(() -> {
+                Veterinario nuevoVeterinario = new Veterinario();
+                nuevoVeterinario.setNombre("Veterinario principal");
+                return veterinarioRepository.save(nuevoVeterinario);
+            });
+        }
+
+        Medicamento medicamento = medicamentoRepository.findById(medicamentoId)
+                .orElseThrow(() -> new NoSuchElementException("Medicamento no encontrado"));
+
+        RecetaMedica receta = new RecetaMedica();
+        receta.setPaciente(paciente);
+        receta.setVeterinario(veterinario);
+        receta.setObservaciones(observaciones != null && !observaciones.isBlank()
+                ? observaciones
+                : "Solicitud creada desde el dashboard");
+        receta.setEstado(RecetaEstado.PENDIENTE);
+
+        RecetaItem item = new RecetaItem();
+        item.setReceta(receta);
+        item.setMedicamento(medicamento);
+        item.setCantidad(cantidad != null && cantidad > 0 ? cantidad : 1);
+        item.setDosis(dosis);
+        item.setFrecuencia(frecuencia);
+
+        receta.getItems().add(item);
+        return recetaRepository.save(receta);
+    }
 
     public List<RecetaMedica> obtenerTodasLasRecetas() {
         return recetaRepository.findAll();

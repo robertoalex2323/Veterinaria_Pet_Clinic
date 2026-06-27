@@ -31,6 +31,8 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.model.AlertaCritica;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Consulta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.RecetaEstado;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.RecetaMedica;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.SignosVitales;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
@@ -39,7 +41,9 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AlertaCriticaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ConsultaService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MedicamentoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SeguimientoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SignosVitalesService;
 
@@ -59,6 +63,8 @@ public class VeterinariaController {
 
     private final SignosVitalesService signosVitalesService;
     private final UsuarioRepository usuarioRepository;
+    private final MedicamentoService medicamentoService;
+    private final FarmaceuticoService farmaceuticoService;
 
     public VeterinariaController(CitaRepository citaRepository,
                                   CitaService citaService,
@@ -66,7 +72,11 @@ public class VeterinariaController {
                                   ConsultaService consultaService,
                                   SeguimientoService seguimientoService,
                                   SignosVitalesService signosVitalesService,
-                                  UsuarioRepository usuarioRepository,AgendaService agendaService ,AlertaCriticaService alertaCriticaService) {
+                                  UsuarioRepository usuarioRepository,
+                                  AgendaService agendaService,
+                                  AlertaCriticaService alertaCriticaService,
+                                  MedicamentoService medicamentoService,
+                                  FarmaceuticoService farmaceuticoService) {
         this.citaRepository = citaRepository;
         this.citaService = citaService;
         this.mascotaService = mascotaService;
@@ -76,7 +86,8 @@ public class VeterinariaController {
         this.usuarioRepository = usuarioRepository;
         this.agendaService = agendaService;
         this.alertaCriticaService = alertaCriticaService;
-        
+        this.medicamentoService = medicamentoService;
+        this.farmaceuticoService = farmaceuticoService;
     }
 
     private String getUsername() {
@@ -154,6 +165,7 @@ public class VeterinariaController {
 
         model.addAttribute("fecha", hoy);
         model.addAttribute("mascotas", mascotas);
+        model.addAttribute("medicamentos", medicamentoService.listarTodos());
         model.addAttribute("citaHoyPorMascota", citaHoyPorMascota);
         model.addAttribute("ultimoSignoPorMascota", ultimoSignoPorMascota);
         model.addAttribute("estadoPorMascota", estadoPorMascota);
@@ -163,7 +175,34 @@ public class VeterinariaController {
         model.addAttribute("pendientesHoy", pendientes);
         model.addAttribute("criticosHoy", criticos);
         model.addAttribute("totalMascotas", mascotas.size());
+        model.addAttribute("solicitudesPendientes", farmaceuticoService.contarRecetasPendientes());
+        model.addAttribute("solicitudesTotales", farmaceuticoService.obtenerTodasLasRecetas().size());
         return "Veterinaria/dashboard";
+    }
+
+    @PostMapping("/solicitud-medicamentos")
+    public String crearSolicitudMedicamentos(@RequestParam Long mascotaId,
+                                             @RequestParam(required = false) Long veterinarioId,
+                                             @RequestParam Long medicamentoId,
+                                             @RequestParam(defaultValue = "1") Integer cantidad,
+                                             @RequestParam String dosis,
+                                             @RequestParam(required = false) String frecuencia,
+                                             @RequestParam(required = false) String observaciones,
+                                             RedirectAttributes redirectAttributes) {
+        try {
+            farmaceuticoService.crearSolicitudMedicamentos(
+                    mascotaId,
+                    veterinarioId,
+                    medicamentoId,
+                    cantidad,
+                    dosis,
+                    frecuencia,
+                    observaciones);
+            redirectAttributes.addFlashAttribute("success", "Solicitud de medicamentos enviada al módulo de farmacéutico.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "No se pudo crear la solicitud: " + e.getMessage());
+        }
+        return "redirect:/veterinaria/solicitudes";
     }
 
     private boolean esTriajeCritico(SignosVitales signo) {
@@ -266,6 +305,33 @@ public class VeterinariaController {
         model.addAttribute("fecha", fecha);
 
         return "Veterinaria/pacientes";
+    }
+
+    @GetMapping("/solicitudes")
+    public String solicitudes(Model model) {
+        model.addAttribute("currentPage", "solicitudes");
+        usuarioRepository.findByUsername(getUsername()).ifPresent(u ->
+            model.addAttribute("nombreUsuario", u.getNombre()));
+
+        List<Mascota> mascotas = filtrarActivas(mascotaService.listarTodosConCliente());
+        model.addAttribute("mascotas", mascotas);
+        model.addAttribute("medicamentos", medicamentoService.listarTodos());
+        List<RecetaMedica> solicitudes = farmaceuticoService.obtenerTodasLasRecetas().stream()
+                .sorted((a, b) -> {
+                    LocalDate fechaA = a.getFecha() != null ? a.getFecha() : LocalDate.MIN;
+                    LocalDate fechaB = b.getFecha() != null ? b.getFecha() : LocalDate.MIN;
+                    return fechaB.compareTo(fechaA);
+                })
+                .toList();
+        model.addAttribute("solicitudes", solicitudes);
+        model.addAttribute("totalSolicitudes", solicitudes.size());
+        model.addAttribute("solicitudesPendientes", solicitudes.stream()
+                .filter(r -> r.getEstado() == RecetaEstado.PENDIENTE)
+                .count());
+        model.addAttribute("solicitudesDispensadas", solicitudes.stream()
+                .filter(r -> r.getEstado() == RecetaEstado.DISPENSADA)
+                .count());
+        return "Veterinaria/solicitudes";
     }
 
     @GetMapping("/reportes")

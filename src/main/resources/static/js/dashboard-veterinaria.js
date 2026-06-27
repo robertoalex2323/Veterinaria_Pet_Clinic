@@ -61,6 +61,16 @@ function seleccionarPaciente(item) {
         btnHistorial.href = data.historialUrl || "/veterinaria/historial";
     }
 
+    const inputMascota = document.getElementById("mascotaSolicitudId");
+    if (inputMascota) {
+        inputMascota.value = data.id || "";
+    }
+
+    const inputNombrePaciente = document.getElementById("pacienteSolicitudNombre");
+    if (inputNombrePaciente) {
+        inputNombrePaciente.value = data.nombre || "";
+    }
+
     mostrarFichaPaciente(data);
 }
 

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitudes de Medicamentos</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+    <main class="main">
+        <header class="header">
+            <div class="status-pill">Módulo de solicitudes</div>
+        </header>
+
+        <section class="hero">
+            <h1>Solicitudes de Medicamentos</h1>
+            <p>Gestiona y revisa las solicitudes enviadas a farmacia desde veterinaria.</p>
+        </section>
+
+        <section class="stats-grid">
+            <article class="stat-card blue">
+                <div class="stat-label">Total solicitudes</div>
+                <div class="stat-value" th:text="${totalSolicitudes}">0</div>
+            </article>
+            <article class="stat-card orange">
+                <div class="stat-label">Pendientes</div>
+                <div class="stat-value" th:text="${solicitudesPendientes}">0</div>
+            </article>
+            <article class="stat-card green">
+                <div class="stat-label">Dispensadas</div>
+                <div class="stat-value" th:text="${solicitudesDispensadas}">0</div>
+            </article>
+        </section>
+
+        <section class="dashboard-grid single-column">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Nueva solicitud</h2>
+                    <span class="badge">Farmacia</span>
+                </div>
+                <div th:if="${success}" class="alert success-alert" th:text="${success}"></div>
+                <div th:if="${error}" class="alert error-alert" th:text="${error}"></div>
+                <form th:action="@{/veterinaria/solicitud-medicamentos}" method="post" class="medicine-form">
+                    <input type="hidden" name="veterinarioId" value="1">
+                    <label>Paciente</label>
+                    <select name="mascotaId" required>
+                        <option value="">Seleccione un paciente</option>
+                        <option th:each="mascota : ${mascotas}" th:value="${mascota.id}" th:text="${mascota.nombre + ' - ' + mascota.especie}"></option>
+                    </select>
+
+                    <label>Medicamento</label>
+                    <select name="medicamentoId" required>
+                        <option value="">Seleccione un medicamento</option>
+                        <option th:each="med : ${medicamentos}" th:value="${med.id}" th:text="${med.nombre + ' (stock: ' + med.stock + ')'}"></option>
+                    </select>
+
+                    <label>Cantidad</label>
+                    <input type="number" name="cantidad" min="1" value="1" required>
+
+                    <label>Dosis</label>
+                    <input type="text" name="dosis" placeholder="1 tableta cada 8 horas" required>
+
+                    <label>Frecuencia</label>
+                    <input type="text" name="frecuencia" placeholder="Cada 12 horas">
+
+                    <label>Observaciones</label>
+                    <textarea name="observaciones" placeholder="Indicaciones adicionales para farmacia..."></textarea>
+
+                    <button type="submit" class="btn purple full-width">
+                        <i class="fas fa-prescription-bottle-medical"></i> Enviar a farmacia
+                    </button>
+                </form>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Solicitudes enviadas</h2>
+                    <span class="badge" th:text="${#lists.size(solicitudes) + ' registros'}">0 registros</span>
+                </div>
+                <div class="small-list" th:if="${!#lists.isEmpty(solicitudes)}">
+                    <div class="small-item" th:each="solicitud : ${solicitudes}">
+                        <div>
+                            <strong th:text="${solicitud.paciente != null ? solicitud.paciente.nombre : 'Sin paciente'}">Paciente</strong>
+                            <p th:text="${solicitud.observaciones != null ? solicitud.observaciones : 'Sin observaciones'}">Observaciones</p>
+                            <small th:text="${solicitud.items != null and !solicitud.items.isEmpty() ? solicitud.items[0].medicamento.nombre : 'Sin medicamento'}">Medicamento</small>
+                        </div>
+                        <div class="d-flex flex-column align-items-end gap-1">
+                            <span class="tag warning" th:text="${solicitud.estado.name()}"></span>
+                            <small th:text="${solicitud.fecha != null ? #temporals.format(solicitud.fecha, 'dd/MM/yyyy') : ''}"></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="empty-state" th:if="${#lists.isEmpty(solicitudes)}">
+                    <i class="fas fa-pills"></i>
+                    <p>No hay solicitudes registradas aún.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
