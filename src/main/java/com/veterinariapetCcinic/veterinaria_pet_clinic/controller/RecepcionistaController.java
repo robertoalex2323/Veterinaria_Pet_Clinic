@@ -743,102 +743,141 @@ public class RecepcionistaController {
         return ResponseEntity.ok(info);
     }
   
-   @PostMapping("/pagos/guardar")
-public String guardarPago(@RequestParam Long clienteId,
+    @PostMapping("/pagos/guardar")
+    public String guardarPago(@RequestParam Long clienteId,
             @RequestParam Double monto,
             @RequestParam String metodoPago,
             @RequestParam(required = false) Long citaId,
             @RequestParam(required = false) String numeroComprobanteYape,
             RedirectAttributes redirectAttributes) {
+
         try {
+
+            // Validar si la cita ya fue pagada
             if (citaId != null && citaId > 0) {
                 if (pagoService.estaPagadaLaCita(citaId)) {
-                    redirectAttributes.addFlashAttribute("error", "Usted ya ha pagado esta cita. No se puede registrar otro pago.");
+                    redirectAttributes.addFlashAttribute(
+                            "error",
+                            "Usted ya ha pagado esta cita. No se puede registrar otro pago.");
                     return "redirect:/recepcionista/citas";
                 }
             }
 
-            // Validación básica por método (Yape/Plin)
+            // Validación para Yape/Plin
             if ("Yape/Plin".equals(metodoPago)) {
                 if (numeroComprobanteYape == null || numeroComprobanteYape.isBlank()) {
-                    redirectAttributes.addFlashAttribute("error", "El comprobante de Yape/Plin es obligatorio.");
+                    redirectAttributes.addFlashAttribute(
+                            "error",
+                            "El comprobante de Yape/Plin es obligatorio.");
                     return "redirect:/recepcionista/pagos";
                 }
             }
 
-
             Cliente cliente = clienteService.buscarPorId(clienteId);
 
             Pago pago = new Pago();
-
             pago.setCliente(cliente);
             pago.setMonto(monto);
             pago.setMetodoPago(metodoPago);
             pago.setEstado("PAGADO");
 
-
+            // Generar número de comprobante
             String ultimoMax = pagoService.obtenerMaxComprobantePet2026();
+
             long consecutivo = 1;
-            if (ultimoMax != null && !ultimoMax.isBlank() && ultimoMax.contains("PET2026-")) {
+
+            if (ultimoMax != null
+                    && !ultimoMax.isBlank()
+                    && ultimoMax.startsWith("PET2026-")) {
+
                 try {
                     String sufijo = ultimoMax.substring("PET2026-".length());
-                    consecutivo = Long.parseLong(sufijo);
-                    consecutivo = consecutivo + 1;
-                } catch (Exception ignore) {
+                    consecutivo = Long.parseLong(sufijo) + 1;
+                } catch (NumberFormatException e) {
                     consecutivo = 1;
                 }
             }
+
             String comprobante = String.format("PET2026-%05d", consecutivo);
             pago.setComprobante(comprobante);
 
+            // Asociar cita si corresponde
             if (citaId != null && citaId > 0) {
                 Cita cita = citaService.buscarPorId(citaId);
                 pago.setCita(cita);
-                pagoService.guardar(pago);
-            } else {
-                pagoService.guardar(pago);
             }
 
-            // Enviar confirmación con comprobante PDF adjunto (si el cliente tiene email)
-            String responsable = getNombreUsuario();
-            byte[] pdf = comprobantePagoPdfService.generarComprobantePago(pago, responsable);
+            // Guardar pago
+            pagoService.guardar(pago);
 
-            String nombreArchivo = "Comprobante_PetClinic_" + pago.getId() + ".pdf";
-            notificacionService.enviarEmailConAdjunto(
-                    cliente.getEmail(),
-                    "Confirmación de Pago - Pet Clinic",
-                    String.format("""
-                            Estimado(a) %s,
+            // Enviar comprobante PDF por correo
+            if (cliente.getEmail() != null && !cliente.getEmail().isBlank()) {
 
-                            Le informamos que hemos registrado su pago.
+                try {
 
-                            Detalle del pago
-                            -----------------
-                            Monto: S/ %.2f
-                            Método de pago: %s
+                    String responsable = getNombreUsuario();
 
-                            Adjuntamos su comprobante.
+                    byte[] pdf = comprobantePagoPdfService
+                            .generarComprobantePago(pago, responsable);
 
-                            Atentamente,
-                            Veterinaria Pet Clinic
-                            """, cliente.getNombre(), monto, metodoPago),
-                    pdf,
-                    nombreArchivo);
+                    String archivoComprobante =
+                            "comprobante_pago_" + pago.getId() + ".pdf";
 
-            redirectAttributes.addFlashAttribute("success", "Pago registrado exitosamente");
+                    notificacionService.enviarEmailConAdjunto(
+                            cliente.getEmail(),
+                            "Confirmación de Pago - Pet Clinic",
+                            String.format("""
+                                    Estimado(a) %s,
+
+                                    Le informamos que hemos registrado su pago exitosamente.
+
+                                    DETALLE DEL PAGO
+                                    --------------------------
+                                    N° Comprobante: %s
+                                    Monto: S/ %.2f
+                                    Método de pago: %s
+                                    Estado: PAGADO
+
+                                    Adjuntamos su comprobante de pago en formato PDF.
+
+                                    Gracias por confiar en Veterinaria Pet Clinic.
+
+                                    Atentamente,
+                                    Veterinaria Pet Clinic
+                                    """,
+                                    cliente.getNombre(),
+                                    pago.getComprobante(),
+                                    monto,
+                                    metodoPago),
+                            pdf,
+                            archivoComprobante);
+
+                } catch (Exception ex) {
+                    log.error("Error al enviar comprobante por correo: {}", ex.getMessage(), ex);
+                }
+            }
+
+            redirectAttributes.addFlashAttribute(
+                    "success",
+                    "Pago registrado exitosamente.");
+
             return "redirect:/recepcionista/pagos/ver/" + pago.getId();
+
         } catch (Exception e) {
+
             log.error("Error al guardar pago: {}", e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("error", "Error al registrar el pago: " + e.getMessage());
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    "Error al registrar el pago: " + e.getMessage());
+
             return "redirect:/recepcionista/pagos";
         }
     }
 
-
     @GetMapping("/pagos/ver/{id}")
     public String verDetallePago(@PathVariable Long id, Model model) {
         model.addAttribute("nombreUsuario", getNombreUsuario());
-        // Para mostrar el responsable de atención (rol recepcionista)
         usuarioRepository.findByUsername(getNombreUsuario())
                 .ifPresent(u -> model.addAttribute("nombreUsuarioCompleto", u.getNombre()));
 

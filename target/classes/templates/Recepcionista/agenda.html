@@ -106,12 +106,12 @@
 
                         <!-- Botón Cancelar (solo si está AGENDADA) -->
                         <div class="mt-2 text-end" th:if="${cita.estado != null and cita.estado == 'AGENDADA'}">
-                            <a th:href="@{/recepcionista/citas/cancelar/{id}(id=${cita.id})}"
-                               class="btn btn-sm btn-outline-danger"
-                               style="font-size: 0.7rem;"
-                               onclick="return confirm('¿Estás seguro de cancelar esta cita?')">
-                               Cancelar Cita
-                            </a>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    style="font-size: 0.7rem;"
+                                    th:onclick="'abrirModalCancelarCita(' + ${cita.id} + ')'">
+                                Cancelar Cita
+                            </button>
                         </div>
                     </div>
 
@@ -125,8 +125,11 @@
                 </div>
             </div>
         </div>
+        <div th:replace="~{Recepcionista/fragments/modal-cancelar-cita :: modalCancelarCita}"></div>
 
         <script th:src="@{/js/agenda.js}"></script>
+        <script th:src="@{/js/citas.js}"></script>
+
     </div>
 </body>
 

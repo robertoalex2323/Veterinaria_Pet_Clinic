@@ -81,20 +81,78 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     }
+
+    // Initialize modal actions (cancel & reprogram)
+    initModalActions();
 });
 
-function confirmarCancelacion(id) {
-    const motivo = prompt('Por favor, ingrese el motivo de cancelación:');
-    if (motivo !== null && motivo.trim().length > 0) {
-        window.location.href = `/recepcionista/citas/cancelar/${id}?motivo=${encodeURIComponent(motivo)}`;
+function initModalActions() {
+    const btnConfirmarCancelarCita = document.getElementById('btnConfirmarCancelarCita');
+    const motivoEl = document.getElementById('cancelarMotivo');
+    const idElCancelar = document.getElementById('cancelarCitaId');
+
+    const btnConfirmarReprogramar = document.getElementById('btnConfirmarReprogramar');
+    const idElReprogramar = document.getElementById('reprogramarCitaId');
+    const fechaEl = document.getElementById('reprogramarFecha');
+    const horaEl = document.getElementById('reprogramarHora');
+    const motivoReprogramarEl = document.getElementById('reprogramarMotivo');
+
+    if (btnConfirmarCancelarCita && motivoEl && idElCancelar) {
+        btnConfirmarCancelarCita.addEventListener('click', function () {
+            const id = idElCancelar.value;
+            const motivo = (motivoEl.value || '').trim();
+
+            if (!id) {
+                alert('ID de cita no encontrado.');
+                return;
+            }
+            if (!motivo) {
+                alert('Por favor ingresa el motivo de cancelación.');
+                motivoEl.focus();
+                return;
+            }
+
+            window.location.href = `/recepcionista/citas/cancelar/${id}?motivo=${encodeURIComponent(motivo)}`;
+        });
+    }
+
+    if (btnConfirmarReprogramar && idElReprogramar && fechaEl && horaEl) {
+        btnConfirmarReprogramar.addEventListener('click', function () {
+            const id = idElReprogramar.value;
+            const fecha = fechaEl.value;
+            const hora = horaEl.value;
+            const motivo = (motivoReprogramarEl && motivoReprogramarEl.value ? motivoReprogramarEl.value : '').trim();
+
+            if (!id) {
+                alert('ID de cita no encontrado.');
+                return;
+            }
+            if (!fecha) {
+                alert('Debe ingresar la nueva fecha.');
+                return;
+            }
+            if (!hora) {
+                alert('Debe ingresar la nueva hora.');
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.set('reprogramarDesdeId', String(id));
+            params.set('fechaNueva', fecha);
+            params.set('horaNueva', hora);
+            if (motivo.length > 0) params.set('motivo', motivo);
+
+            window.location.href = `/recepcionista/citas/nueva?${params.toString()}`;
+        });
     }
 }
 
-function confirmarCancelacionOReprogramar(id) {
-    // Menú simple: Aceptar => Reprogramar, Cancelar => Cancelar
-    const quiereReprogramar = confirm('¿Desea REPROGRAMAR esta cita?\n\nAceptar: reprogramar\nCancelar: cancelar');
+function abrirModalCancelarCita(id) {
+    const idEl = document.getElementById('cancelarCitaId');
+    if (idEl) idEl.value = id;
 
-    if (!quiereReprogramar) {
+    const modalEl = document.getElementById('modalCancelarCita');
+    if (!modalEl) {
         const motivoCancel = prompt('Motivo de cancelación:');
         if (motivoCancel !== null && motivoCancel.trim().length > 0) {
             window.location.href = `/recepcionista/citas/cancelar/${id}?motivo=${encodeURIComponent(motivoCancel)}`;
@@ -102,21 +160,40 @@ function confirmarCancelacionOReprogramar(id) {
         return;
     }
 
-    // Reprogramar: pide fecha/hora nueva
-    const fechaNueva = prompt('Ingrese la NUEVA FECHA (YYYY-MM-DD):');
-    if (!fechaNueva) return;
-    const horaNueva = prompt('Ingrese la NUEVA HORA (HH:mm):');
-    if (!horaNueva) return;
+    const modal = window.bootstrap?.Modal?.getOrCreateInstance(modalEl);
+    modal?.show?.();
+}
 
-    const motivo = prompt('Motivo de la reprogramación (opcional):') || '';
+function abrirModalReprogramarCita(id) {
+    const idEl = document.getElementById('reprogramarCitaId');
+    if (idEl) idEl.value = id;
 
-    // Navega al formulario de nueva cita con parámetros para precargar
-    const params = new URLSearchParams();
-    params.set('reprogramarDesdeId', String(id));
-    params.set('fechaNueva', fechaNueva);
-    params.set('horaNueva', horaNueva);
-    if (motivo.trim().length > 0) params.set('motivo', motivo.trim());
+    const modalEl = document.getElementById('modalReprogramarCita');
+    if (!modalEl) {
+        console.error('No se encontró el modalReprogramarCita en el DOM. Verifica el fragmento/templates.');
+        return;
+    }
 
-    window.location.href = `/recepcionista/citas/nueva?${params.toString()}`;
+
+    const modal = window.bootstrap?.Modal?.getOrCreateInstance(modalEl);
+    modal?.show?.();
+}
+
+function confirmarCancelacion(id) {
+    // Usar SIEMPRE el modal (sin prompts) para capturar el motivo
+    abrirModalCancelarCita(id);
+}
+
+
+function confirmarCancelacionOReprogramar(id) {
+    // Menú simple: Aceptar => Reprogramar, Cancelar => Cancelar
+    const quiereReprogramar = confirm('¿Desea REPROGRAMAR esta cita?\n\nAceptar: reprogramar\nCancelar: cancelar');
+
+    if (!quiereReprogramar) {
+        abrirModalCancelarCita(id);
+        return;
+    }
+
+    abrirModalReprogramarCita(id);
 }
 
