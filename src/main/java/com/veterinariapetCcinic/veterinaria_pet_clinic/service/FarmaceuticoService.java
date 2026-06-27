@@ -59,10 +59,10 @@ public class FarmaceuticoService {
         return crearSolicitudMedicamentos(
                 mascotaId,
                 veterinarioId,
-                List.of(medicamentoId),
-                List.of(cantidad),
-                List.of(dosis),
-                List.of(frecuencia),
+                Collections.singletonList(medicamentoId),
+                Collections.singletonList(cantidad),
+                Collections.singletonList(dosis),
+                Collections.singletonList(frecuencia),
                 null,
                 null,
                 null,
@@ -101,9 +101,13 @@ public class FarmaceuticoService {
             veterinario = veterinarioRepository.findById(veterinarioId).orElse(null);
         }
         if (veterinario == null) {
-            veterinario = veterinarioRepository.findAll().stream().findFirst().orElseGet(() -> {
+            veterinario = veterinarioRepository.findAll().stream()
+                    .filter(v -> v.getNombre() != null && v.getNombre().toLowerCase().contains("alberca"))
+                    .findFirst()
+                    .orElseGet(() -> {
                 Veterinario nuevoVeterinario = new Veterinario();
-                nuevoVeterinario.setNombre("Veterinario principal");
+                nuevoVeterinario.setNombre("Dra. Alberca");
+                nuevoVeterinario.setEspecialidad("Medicina veterinaria");
                 return veterinarioRepository.save(nuevoVeterinario);
             });
         }
@@ -128,11 +132,17 @@ public class FarmaceuticoService {
 
             Medicamento medicamento = medicamentoRepository.findById(medicamentoId)
                     .orElseThrow(() -> new NoSuchElementException("Medicamento no encontrado"));
+            Integer cantidadSolicitada = valorEntero(cantidades, i, 1);
+            Integer stockDisponible = medicamento.getStock() != null ? medicamento.getStock() : 0;
+            if (cantidadSolicitada > stockDisponible) {
+                throw new IllegalArgumentException("La cantidad solicitada de " + medicamento.getNombre()
+                        + " supera el stock disponible (" + stockDisponible + ")");
+            }
 
             RecetaItem item = new RecetaItem();
             item.setReceta(receta);
             item.setMedicamento(medicamento);
-            item.setCantidad(valorEntero(cantidades, i, 1));
+            item.setCantidad(cantidadSolicitada);
             item.setDosis(valorTexto(dosis, i));
             item.setFrecuencia(valorTexto(frecuencias, i));
             item.setVia(valorTexto(vias, i));
@@ -277,6 +287,19 @@ public class FarmaceuticoService {
                 advertencias,
                 alternativas
         );
+    }
+
+    @Transactional
+    public ValidacionReceta validarYMarcarReceta(Long recetaId) {
+        ValidacionReceta validacion = validarReceta(recetaId);
+        if (validacion.valida()
+                && validacion.receta().getEstado() == RecetaEstado.PENDIENTE) {
+            RecetaMedica receta = validacion.receta();
+            receta.setEstado(RecetaEstado.VALIDADA);
+            recetaRepository.save(receta);
+            return validarReceta(recetaId);
+        }
+        return validacion;
     }
 
     @Transactional

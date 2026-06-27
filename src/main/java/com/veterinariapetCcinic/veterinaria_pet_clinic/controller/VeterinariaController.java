@@ -359,6 +359,12 @@ public class VeterinariaController {
         return "Veterinaria/solicitudes";
     }
 
+    @GetMapping("/solicitudes/detalle/{id}")
+    @ResponseBody
+    public FarmaceuticoService.ValidacionReceta detalleSolicitud(@PathVariable Long id) {
+        return farmaceuticoService.validarReceta(id);
+    }
+
     @GetMapping("/reportes")
 public String reportes(
         @RequestParam(required = false) Long mascotaId,

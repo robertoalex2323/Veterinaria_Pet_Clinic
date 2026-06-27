@@ -90,7 +90,7 @@ async function cargarDetalleReceta(id) {
     tbody.innerHTML = '<tr><td colspan="10" class="text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando...</td></tr>';
 
     try {
-        const response = await fetch(`/farmaceutico/recetas/validar/${id}`, { method: 'POST' });
+        const response = await fetch(`/farmaceutico/recetas/detalle/${id}`);
         const data = await response.json();
 
         const receta = data.receta || {};

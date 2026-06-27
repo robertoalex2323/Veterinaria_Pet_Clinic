@@ -37,8 +37,6 @@
 
         <section class="request-layout">
             <form th:action="@{/veterinaria/solicitud-medicamentos}" method="post" class="request-workspace">
-                <input type="hidden" name="veterinarioId" value="1">
-
                 <section class="panel request-card patient-request-card">
                     <div class="section-title">
                         <div class="section-icon blue"><i class="fas fa-pills"></i></div>
@@ -119,6 +117,7 @@
                                     <option value="">Nombre del medicamento</option>
                                     <option th:each="med : ${medicamentos}"
                                             th:value="${med.id}"
+                                            th:attr="data-stock=${med.stock != null ? med.stock : 0}"
                                             th:text="${med.nombre + ' (stock: ' + med.stock + ')'}"></option>
                                 </select>
                                 <select name="vias">
@@ -196,9 +195,15 @@
                         </div>
                         <div class="sent-request-actions">
                             <span class="tag warning" th:if="${solicitud.estado.name() == 'PENDIENTE'}">Pendiente</span>
+                            <span class="tag info" th:if="${solicitud.estado.name() == 'VALIDADA'}">Validada</span>
                             <span class="tag normal" th:if="${solicitud.estado.name() == 'DISPENSADA'}">Dispensada</span>
                             <span class="tag danger" th:if="${solicitud.estado.name() == 'RECHAZADA'}">Rechazada</span>
-                            <a th:href="@{/farmaceutico/recetas}" title="Ver en farmacia"><i class="far fa-eye"></i></a>
+                            <button type="button"
+                                    class="request-eye-button"
+                                    th:attr="data-id=${solicitud.id}"
+                                    title="Ver detalle de solicitud">
+                                <i class="far fa-eye"></i>
+                            </button>
                         </div>
                     </article>
                 </div>
@@ -211,16 +216,80 @@
     </main>
 </div>
 
+<div class="vet-modal-backdrop" id="solicitudModal" hidden>
+    <section class="vet-detail-modal" role="dialog" aria-modal="true" aria-labelledby="solicitudModalTitle">
+        <button type="button" class="vet-modal-close" id="cerrarSolicitudModal" title="Cerrar">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="vet-modal-header">
+            <div class="section-icon blue"><i class="fas fa-file-prescription"></i></div>
+            <div>
+                <h2 id="solicitudModalTitle">Detalle de Solicitud</h2>
+                <p id="modalSolicitudEstado">Cargando...</p>
+            </div>
+        </div>
+
+        <div class="vet-detail-grid">
+            <div>
+                <span>Paciente</span>
+                <strong id="modalPaciente">-</strong>
+            </div>
+            <div>
+                <span>Especie / Raza</span>
+                <strong id="modalEspecie">-</strong>
+            </div>
+            <div>
+                <span>Veterinaria</span>
+                <strong id="modalVeterinaria">-</strong>
+            </div>
+            <div>
+                <span>Fecha</span>
+                <strong id="modalFecha">-</strong>
+            </div>
+        </div>
+
+        <div class="vet-modal-notes">
+            <span>Observaciones clinicas</span>
+            <p id="modalObservaciones">-</p>
+        </div>
+
+        <div class="vet-modal-items">
+            <h3>Medicamentos solicitados</h3>
+            <div id="modalItems"></div>
+        </div>
+
+        <div class="vet-modal-validation" id="modalValidacion"></div>
+    </section>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const list = document.getElementById('medicationItems');
     const addButton = document.getElementById('addMedicationBtn');
+    const modal = document.getElementById('solicitudModal');
+    const closeModalButton = document.getElementById('cerrarSolicitudModal');
+
+    function syncStockLimit(item) {
+        const select = item.querySelector('select[name="medicamentoIds"]');
+        const quantity = item.querySelector('input[name="cantidades"]');
+        const selected = select.options[select.selectedIndex];
+        const stock = Number(selected?.dataset?.stock || 0);
+        quantity.max = stock > 0 ? String(stock) : '0';
+        if (stock <= 0) {
+            quantity.value = '0';
+        } else if (Number(quantity.value || 0) < 1) {
+            quantity.value = '1';
+        } else if (Number(quantity.value) > stock) {
+            quantity.value = String(stock);
+        }
+    }
 
     function refreshMedicationNumbers() {
         list.querySelectorAll('[data-medication-item]').forEach(function (item, index) {
             item.querySelector('[data-medication-number]').textContent = index + 1;
             const removeButton = item.querySelector('.remove-medication');
             removeButton.disabled = list.querySelectorAll('[data-medication-item]').length === 1;
+            syncStockLimit(item);
         });
     }
 
@@ -253,6 +322,87 @@ document.addEventListener('DOMContentLoaded', function () {
         removeButton.closest('[data-medication-item]').remove();
         refreshMedicationNumbers();
     });
+
+    list.addEventListener('change', function (event) {
+        if (event.target.matches('select[name="medicamentoIds"]')) {
+            syncStockLimit(event.target.closest('[data-medication-item]'));
+        }
+    });
+
+    list.addEventListener('input', function (event) {
+        if (event.target.matches('input[name="cantidades"]')) {
+            syncStockLimit(event.target.closest('[data-medication-item]'));
+        }
+    });
+
+    document.querySelectorAll('.request-eye-button').forEach(function (button) {
+        button.addEventListener('click', function () {
+            abrirDetalleSolicitud(button.dataset.id);
+        });
+    });
+
+    closeModalButton.addEventListener('click', cerrarDetalleSolicitud);
+    modal.addEventListener('click', function (event) {
+        if (event.target === modal) {
+            cerrarDetalleSolicitud();
+        }
+    });
+
+    async function abrirDetalleSolicitud(id) {
+        modal.hidden = false;
+        document.getElementById('modalSolicitudEstado').textContent = 'Cargando solicitud #' + id + '...';
+        document.getElementById('modalItems').innerHTML = '<p class="modal-loading">Cargando medicamentos...</p>';
+        document.getElementById('modalValidacion').innerHTML = '';
+
+        try {
+            const response = await fetch('/veterinaria/solicitudes/detalle/' + id);
+            const data = await response.json();
+            const receta = data.receta || {};
+            const paciente = receta.paciente || {};
+            const veterinario = receta.veterinario || {};
+            const items = receta.items || [];
+            const estado = receta.estado || 'PENDIENTE';
+
+            document.getElementById('solicitudModalTitle').textContent = 'Detalle de Solicitud #' + id;
+            document.getElementById('modalSolicitudEstado').textContent = estado;
+            document.getElementById('modalPaciente').textContent = paciente.nombre || '-';
+            document.getElementById('modalEspecie').textContent = [paciente.especie, paciente.raza].filter(Boolean).join(' / ') || '-';
+            document.getElementById('modalVeterinaria').textContent = veterinario.nombre || 'Dra. Alberca';
+            document.getElementById('modalFecha').textContent = receta.fecha || '-';
+            document.getElementById('modalObservaciones').textContent = receta.observaciones || 'Sin observaciones';
+
+            document.getElementById('modalItems').innerHTML = items.map(function (item) {
+                const med = item.medicamento || {};
+                const stock = med.stock ?? 0;
+                const cantidad = item.cantidad ?? 0;
+                const disponible = stock >= cantidad;
+                return `<article class="vet-modal-item">
+                    <div>
+                        <strong>${med.nombre || 'Medicamento'}</strong>
+                        <span>${cantidad} unidad(es) solicitadas · stock ${stock}</span>
+                    </div>
+                    <p>${item.dosis || '-'} ${item.unidad || ''} · ${item.via || '-'} · ${item.frecuencia || '-'} · ${item.duracion || '-'}</p>
+                    ${item.notas ? `<small>${item.notas}</small>` : ''}
+                    <b class="${disponible ? 'stock-ok' : 'stock-bad'}">${disponible ? 'Disponible' : 'Stock insuficiente'}</b>
+                </article>`;
+            }).join('') || '<p class="modal-loading">Sin medicamentos registrados.</p>';
+
+            const errores = data.errores || [];
+            const advertencias = data.advertencias || [];
+            document.getElementById('modalValidacion').innerHTML = [
+                errores.length ? `<div class="modal-error"><strong>Errores</strong><ul>${errores.map(e => `<li>${e}</li>`).join('')}</ul></div>` : '',
+                advertencias.length ? `<div class="modal-warning"><strong>Advertencias</strong><ul>${advertencias.map(a => `<li>${a}</li>`).join('')}</ul></div>` : '',
+                !errores.length && !advertencias.length ? '<div class="modal-success">Solicitud valida y lista para farmacia.</div>' : ''
+            ].join('');
+        } catch (error) {
+            document.getElementById('modalSolicitudEstado').textContent = 'No se pudo cargar';
+            document.getElementById('modalItems').innerHTML = '<p class="modal-loading">Error al cargar el detalle.</p>';
+        }
+    }
+
+    function cerrarDetalleSolicitud() {
+        modal.hidden = true;
+    }
 
     refreshMedicationNumbers();
 });

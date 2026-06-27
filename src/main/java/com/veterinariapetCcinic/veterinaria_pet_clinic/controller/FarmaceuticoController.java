@@ -92,7 +92,7 @@ public class FarmaceuticoController {
         model.addAttribute("currentPage", "dashboard");
         model.addAttribute("bajoStockCount", medicamentoService.listarBajoStock().size());
         model.addAttribute("ventasHoy", ventaService.calcularVentasHoy());
-        model.addAttribute("recetasPendientes", recetaService.listarPendientes().size());
+        model.addAttribute("recetasPendientes", farmaceuticoService.contarRecetasPendientes());
         return "farmaceutico/dashboard";
     }
 
@@ -224,6 +224,12 @@ public class FarmaceuticoController {
     @PostMapping("/recetas/validar/{id}")
     @ResponseBody
     public FarmaceuticoService.ValidacionReceta validarReceta(@PathVariable Long id) {
+        return farmaceuticoService.validarYMarcarReceta(id);
+    }
+
+    @GetMapping("/recetas/detalle/{id}")
+    @ResponseBody
+    public FarmaceuticoService.ValidacionReceta detalleReceta(@PathVariable Long id) {
         return farmaceuticoService.validarReceta(id);
     }
 
