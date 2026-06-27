@@ -56,6 +56,32 @@ public class FarmaceuticoService {
                                                    String dosis,
                                                    String frecuencia,
                                                    String observaciones) {
+        return crearSolicitudMedicamentos(
+                mascotaId,
+                veterinarioId,
+                List.of(medicamentoId),
+                List.of(cantidad),
+                List.of(dosis),
+                List.of(frecuencia),
+                null,
+                null,
+                null,
+                null,
+                observaciones);
+    }
+
+    @Transactional
+    public RecetaMedica crearSolicitudMedicamentos(Long mascotaId,
+                                                   Long veterinarioId,
+                                                   List<Long> medicamentoIds,
+                                                   List<Integer> cantidades,
+                                                   List<String> dosis,
+                                                   List<String> frecuencias,
+                                                   List<String> vias,
+                                                   List<String> unidades,
+                                                   List<String> duraciones,
+                                                   List<String> notasItems,
+                                                   String observaciones) {
         Mascota mascota = mascotaRepository.findById(mascotaId)
                 .orElseThrow(() -> new NoSuchElementException("Mascota no encontrada"));
 
@@ -82,8 +108,9 @@ public class FarmaceuticoService {
             });
         }
 
-        Medicamento medicamento = medicamentoRepository.findById(medicamentoId)
-                .orElseThrow(() -> new NoSuchElementException("Medicamento no encontrado"));
+        if (medicamentoIds == null || medicamentoIds.isEmpty()) {
+            throw new IllegalArgumentException("Debe agregar al menos un medicamento");
+        }
 
         RecetaMedica receta = new RecetaMedica();
         receta.setPaciente(paciente);
@@ -93,15 +120,49 @@ public class FarmaceuticoService {
                 : "Solicitud creada desde el dashboard");
         receta.setEstado(RecetaEstado.PENDIENTE);
 
-        RecetaItem item = new RecetaItem();
-        item.setReceta(receta);
-        item.setMedicamento(medicamento);
-        item.setCantidad(cantidad != null && cantidad > 0 ? cantidad : 1);
-        item.setDosis(dosis);
-        item.setFrecuencia(frecuencia);
+        for (int i = 0; i < medicamentoIds.size(); i++) {
+            Long medicamentoId = medicamentoIds.get(i);
+            if (medicamentoId == null) {
+                continue;
+            }
 
-        receta.getItems().add(item);
+            Medicamento medicamento = medicamentoRepository.findById(medicamentoId)
+                    .orElseThrow(() -> new NoSuchElementException("Medicamento no encontrado"));
+
+            RecetaItem item = new RecetaItem();
+            item.setReceta(receta);
+            item.setMedicamento(medicamento);
+            item.setCantidad(valorEntero(cantidades, i, 1));
+            item.setDosis(valorTexto(dosis, i));
+            item.setFrecuencia(valorTexto(frecuencias, i));
+            item.setVia(valorTexto(vias, i));
+            item.setUnidad(valorTexto(unidades, i));
+            item.setDuracion(valorTexto(duraciones, i));
+            item.setNotas(valorTexto(notasItems, i));
+
+            receta.getItems().add(item);
+        }
+
+        if (receta.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Debe agregar al menos un medicamento valido");
+        }
+
         return recetaRepository.save(receta);
+    }
+
+    private Integer valorEntero(List<Integer> valores, int index, Integer valorPorDefecto) {
+        if (valores == null || index >= valores.size() || valores.get(index) == null || valores.get(index) <= 0) {
+            return valorPorDefecto;
+        }
+        return valores.get(index);
+    }
+
+    private String valorTexto(List<String> valores, int index) {
+        if (valores == null || index >= valores.size()) {
+            return null;
+        }
+        String valor = valores.get(index);
+        return valor != null && !valor.isBlank() ? valor.trim() : null;
     }
 
     public List<RecetaMedica> obtenerTodasLasRecetas() {

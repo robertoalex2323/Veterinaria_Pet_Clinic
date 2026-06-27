@@ -183,26 +183,51 @@ public class VeterinariaController {
     @PostMapping("/solicitud-medicamentos")
     public String crearSolicitudMedicamentos(@RequestParam Long mascotaId,
                                              @RequestParam(required = false) Long veterinarioId,
-                                             @RequestParam Long medicamentoId,
-                                             @RequestParam(defaultValue = "1") Integer cantidad,
-                                             @RequestParam String dosis,
-                                             @RequestParam(required = false) String frecuencia,
+                                             @RequestParam("medicamentoIds") List<Long> medicamentoIds,
+                                             @RequestParam("cantidades") List<Integer> cantidades,
+                                             @RequestParam("dosis") List<String> dosis,
+                                             @RequestParam(required = false, name = "frecuencias") List<String> frecuencias,
+                                             @RequestParam(required = false, name = "vias") List<String> vias,
+                                             @RequestParam(required = false, name = "unidades") List<String> unidades,
+                                             @RequestParam(required = false, name = "duraciones") List<String> duraciones,
+                                             @RequestParam(required = false, name = "notasItems") List<String> notasItems,
+                                             @RequestParam(required = false) String diagnostico,
+                                             @RequestParam(required = false) String prioridad,
                                              @RequestParam(required = false) String observaciones,
                                              RedirectAttributes redirectAttributes) {
         try {
+            String observacionesClinicas = construirObservacionesReceta(diagnostico, prioridad, observaciones);
             farmaceuticoService.crearSolicitudMedicamentos(
                     mascotaId,
                     veterinarioId,
-                    medicamentoId,
-                    cantidad,
+                    medicamentoIds,
+                    cantidades,
                     dosis,
-                    frecuencia,
-                    observaciones);
+                    frecuencias,
+                    vias,
+                    unidades,
+                    duraciones,
+                    notasItems,
+                    observacionesClinicas);
             redirectAttributes.addFlashAttribute("success", "Solicitud de medicamentos enviada al módulo de farmacéutico.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "No se pudo crear la solicitud: " + e.getMessage());
         }
         return "redirect:/veterinaria/solicitudes";
+    }
+
+    private String construirObservacionesReceta(String diagnostico, String prioridad, String observaciones) {
+        List<String> partes = new ArrayList<>();
+        if (diagnostico != null && !diagnostico.isBlank()) {
+            partes.add("Dx: " + diagnostico.trim());
+        }
+        if (prioridad != null && !prioridad.isBlank()) {
+            partes.add("Prioridad: " + prioridad.trim());
+        }
+        if (observaciones != null && !observaciones.isBlank()) {
+            partes.add(observaciones.trim());
+        }
+        return String.join("\n", partes);
     }
 
     private boolean esTriajeCritico(SignosVitales signo) {

@@ -87,7 +87,7 @@ function verDetalleReceta(btn) {
 
 async function cargarDetalleReceta(id) {
     const tbody = document.getElementById('detalleItemsBody');
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando...</td></tr>';
 
     try {
         const response = await fetch(`/farmaceutico/recetas/validar/${id}`, { method: 'POST' });
@@ -101,7 +101,7 @@ async function cargarDetalleReceta(id) {
         document.getElementById('detalleObservaciones').textContent = receta.observaciones || 'Sin observaciones';
 
         if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay medicamentos en esta receta</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No hay medicamentos en esta receta</td></tr>';
         } else {
             tbody.innerHTML = items.map(item => {
                 const med = item.medicamento || {};
@@ -110,7 +110,11 @@ async function cargarDetalleReceta(id) {
                     <td class="fw-bold">${med.nombre || 'N/A'}</td>
                     <td>${item.cantidad || 0}</td>
                     <td>${item.dosis || 'N/A'}</td>
+                    <td>${item.unidad || 'N/A'}</td>
+                    <td>${item.via || 'N/A'}</td>
                     <td>${item.frecuencia || 'N/A'}</td>
+                    <td>${item.duracion || 'N/A'}</td>
+                    <td>${item.notas || 'N/A'}</td>
                     <td class="text-center">
                         <span class="badge ${stockOk ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}">
                             ${med.stock != null ? med.stock : 'N/A'}
@@ -158,7 +162,7 @@ async function cargarDetalleReceta(id) {
         }
 
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error al cargar detalle</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error al cargar detalle</td></tr>';
         console.error('Error cargando detalle:', error);
     }
 }

@@ -1,6 +1,7 @@
 com\veterinariapetCcinic\veterinaria_pet_clinic\repository\MedicamentoRepository.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\service\VacunaAplicadaService.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\SignosVitales.class
+META-INF\spring-configuration-metadata.json
 com\veterinariapetCcinic\veterinaria_pet_clinic\controller\LoginController.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\service\MedicamentoService.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\repository\PagoRepository.class

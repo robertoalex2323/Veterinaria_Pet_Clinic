@@ -10,96 +10,252 @@
 <body>
 <div class="app">
     <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
-    <main class="main">
+    <main class="main solicitudes-page">
         <header class="header">
-            <div class="status-pill">Módulo de solicitudes</div>
+            <div class="status-pill"><span class="status-dot"></span>Sistema activo</div>
         </header>
 
-        <section class="hero">
+        <section class="hero solicitudes-hero">
             <h1>Solicitudes de Medicamentos</h1>
-            <p>Gestiona y revisa las solicitudes enviadas a farmacia desde veterinaria.</p>
+            <p>Envia solicitudes a farmacia y visualiza el dashboard del farmaceutico.</p>
         </section>
 
-        <section class="stats-grid">
-            <article class="stat-card blue">
-                <div class="stat-label">Total solicitudes</div>
-                <div class="stat-value" th:text="${totalSolicitudes}">0</div>
-            </article>
-            <article class="stat-card orange">
-                <div class="stat-label">Pendientes</div>
-                <div class="stat-value" th:text="${solicitudesPendientes}">0</div>
-            </article>
-            <article class="stat-card green">
-                <div class="stat-label">Dispensadas</div>
-                <div class="stat-value" th:text="${solicitudesDispensadas}">0</div>
-            </article>
-        </section>
+        <div class="request-tabs">
+            <button class="request-tab active" type="button">
+                <i class="fas fa-capsules"></i>
+                Solicitar Medicamentos
+            </button>
+            <a class="request-tab" th:href="@{/farmaceutico/recetas}">
+                <i class="fas fa-receipt"></i>
+                Vista Farmaceutico
+                <span th:if="${solicitudesPendientes > 0}" th:text="${solicitudesPendientes + ' pendiente'}">1 pendiente</span>
+            </a>
+        </div>
 
-        <section class="dashboard-grid single-column">
-            <div class="panel">
-                <div class="panel-header">
-                    <h2>Nueva solicitud</h2>
-                    <span class="badge">Farmacia</span>
-                </div>
-                <div th:if="${success}" class="alert success-alert" th:text="${success}"></div>
-                <div th:if="${error}" class="alert error-alert" th:text="${error}"></div>
-                <form th:action="@{/veterinaria/solicitud-medicamentos}" method="post" class="medicine-form">
-                    <input type="hidden" name="veterinarioId" value="1">
-                    <label>Paciente</label>
-                    <select name="mascotaId" required>
-                        <option value="">Seleccione un paciente</option>
-                        <option th:each="mascota : ${mascotas}" th:value="${mascota.id}" th:text="${mascota.nombre + ' - ' + mascota.especie}"></option>
-                    </select>
+        <div th:if="${success}" class="alert success-alert request-alert" th:text="${success}"></div>
+        <div th:if="${error}" class="alert error-alert request-alert" th:text="${error}"></div>
 
-                    <label>Medicamento</label>
-                    <select name="medicamentoId" required>
-                        <option value="">Seleccione un medicamento</option>
-                        <option th:each="med : ${medicamentos}" th:value="${med.id}" th:text="${med.nombre + ' (stock: ' + med.stock + ')'}"></option>
-                    </select>
+        <section class="request-layout">
+            <form th:action="@{/veterinaria/solicitud-medicamentos}" method="post" class="request-workspace">
+                <input type="hidden" name="veterinarioId" value="1">
 
-                    <label>Cantidad</label>
-                    <input type="number" name="cantidad" min="1" value="1" required>
-
-                    <label>Dosis</label>
-                    <input type="text" name="dosis" placeholder="1 tableta cada 8 horas" required>
-
-                    <label>Frecuencia</label>
-                    <input type="text" name="frecuencia" placeholder="Cada 12 horas">
-
-                    <label>Observaciones</label>
-                    <textarea name="observaciones" placeholder="Indicaciones adicionales para farmacia..."></textarea>
-
-                    <button type="submit" class="btn purple full-width">
-                        <i class="fas fa-prescription-bottle-medical"></i> Enviar a farmacia
-                    </button>
-                </form>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">
-                    <h2>Solicitudes enviadas</h2>
-                    <span class="badge" th:text="${#lists.size(solicitudes) + ' registros'}">0 registros</span>
-                </div>
-                <div class="small-list" th:if="${!#lists.isEmpty(solicitudes)}">
-                    <div class="small-item" th:each="solicitud : ${solicitudes}">
+                <section class="panel request-card patient-request-card">
+                    <div class="section-title">
+                        <div class="section-icon blue"><i class="fas fa-pills"></i></div>
                         <div>
-                            <strong th:text="${solicitud.paciente != null ? solicitud.paciente.nombre : 'Sin paciente'}">Paciente</strong>
-                            <p th:text="${solicitud.observaciones != null ? solicitud.observaciones : 'Sin observaciones'}">Observaciones</p>
-                            <small th:text="${solicitud.items != null and !solicitud.items.isEmpty() ? solicitud.items[0].medicamento.nombre : 'Sin medicamento'}">Medicamento</small>
-                        </div>
-                        <div class="d-flex flex-column align-items-end gap-1">
-                            <span class="tag warning" th:text="${solicitud.estado.name()}"></span>
-                            <small th:text="${solicitud.fecha != null ? #temporals.format(solicitud.fecha, 'dd/MM/yyyy') : ''}"></small>
+                            <h2>Nueva Solicitud de Medicamentos</h2>
+                            <p>La solicitud llegara al dashboard del farmaceutico.</p>
                         </div>
                     </div>
+
+                    <label class="field-label">Paciente</label>
+                    <div class="patient-choice-grid" th:if="${!#lists.isEmpty(mascotas)}">
+                        <label class="patient-choice" th:each="mascota, iter : ${mascotas}">
+                            <input type="radio" name="mascotaId" th:value="${mascota.id}" th:checked="${iter.index == 0}" required>
+                            <span class="pet-emoji"
+                                  th:text="${#strings.containsIgnoreCase(mascota.especie ?: '', 'gato') ? 'G' : (#strings.containsIgnoreCase(mascota.especie ?: '', 'ave') ? 'A' : (#strings.containsIgnoreCase(mascota.especie ?: '', 'reptil') ? 'R' : 'P'))}">P</span>
+                            <strong th:text="${mascota.nombre}">Luna</strong>
+                            <small th:text="${mascota.especie}">Perro</small>
+                        </label>
+                    </div>
+                    <div class="empty-state compact-empty" th:if="${#lists.isEmpty(mascotas)}">
+                        <p>No hay pacientes activos para solicitar medicamentos.</p>
+                    </div>
+
+                    <div class="patient-meta-row">
+                        <div>
+                            <span>Pacientes</span>
+                            <strong th:text="${#lists.size(mascotas)}">0</strong>
+                        </div>
+                        <div>
+                            <span>Solicitudes</span>
+                            <strong th:text="${totalSolicitudes}">0</strong>
+                        </div>
+                        <div>
+                            <span>Pendientes</span>
+                            <strong th:text="${solicitudesPendientes}">0</strong>
+                        </div>
+                        <div>
+                            <span>Dispensadas</span>
+                            <strong th:text="${solicitudesDispensadas}">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="request-field-grid">
+                        <label>
+                            <span>Diagnostico</span>
+                            <input type="text" name="diagnostico" placeholder="Ej: Infeccion bacteriana, gastritis...">
+                        </label>
+                        <label>
+                            <span>Prioridad</span>
+                            <select name="prioridad">
+                                <option value="Normal">Normal</option>
+                                <option value="Urgente">Urgente</option>
+                            </select>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="panel medicine-builder-card">
+                    <div class="medicine-builder-header">
+                        <h2>Medicamentos</h2>
+                        <button type="button" class="mini-action-button" id="addMedicationBtn">
+                            <i class="fas fa-plus"></i>
+                            Agregar
+                        </button>
+                    </div>
+
+                    <div id="medicationItems" class="medication-items">
+                        <article class="medication-request-item" data-medication-item>
+                            <div class="medication-item-top">
+                                <span>Medicamento #<b data-medication-number>1</b></span>
+                                <button type="button" class="icon-only remove-medication" title="Eliminar medicamento">
+                                    <i class="far fa-trash-alt"></i>
+                                </button>
+                            </div>
+
+                            <div class="medication-row primary">
+                                <select name="medicamentoIds" required>
+                                    <option value="">Nombre del medicamento</option>
+                                    <option th:each="med : ${medicamentos}"
+                                            th:value="${med.id}"
+                                            th:text="${med.nombre + ' (stock: ' + med.stock + ')'}"></option>
+                                </select>
+                                <select name="vias">
+                                    <option>Oral</option>
+                                    <option>Topica</option>
+                                    <option>Inyectable</option>
+                                    <option>Oftalmica</option>
+                                    <option>Otica</option>
+                                </select>
+                            </div>
+
+                            <div class="medication-row details">
+                                <input type="number" name="cantidades" min="1" value="1" placeholder="Cantidad" required>
+                                <input type="text" name="dosis" placeholder="Dosis" required>
+                                <select name="unidades">
+                                    <option>mg</option>
+                                    <option>ml</option>
+                                    <option>tableta(s)</option>
+                                    <option>gota(s)</option>
+                                    <option>capsula(s)</option>
+                                </select>
+                                <select name="frecuencias">
+                                    <option>Cada 12 horas</option>
+                                    <option>Cada 8 horas</option>
+                                    <option>Cada 24 horas</option>
+                                    <option>Una vez al dia</option>
+                                    <option>Segun indicacion</option>
+                                </select>
+                                <select name="duraciones">
+                                    <option>7 dias</option>
+                                    <option>3 dias</option>
+                                    <option>5 dias</option>
+                                    <option>10 dias</option>
+                                    <option>14 dias</option>
+                                </select>
+                            </div>
+
+                            <input type="text" name="notasItems" class="medication-note" placeholder="Notas adicionales (opcional)...">
+                        </article>
+                    </div>
+
+                    <label class="clinical-notes">
+                        <span>Notas clinicas para el farmaceutico</span>
+                        <textarea name="observaciones" placeholder="Observaciones especiales, alergias conocidas, consideraciones de dosificacion..."></textarea>
+                    </label>
+
+                    <button type="submit" class="send-pharmacy-button">
+                        <i class="far fa-paper-plane"></i>
+                        Enviar solicitud a Farmacia
+                    </button>
+                </section>
+            </form>
+
+            <aside class="panel sent-requests-card">
+                <div class="section-title">
+                    <div class="section-icon amber"><i class="fas fa-box-open"></i></div>
+                    <div>
+                        <h2>Mis Solicitudes</h2>
+                        <p th:text="${totalSolicitudes + ' solicitudes enviadas'}">0 solicitudes enviadas</p>
+                    </div>
                 </div>
-                <div class="empty-state" th:if="${#lists.isEmpty(solicitudes)}">
-                    <i class="fas fa-pills"></i>
-                    <p>No hay solicitudes registradas aún.</p>
+
+                <div class="sent-request-list" th:if="${!#lists.isEmpty(solicitudes)}">
+                    <article class="sent-request-item" th:each="solicitud : ${solicitudes}">
+                        <div class="sent-request-main">
+                            <div class="pet-mini">P</div>
+                            <div>
+                                <strong th:text="${solicitud.paciente != null ? solicitud.paciente.nombre : 'Sin paciente'}">Luna</strong>
+                                <span th:text="${solicitud.fecha != null ? #temporals.format(solicitud.fecha, 'dd/MM/yyyy') : ''}">26/06/2026</span>
+                                <p th:text="${solicitud.observaciones != null ? solicitud.observaciones : 'Sin observaciones'}">Dx: Infeccion bacteriana cutanea</p>
+                                <div class="medicine-tags" th:if="${solicitud.items != null and !solicitud.items.isEmpty()}">
+                                    <small th:each="item : ${solicitud.items}" th:text="${item.medicamento != null ? item.medicamento.nombre : 'Medicamento'}">Amoxicilina</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sent-request-actions">
+                            <span class="tag warning" th:if="${solicitud.estado.name() == 'PENDIENTE'}">Pendiente</span>
+                            <span class="tag normal" th:if="${solicitud.estado.name() == 'DISPENSADA'}">Dispensada</span>
+                            <span class="tag danger" th:if="${solicitud.estado.name() == 'RECHAZADA'}">Rechazada</span>
+                            <a th:href="@{/farmaceutico/recetas}" title="Ver en farmacia"><i class="far fa-eye"></i></a>
+                        </div>
+                    </article>
                 </div>
-            </div>
+                <div class="empty-state compact-empty" th:if="${#lists.isEmpty(solicitudes)}">
+                    <i class="fas fa-prescription-bottle-medical"></i>
+                    <p>No hay solicitudes registradas aun.</p>
+                </div>
+            </aside>
         </section>
     </main>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const list = document.getElementById('medicationItems');
+    const addButton = document.getElementById('addMedicationBtn');
+
+    function refreshMedicationNumbers() {
+        list.querySelectorAll('[data-medication-item]').forEach(function (item, index) {
+            item.querySelector('[data-medication-number]').textContent = index + 1;
+            const removeButton = item.querySelector('.remove-medication');
+            removeButton.disabled = list.querySelectorAll('[data-medication-item]').length === 1;
+        });
+    }
+
+    function clearItemValues(item) {
+        item.querySelectorAll('input').forEach(function (input) {
+            if (input.type === 'number') {
+                input.value = '1';
+            } else {
+                input.value = '';
+            }
+        });
+        item.querySelectorAll('select').forEach(function (select) {
+            select.selectedIndex = 0;
+        });
+    }
+
+    addButton.addEventListener('click', function () {
+        const firstItem = list.querySelector('[data-medication-item]');
+        const clone = firstItem.cloneNode(true);
+        clearItemValues(clone);
+        list.appendChild(clone);
+        refreshMedicationNumbers();
+    });
+
+    list.addEventListener('click', function (event) {
+        const removeButton = event.target.closest('.remove-medication');
+        if (!removeButton || removeButton.disabled) {
+            return;
+        }
+        removeButton.closest('[data-medication-item]').remove();
+        refreshMedicationNumbers();
+    });
+
+    refreshMedicationNumbers();
+});
+</script>
 </body>
 </html>
