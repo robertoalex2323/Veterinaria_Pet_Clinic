@@ -21,21 +21,21 @@
         </section>
 
         <div class="request-tabs">
-            <button class="request-tab active" type="button">
+            <button class="request-tab active" type="button" data-request-view="form">
                 <i class="fas fa-capsules"></i>
                 Solicitar Medicamentos
             </button>
-            <a class="request-tab" th:href="@{/farmaceutico/recetas}">
+            <button class="request-tab" type="button" data-request-view="pharmacy">
                 <i class="fas fa-receipt"></i>
                 Vista Farmaceutico
                 <span th:if="${solicitudesPendientes > 0}" th:text="${solicitudesPendientes + ' pendiente'}">1 pendiente</span>
-            </a>
+            </button>
         </div>
 
         <div th:if="${success}" class="alert success-alert request-alert" th:text="${success}"></div>
         <div th:if="${error}" class="alert error-alert request-alert" th:text="${error}"></div>
 
-        <section class="request-layout">
+        <section class="request-layout" id="solicitudFormView">
             <form th:action="@{/veterinaria/solicitud-medicamentos}" method="post" class="request-workspace">
                 <section class="panel request-card patient-request-card">
                     <div class="section-title">
@@ -213,6 +213,125 @@
                 </div>
             </aside>
         </section>
+
+        <section class="pharmacy-preview-view" id="pharmacyPreviewView" hidden>
+            <div class="pharmacy-preview-shell">
+                <header class="pharmacy-preview-topbar">
+                    <div class="preview-brand">
+                        <span class="section-icon blue"><i class="fas fa-cube"></i></span>
+                        <strong>Veterinaria Pet Clinic</strong>
+                    </div>
+                    <div class="preview-user">
+                        <i class="far fa-bell"></i>
+                        <span>Farmaceutico</span>
+                    </div>
+                </header>
+
+                <div class="pharmacy-preview-content">
+                    <div class="pharmacy-stats-row">
+                        <article class="pharmacy-stat purple">
+                            <span><i class="fas fa-prescription-bottle-medical"></i></span>
+                            <div>
+                                <strong th:text="${totalSolicitudes}">0</strong>
+                                <p>Total recetas</p>
+                            </div>
+                        </article>
+                        <article class="pharmacy-stat yellow">
+                            <span><i class="far fa-clock"></i></span>
+                            <div>
+                                <strong th:text="${solicitudesPendientes}">0</strong>
+                                <p>Pendientes</p>
+                            </div>
+                        </article>
+                        <article class="pharmacy-stat green">
+                            <span><i class="far fa-check-circle"></i></span>
+                            <div>
+                                <strong th:text="${solicitudesDispensadas}">0</strong>
+                                <p>Dispensados hoy</p>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="pharmacy-preview-heading">
+                        <div>
+                            <h2><i class="fas fa-clipboard-list"></i> Verificacion de Recetas</h2>
+                            <p>Valida y dispensa las recetas emitidas por los veterinarios.</p>
+                        </div>
+                        <div class="pharmacy-preview-filters">
+                            <button type="button" class="active" data-pharmacy-filter="todas">
+                                <i class="fas fa-list"></i> Todas
+                            </button>
+                            <button type="button" data-pharmacy-filter="pendientes">
+                                <i class="far fa-clock"></i> Pendientes
+                                <span th:text="${solicitudesPendientes}">0</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pharmacy-preview-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="pharmacyPreviewSearch" placeholder="Buscar por paciente, veterinario o medicamento...">
+                    </div>
+
+                    <div class="pharmacy-preview-table-wrap">
+                        <table class="pharmacy-preview-table" id="pharmacyPreviewTable">
+                            <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Paciente</th>
+                                <th>Especie</th>
+                                <th>Veterinario</th>
+                                <th>Fecha</th>
+                                <th>Medicamentos</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="receta : ${solicitudes}" th:attr="data-estado=${receta.estado.name()}">
+                                <td th:text="${receta.id}">1</td>
+                                <td><strong th:text="${receta.paciente != null ? receta.paciente.nombre : 'Sin paciente'}">Luna</strong></td>
+                                <td th:text="${receta.paciente != null ? receta.paciente.especie : '-'}">Perro</td>
+                                <td th:text="${receta.veterinario != null ? receta.veterinario.nombre : 'Dra. Alberca'}">Dra. Alberca</td>
+                                <td th:text="${receta.fecha != null ? #temporals.format(receta.fecha, 'dd/MM/yyyy') : ''}">27/06/2026</td>
+                                <td>
+                                    <span class="preview-med-count"
+                                          th:text="${receta.items != null ? receta.items.size() + ' medicamento(s)' : '0 medicamento(s)'}">
+                                        1 medicamento(s)
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="preview-state pending" th:if="${receta.estado.name() == 'PENDIENTE'}">
+                                        <i class="fas fa-clock"></i> Pendiente
+                                    </span>
+                                    <span class="preview-state validated" th:if="${receta.estado.name() == 'VALIDADA'}">
+                                        <i class="fas fa-check-circle"></i> Validada
+                                    </span>
+                                    <span class="preview-state dispensed" th:if="${receta.estado.name() == 'DISPENSADA'}">
+                                        <i class="fas fa-prescription-bottle"></i> Dispensada
+                                    </span>
+                                    <span class="preview-state rejected" th:if="${receta.estado.name() == 'RECHAZADA'}">
+                                        <i class="fas fa-ban"></i> Rechazada
+                                    </span>
+                                </td>
+                                <td>
+                                    <button type="button"
+                                            class="preview-eye-button request-eye-button"
+                                            th:attr="data-id=${receta.id}"
+                                            title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(solicitudes)}">
+                                <td colspan="8" class="preview-empty">No hay recetas registradas.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 </div>
 
@@ -268,6 +387,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const addButton = document.getElementById('addMedicationBtn');
     const modal = document.getElementById('solicitudModal');
     const closeModalButton = document.getElementById('cerrarSolicitudModal');
+    const formView = document.getElementById('solicitudFormView');
+    const pharmacyView = document.getElementById('pharmacyPreviewView');
+    const requestTabs = document.querySelectorAll('[data-request-view]');
+    const pharmacySearch = document.getElementById('pharmacyPreviewSearch');
 
     function syncStockLimit(item) {
         const select = item.querySelector('select[name="medicamentoIds"]');
@@ -340,6 +463,43 @@ document.addEventListener('DOMContentLoaded', function () {
             abrirDetalleSolicitud(button.dataset.id);
         });
     });
+
+    requestTabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            const target = tab.dataset.requestView;
+            requestTabs.forEach(function (item) {
+                item.classList.toggle('active', item === tab);
+            });
+            formView.hidden = target !== 'form';
+            pharmacyView.hidden = target !== 'pharmacy';
+        });
+    });
+
+    document.querySelectorAll('[data-pharmacy-filter]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const filter = button.dataset.pharmacyFilter;
+            document.querySelectorAll('[data-pharmacy-filter]').forEach(function (item) {
+                item.classList.toggle('active', item === button);
+            });
+            filterPharmacyPreview(filter, pharmacySearch.value);
+        });
+    });
+
+    if (pharmacySearch) {
+        pharmacySearch.addEventListener('input', function () {
+            const activeFilter = document.querySelector('[data-pharmacy-filter].active')?.dataset?.pharmacyFilter || 'todas';
+            filterPharmacyPreview(activeFilter, pharmacySearch.value);
+        });
+    }
+
+    function filterPharmacyPreview(filter, text) {
+        const query = (text || '').trim().toLowerCase();
+        document.querySelectorAll('#pharmacyPreviewTable tbody tr[data-estado]').forEach(function (row) {
+            const matchesState = filter === 'todas' || row.dataset.estado === 'PENDIENTE';
+            const matchesText = !query || row.textContent.toLowerCase().includes(query);
+            row.style.display = matchesState && matchesText ? '' : 'none';
+        });
+    }
 
     closeModalButton.addEventListener('click', cerrarDetalleSolicitud);
     modal.addEventListener('click', function (event) {
