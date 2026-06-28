@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda;
 
 @Repository
 public interface AgendaRepository extends JpaRepository<Agenda, Long> {
@@ -24,4 +24,12 @@ public interface AgendaRepository extends JpaRepository<Agenda, Long> {
     
     @Query("SELECT a FROM Agenda a WHERE a.veterinario.id = :veterinarioId AND a.fecha = :fecha")
     List<Agenda> findByVeterinarioAndFecha(@Param("veterinarioId") Long veterinarioId, @Param("fecha") LocalDate fecha);
+    
+
+    @Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio <= :hora AND a.horaFin > :hora AND a.disponible = true")
+    List<Agenda> findAgendaDisponiblePorFechaYHora(@Param("fecha") LocalDate fecha, @Param("hora") java.time.LocalTime hora);
+
+    @Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio <= :hora AND a.horaFin > :hora")
+    List<Agenda> findAgendaPorFechaYHora(@Param("fecha") LocalDate fecha, @Param("hora") java.time.LocalTime hora);
+
 }

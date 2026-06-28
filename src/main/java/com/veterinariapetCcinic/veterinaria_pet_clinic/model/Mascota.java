@@ -1,4 +1,4 @@
-package com.veterinariapetCcinic.veterinaria_pet_clinic.Model;
+package com.veterinariapetCcinic.veterinaria_pet_clinic.model;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -44,6 +44,9 @@ public class Mascota {
 
     @Column(length = 500)
     private String fotoUrl;
+
+    private Boolean activo = true;
+    private LocalDate fechaBaja;
 
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
@@ -134,6 +137,26 @@ public class Mascota {
 
     public void setFotoUrl(String fotoUrl) {
         this.fotoUrl = fotoUrl;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
+    }
+
+    public boolean estaActivo() {
+        return activo == null || activo;
+    }
+
+    public LocalDate getFechaBaja() {
+        return fechaBaja;
+    }
+
+    public void setFechaBaja(LocalDate fechaBaja) {
+        this.fechaBaja = fechaBaja;
     }
 
     public Cliente getCliente() {

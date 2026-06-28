@@ -15,12 +15,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Pago;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Pago;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.AgendaRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_farmaceutico::layout(~{::div#content}, 'proveedores')}">
+<head>
+    <title th:text="${proveedor.id != null ? 'Editar Proveedor' : 'Nuevo Proveedor'}">Proveedor</title>
+</head>
+<body>
+<div id="content">
+    <div class="mb-4">
+        <a th:href="@{/farmaceutico/proveedores}" class="btn btn-outline-secondary btn-sm mb-2">
+            <i class="fas fa-arrow-left me-1"></i> Volver a Proveedores
+        </a>
+        <h2 class="fw-bold mb-0 text-dark" th:text="${proveedor.id != null ? 'Editar Proveedor' : 'Nuevo Proveedor'}">
+            Nuevo Proveedor
+        </h2>
+        <p class="text-muted" th:text="${proveedor.id != null ? 'Modifica los datos del proveedor.' : 'Ingresa los datos del nuevo proveedor.'}">
+            Ingresa los datos del nuevo proveedor.
+        </p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card form-card border-0 shadow-lg">
+                <div class="card-body p-4">
+                    <form th:action="@{/farmaceutico/proveedores/guardar}" method="post" th:object="${proveedor}">
+                        <input type="hidden" name="id" th:value="${proveedor.id}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nombre del Proveedor <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                <input type="text" name="nombre" class="form-control" th:value="${proveedor.nombre}" placeholder="Ej: Distribuidora Farma SAC" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">RUC <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                <input type="text" name="ruc" class="form-control" th:value="${proveedor.ruc}" placeholder="Ej: 20123456789" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Contacto</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                                    <input type="text" name="contacto" class="form-control" th:value="${proveedor.contacto}" placeholder="Nombre del contacto">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Teléfono</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                    <input type="text" name="telefono" class="form-control" th:value="${proveedor.telefono}" placeholder="Ej: +51 999 888 777">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" name="email" class="form-control" th:value="${proveedor.email}" placeholder="contacto@proveedor.com">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Dirección</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                <textarea name="direccion" class="form-control" rows="2" placeholder="Av. Principal 123, Lima" th:inline="text">[[${proveedor.direccion}]]</textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4 flex-grow-1">
+                                <i class="fas fa-save me-2"></i> <span th:text="${proveedor.id != null ? 'Actualizar Proveedor' : 'Guardar Proveedor'}">Guardar Proveedor</span>
+                            </button>
+                            <a th:href="@{/farmaceutico/proveedores}" class="btn btn-outline-secondary px-4">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

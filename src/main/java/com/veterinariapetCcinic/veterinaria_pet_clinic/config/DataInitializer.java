@@ -7,8 +7,9 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -18,6 +19,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private AgendaService agendaService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -90,6 +94,19 @@ public class DataInitializer implements CommandLineRunner {
             farmaceutico.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(farmaceutico);
             System.out.println("✅ Usuario FARMACEUTICO creado exitosamente");
+        }
+        // 6. Generar Agenda Base
+        Usuario veterinarioObj = null;
+        for (Usuario u : usuarioRepository.findAll()) {
+            if ("VETERINARIO".equals(u.getRol())) {
+                veterinarioObj = u;
+                break;
+            }
+        }
+        
+        if (veterinarioObj != null) {
+            agendaService.generarAgendaBaseSiVacia(veterinarioObj);
+            System.out.println("✅ Agenda base generada o verificada exitosamente");
         }
         
         System.out.println("🎉 Todos los usuarios iniciales han sido creados");
