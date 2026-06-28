@@ -13,12 +13,17 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     
+    // ===== BÚSQUEDAS POR CAMPOS =====
     Optional<Cliente> findByTelefono(String telefono);
     
     Optional<Cliente> findByEmail(String email);
     
+    // ✅ NUEVO: Buscar cliente por nombre exacto
+    Cliente findByNombre(String nombre);
+    
     List<Cliente> findByNombreContainingIgnoreCase(String nombre);
     
+    // ===== CONSULTAS CON FETCH =====
     @Query("SELECT c FROM Cliente c LEFT JOIN FETCH c.mascotas WHERE c.id = :id")
     Optional<Cliente> findByIdWithMascotas(@Param("id") Long id);
     
@@ -28,8 +33,10 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     @Query("SELECT c FROM Cliente c LEFT JOIN FETCH c.pagos WHERE c.id = :id")
     Optional<Cliente> findByIdWithPagos(@Param("id") Long id);
     
+    // ===== VALIDACIONES =====
     boolean existsByTelefono(String telefono);
     
+    // ===== CONTADORES =====
     @Override
     long count();
 }

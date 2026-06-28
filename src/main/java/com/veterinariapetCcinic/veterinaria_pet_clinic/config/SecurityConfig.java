@@ -54,10 +54,11 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
                         .requestMatchers("/api/chatbot/**").permitAll()
                         .requestMatchers("/login").permitAll()
-                        .requestMatchers("/veterinario/**").hasRole("VETERINARIO")
-                        .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
+                        .requestMatchers("/veterinario/**").hasRole("VETERINARIO")`r`n                        .requestMatchers("/vendedor/**", "/api/v1/vendedor/**").hasRole("VENDEDOR")`r`n                        .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
+                        
                         // Solo FARMACEUTICO puede acceder a estas rutas
                         .requestMatchers("/farmaceutico/**").hasRole("FARMACEUTICO")
+                        
                         // Solo RECEPCIONISTA puede acceder a estas rutas
                         .requestMatchers("/recepcionista/**").hasRole("RECEPCIONISTA")
                         .requestMatchers("/clientes/**").hasRole("RECEPCIONISTA")
@@ -82,6 +83,10 @@ public class SecurityConfig {
 
                             boolean esFarmaceutico = authentication.getAuthorities().stream()
                                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_FARMACEUTICO"));
+                            
+                            // ¡AGREGADO POR TI! Redirección para VENDEDOR
+                            boolean esVendedor = authentication.getAuthorities().stream()
+                                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_VENDEDOR"));
 
                             if (esAdmin) {
                                 response.sendRedirect("/admin/dashboard");
@@ -89,6 +94,8 @@ public class SecurityConfig {
                                 response.sendRedirect("/veterinaria/dashboard");
                             } else if (esFarmaceutico) {
                                 response.sendRedirect("/farmaceutico/dashboard");
+                            } else if (esVendedor) {
+                                response.sendRedirect("/vendedor");
                             } else {
                                 response.sendRedirect("/recepcionista/dashboard");
                             }
