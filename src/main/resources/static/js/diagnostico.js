@@ -120,7 +120,7 @@ function generarDiagnosticoMock(especie, sintomasText) {
     document.getElementById('confianzaPorcentaje').textContent = porcentaje + "%";
 
     const circulo = document.getElementById('confianzaCirculo');
-    circulo.className = "progress-circle p-85"; // Reset
+    circulo.classList.remove('p-high', 'p-medium', 'p-low');
     if (porcentaje >= 85) circulo.classList.add('p-high');
     else if (porcentaje >= 70) circulo.classList.add('p-medium');
     else circulo.classList.add('p-low');

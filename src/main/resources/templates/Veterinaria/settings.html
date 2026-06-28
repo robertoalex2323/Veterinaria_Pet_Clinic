@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuracion - Panel Veterinario</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+</head>
+
+<body>
+    <div class="app">
+        <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+        <main class="main simple-page">
+            <header class="header">
+                <div class="status-pill">Preferencias</div>
+                <a class="btn blue" href="/veterinaria/perfil">
+                    <i class="fas fa-user"></i> Perfil
+                </a>
+            </header>
+
+            <section class="hero">
+                <h1>Configuracion</h1>
+                <p>Opciones operativas del panel veterinario.</p>
+            </section>
+
+            <section class="simple-grid">
+                <article class="panel">
+                    <div class="panel-header">
+                        <h2>Modulo activo</h2>
+                        <span class="badge">Veterinaria2</span>
+                    </div>
+                    <div class="settings-list">
+                        <div class="settings-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>Dashboard funcional</strong>
+                                <p>Conectado con pacientes, historial, alertas, agenda, reportes y solicitudes.</p>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>Diagnostico IA</strong>
+                                <p>Disponible desde el dashboard y el menu lateral.</p>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <h2>Sesion</h2>
+                    </div>
+                    <div class="simple-actions">
+                        <a class="btn purple" href="/veterinaria/dashboard"><i class="fas fa-home"></i> Volver</a>
+                        <a class="btn blue" href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar sesion</a>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>
