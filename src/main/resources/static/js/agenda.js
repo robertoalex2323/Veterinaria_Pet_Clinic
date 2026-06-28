@@ -5,10 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextMonthBtn = document.getElementById('nextMonth');
     const selectedDateInput = document.getElementById('selectedDate');
 
-    let currentDate = new Date(selectedDateInput.value + 'T12:00:00');
+    const rawDate = selectedDateInput ? selectedDateInput.value : '';
+    let currentDate = rawDate ? new Date(rawDate + 'T12:00:00') : new Date();
     if (isNaN(currentDate.getTime())) {
         currentDate = new Date();
-    }
+}
 
     let currentMonth = currentDate.getMonth();
     let currentYear = currentDate.getFullYear();
@@ -48,8 +49,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             dayDiv.addEventListener('click', () => {
+                // En el controlador se parsea como LocalDate con @DateTimeFormat(iso = ISO.DATE)
+                // Por eso enviamos el formato yyyy-MM-dd.
                 window.location.href = `/recepcionista/agenda?fecha=${isoDate}`;
             });
+
+            // Si el día es el seleccionado, también actualizamos la URL sin depender del click.
+            if (isoDate === selectedIsoDate) {
+                // No redirigimos si ya estamos en esa fecha.
+                // (Esto evita inconsistencias cuando se carga inicialmente con fecha distinta)
+                const current = new URLSearchParams(window.location.search).get('fecha');
+                if (current !== isoDate) {
+                    window.history.replaceState({}, '', `/recepcionista/agenda?fecha=${isoDate}`);
+                }
+            }
 
             calendarGrid.appendChild(dayDiv);
         }

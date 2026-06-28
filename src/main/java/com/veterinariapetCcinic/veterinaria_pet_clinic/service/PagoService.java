@@ -27,12 +27,6 @@ public class PagoService {
         return pagoRepository.save(pago);
     }
     
-    @Transactional
-    public Pago registrarPago(Pago pago, Long citaId) {
-        pago.setEstado("PAGADO");
-        return guardar(pago);
-    }
-    
     public Pago buscarPorId(Long id) {
         return pagoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Pago no encontrado con ID: " + id));
@@ -73,7 +67,22 @@ public class PagoService {
     public long contarPagosPendientes() {
         return pagoRepository.countByEstado("PENDIENTE");
     }
-    
+
+    public boolean estaPagadaLaCita(Long citaId) {
+        if (citaId == null) {
+            return false;
+        }
+        return pagoRepository.existsPagoPagadoPorCita(citaId);
+    }
+
+
+    /**
+     * Obtiene el comprobante máximo con prefijo PET2026- (ej: PET2026-00001).
+     */
+    public String obtenerMaxComprobantePet2026() {
+        return pagoRepository.findMaxComprobantePet2026();
+    }
+
     @Transactional
     public void actualizarEstado(Long id, String nuevoEstado) {
         Pago pago = buscarPorId(id);
