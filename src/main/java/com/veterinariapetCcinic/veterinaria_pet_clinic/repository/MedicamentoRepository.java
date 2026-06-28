@@ -1,5 +1,6 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,4 +20,6 @@ public interface MedicamentoRepository extends JpaRepository<Medicamento, Long> 
     List<Medicamento> findByStockLessThan(Integer stock);
     
     List<Medicamento> findByPresentacion(String presentacion);
+
+    List<Medicamento> findByFechaVencimientoBetweenOrderByFechaVencimientoAsc(LocalDate inicio, LocalDate fin);
 }

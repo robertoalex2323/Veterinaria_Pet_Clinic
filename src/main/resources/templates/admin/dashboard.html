@@ -55,10 +55,22 @@
             <span>Agendas</span>
             <strong th:text="${totalAgendas}">0</strong>
         </a>
+        <a class="admin-stat-card stat-sales" href="/farmaceutico/ventas">
+            <i class="fas fa-cash-register"></i>
+            <span>Ventas del dia</span>
+            <strong th:text="${'S/ ' + #numbers.formatDecimal(ventasDia, 1, 2)}">S/ 0.00</strong>
+        </a>
+        <a class="admin-stat-card stat-expiring" href="/farmaceutico/medicamentos">
+            <i class="fas fa-prescription-bottle-medical"></i>
+            <span>Medicamentos por vencer</span>
+            <strong th:text="${medicamentosProximosVencer}">0</strong>
+        </a>
     </div>
 
     <section class="admin-quick">
         <a href="/admin/usuarios" class="btn btn-primary"><i class="fas fa-user-plus"></i> Nuevo Usuario</a>
+        <a href="/admin/roles" class="btn btn-dark"><i class="fas fa-user-lock"></i> Gestionar Roles</a>
+        <a href="/admin/auditoria" class="btn btn-secondary"><i class="fas fa-clipboard-list"></i> Ver Auditoria</a>
         <a href="/recepcionista/clientes/nuevo" class="btn btn-success"><i class="fas fa-user-friends"></i> Nuevo Cliente</a>
         <a href="/recepcionista/mascotas/nuevo" class="btn btn-warning"><i class="fas fa-paw"></i> Nueva Mascota</a>
         <a href="/recepcionista/citas/nueva" class="btn btn-info"><i class="fas fa-calendar-plus"></i> Nueva Cita</a>
@@ -101,6 +113,31 @@
             </div>
         </article>
 
+        <article class="admin-panel">
+            <div class="admin-panel-header">
+                <h3>Seguridad y farmacia</h3>
+                <span>Auditoria y vencimientos</span>
+            </div>
+            <div class="admin-alert-list">
+                <h4>Medicamentos proximos a vencer</h4>
+                <p th:if="${#lists.isEmpty(listaMedicamentosProximosVencer)}">Sin vencimientos en los proximos 30 dias.</p>
+                <p th:each="med : ${listaMedicamentosProximosVencer}">
+                    <i class="fas fa-prescription-bottle-medical"></i>
+                    <span th:text="${med.nombre}">Medicamento</span>
+                    <small th:text="${med.fechaVencimiento != null ? #temporals.format(med.fechaVencimiento, 'dd/MM/yyyy') : '-'}">-</small>
+                </p>
+                <h4 class="mt-3">Auditoria reciente</h4>
+                <p th:if="${#lists.isEmpty(auditoriaReciente)}">Aun no hay acciones auditadas.</p>
+                <p th:each="log : ${auditoriaReciente}">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span th:text="${log.accion + ' ' + log.entidad}">Accion</span>
+                    <small th:text="${#temporals.format(log.fechaHora, 'dd/MM HH:mm')}">Fecha</small>
+                </p>
+            </div>
+        </article>
+    </section>
+
+    <section class="admin-dashboard-grid mt-3">
         <article class="admin-panel">
             <div class="admin-panel-header">
                 <h3>Graficos</h3>

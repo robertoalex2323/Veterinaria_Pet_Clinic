@@ -35,7 +35,7 @@ public class SecurityConfig {
                     .withUsername(usuario.getUsername())
                     .password(usuario.getPassword())
                     .authorities(new SimpleGrantedAuthority("ROLE_" + usuario.getRol()))
-                    .disabled(!usuario.getActivo())
+                    .disabled(!Boolean.TRUE.equals(usuario.getActivo()) || Boolean.TRUE.equals(usuario.getBloqueado()))
                     .build();
         };
     }
@@ -54,21 +54,21 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
                         .requestMatchers("/api/chatbot/**").permitAll()
                         .requestMatchers("/login").permitAll()
-                        .requestMatchers("/veterinario/**").hasRole("VETERINARIO")
-                        .requestMatchers("/vendedor/**", "/api/v1/vendedor/**").hasRole("VENDEDOR")
-                        .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
+                        .requestMatchers("/veterinario/**").hasAnyRole("VETERINARIO", "ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/vendedor/**", "/api/v1/vendedor/**").hasAnyRole("VENDEDOR", "ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/veterinaria/**").hasAnyRole("VETERINARIO", "ADMIN", "ADMINISTRADOR")
                         
                         // Solo FARMACEUTICO puede acceder a estas rutas
-                        .requestMatchers("/farmaceutico/**").hasRole("FARMACEUTICO")
+                        .requestMatchers("/farmaceutico/**").hasAnyRole("FARMACEUTICO", "ADMIN", "ADMINISTRADOR")
                         
                         // Solo RECEPCIONISTA puede acceder a estas rutas
-                        .requestMatchers("/recepcionista/**").hasRole("RECEPCIONISTA")
-                        .requestMatchers("/clientes/**").hasRole("RECEPCIONISTA")
-                        .requestMatchers("/mascotas/**").hasRole("RECEPCIONISTA")
-                        .requestMatchers("/citas/**").hasRole("RECEPCIONISTA")
-                        .requestMatchers("/agenda/**").hasRole("RECEPCIONISTA")
-                        .requestMatchers("/pagos/**").hasRole("RECEPCIONISTA")
-                        .requestMatchers("/diagnostico/**").hasRole("RECEPCIONISTA")
+                        .requestMatchers("/recepcionista/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/clientes/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/mascotas/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/citas/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/agenda/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/pagos/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/diagnostico/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
                         .requestMatchers("/dashboard").authenticated()
 
                         // Cualquier otra ruta requiere autenticación

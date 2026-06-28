@@ -208,6 +208,124 @@
     background: linear-gradient(135deg, #BE123C, #F43F5E);
 }
 
+.stat-sales {
+    background: linear-gradient(135deg, #155E75, #06B6D4);
+}
+
+.stat-expiring {
+    background: linear-gradient(135deg, #854D0E, #EAB308);
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.admin-form-grid label,
+.admin-inline-form label {
+    display: grid;
+    gap: 6px;
+    color: #4B5563;
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.admin-form-grid input,
+.admin-form-grid select,
+.admin-inline-form input,
+.admin-inline-form select,
+.admin-password-form input {
+    width: 100%;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    padding: 9px 10px;
+    outline: none;
+}
+
+.admin-form-grid input:focus,
+.admin-form-grid select:focus,
+.admin-inline-form input:focus,
+.admin-inline-form select:focus,
+.admin-password-form input:focus {
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.admin-form-wide {
+    grid-column: 1 / -1;
+}
+
+.admin-inline-form {
+    display: grid;
+    grid-template-columns: minmax(140px, 1fr) minmax(170px, 1fr) minmax(130px, .7fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.admin-action-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-password-form {
+    display: flex;
+    gap: 6px;
+}
+
+.admin-password-form input {
+    min-width: 130px;
+}
+
+.admin-policy-list,
+.admin-alert-list {
+    display: grid;
+    gap: 10px;
+}
+
+.admin-policy-list p,
+.admin-alert-list p {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #F8FAFC;
+    border: 1px solid #E5E7EB;
+    color: #374151;
+}
+
+.admin-policy-list i {
+    color: #16A34A;
+}
+
+.admin-alert-list h4 {
+    margin: 0;
+    font-size: .92rem;
+    font-weight: 800;
+    color: #374151;
+}
+
+.admin-alert-list p span {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.admin-alert-list small {
+    color: #64748B;
+    font-weight: 700;
+}
+
+.admin-role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+}
+
 @media (max-width: 768px) {
     .admin-header {
         align-items: flex-start;
@@ -220,6 +338,11 @@
 
     .admin-dashboard-grid,
     .admin-activity {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-form-grid,
+    .admin-inline-form {
         grid-template-columns: 1fr;
     }
 }

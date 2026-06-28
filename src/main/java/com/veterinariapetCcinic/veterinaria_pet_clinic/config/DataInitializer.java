@@ -35,6 +35,8 @@ public class DataInitializer implements CommandLineRunner {
             admin.setEmail("admin@veterinaria.com");
             admin.setRol("ADMIN");
             admin.setActivo(true);
+            admin.setBloqueado(false);
+            admin.setCreadoPor("sistema");
             admin.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(admin);
             System.out.println("✅ Usuario ADMIN creado exitosamente");
@@ -49,6 +51,8 @@ public class DataInitializer implements CommandLineRunner {
             vet.setEmail("katyalb@petclinic.com");
             vet.setRol("VETERINARIO");
             vet.setActivo(true);
+            vet.setBloqueado(false);
+            vet.setCreadoPor("sistema");
             vet.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(vet);
             System.out.println("✅ Usuario VETERINARIO creado exitosamente");
@@ -63,6 +67,8 @@ public class DataInitializer implements CommandLineRunner {
             recep.setEmail("robertoanton@petclinic.com");
             recep.setRol("RECEPCIONISTA");
             recep.setActivo(true);
+            recep.setBloqueado(false);
+            recep.setCreadoPor("sistema");
             recep.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(recep);
             System.out.println(" Usuario RECEPCIONISTA creado exitosamente");
@@ -77,6 +83,8 @@ public class DataInitializer implements CommandLineRunner {
             vendedor.setEmail("Alessandro_Llacshuanga@veterinaria.com");
             vendedor.setRol("VENDEDOR");
             vendedor.setActivo(true);
+            vendedor.setBloqueado(false);
+            vendedor.setCreadoPor("sistema");
             vendedor.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(vendedor);
             System.out.println(" Usuario VENDEDOR creado exitosamente");
@@ -91,6 +99,8 @@ public class DataInitializer implements CommandLineRunner {
             farmaceutico.setEmail("Dario.Arroyo@veterinaria.com");
             farmaceutico.setRol("FARMACEUTICO");
             farmaceutico.setActivo(true);
+            farmaceutico.setBloqueado(false);
+            farmaceutico.setCreadoPor("sistema");
             farmaceutico.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(farmaceutico);
             System.out.println(" Usuario FARMACEUTICO creado exitosamente");

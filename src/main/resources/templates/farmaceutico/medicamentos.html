@@ -77,6 +77,10 @@
                             <span class="detalle-label"><i class="fas fa-cubes text-secondary me-1"></i> Stock Mínimo</span>
                             <span class="detalle-valor" th:text="${med.stockMinimo != null ? med.stockMinimo : 'No definido'}">10</span>
                         </div>
+                        <div class="med-detalle">
+                            <span class="detalle-label"><i class="fas fa-calendar-day text-danger me-1"></i> Vencimiento</span>
+                            <span class="detalle-valor" th:text="${med.fechaVencimiento != null ? #temporals.format(med.fechaVencimiento, 'dd/MM/yyyy') : 'Sin fecha'}">Sin fecha</span>
+                        </div>
                     </div>
                 </div>
             </div>

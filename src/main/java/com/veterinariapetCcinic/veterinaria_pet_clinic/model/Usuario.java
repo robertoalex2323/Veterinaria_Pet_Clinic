@@ -37,6 +37,24 @@ public class Usuario {
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
 
+    @Column(name = "creado_por", length = 80)
+    private String creadoPor;
+
+    @Column(name = "fecha_actualizacion")
+    private LocalDateTime fechaActualizacion;
+
+    @Column(name = "editado_por", length = 80)
+    private String editadoPor;
+
+    @Column(name = "bloqueado")
+    private Boolean bloqueado = false;
+
+    @Column(name = "fecha_bloqueo")
+    private LocalDateTime fechaBloqueo;
+
+    @Column(name = "password_reset_at")
+    private LocalDateTime passwordResetAt;
+
     public Usuario() {
         this.fechaCreacion = LocalDateTime.now();
     }
@@ -104,5 +122,53 @@ public class Usuario {
 
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public String getCreadoPor() {
+        return creadoPor;
+    }
+
+    public void setCreadoPor(String creadoPor) {
+        this.creadoPor = creadoPor;
+    }
+
+    public LocalDateTime getFechaActualizacion() {
+        return fechaActualizacion;
+    }
+
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+        this.fechaActualizacion = fechaActualizacion;
+    }
+
+    public String getEditadoPor() {
+        return editadoPor;
+    }
+
+    public void setEditadoPor(String editadoPor) {
+        this.editadoPor = editadoPor;
+    }
+
+    public Boolean getBloqueado() {
+        return bloqueado;
+    }
+
+    public void setBloqueado(Boolean bloqueado) {
+        this.bloqueado = bloqueado;
+    }
+
+    public LocalDateTime getFechaBloqueo() {
+        return fechaBloqueo;
+    }
+
+    public void setFechaBloqueo(LocalDateTime fechaBloqueo) {
+        this.fechaBloqueo = fechaBloqueo;
+    }
+
+    public LocalDateTime getPasswordResetAt() {
+        return passwordResetAt;
+    }
+
+    public void setPasswordResetAt(LocalDateTime passwordResetAt) {
+        this.passwordResetAt = passwordResetAt;
     }
 }

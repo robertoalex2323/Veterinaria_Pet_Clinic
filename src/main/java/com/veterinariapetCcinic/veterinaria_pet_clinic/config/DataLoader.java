@@ -1,6 +1,7 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.config;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -85,6 +86,7 @@ public class DataLoader {
             analgesico.setContraindicaciones("No usar en gatos");
             analgesico.setInteracciones("Ibuprofeno");
             analgesico.setImagenUrl("/Imagen/Medicamento/aspirin.png");
+            analgesico.setFechaVencimiento(LocalDate.now().plusDays(18));
             medicamentoRepository.save(analgesico);
 
             Medicamento antibiotico = new Medicamento();
@@ -97,6 +99,7 @@ public class DataLoader {
             antibiotico.setContraindicaciones("No usar con alérgia a penicilina");
             antibiotico.setInteracciones("Doxiciclina");
             antibiotico.setImagenUrl("/Imagen/Medicamento/amoxicilina.png");
+            antibiotico.setFechaVencimiento(LocalDate.now().plusDays(9));
             medicamentoRepository.save(antibiotico);
 
             Medicamento alternativa = new Medicamento();
@@ -109,6 +112,7 @@ public class DataLoader {
             alternativa.setContraindicaciones("No usar con alergia a cefalosporinas");
             alternativa.setInteracciones("");
             alternativa.setImagenUrl("/Imagen/Medicamento/cefalexina.png");
+            alternativa.setFechaVencimiento(LocalDate.now().plusDays(45));
             medicamentoRepository.save(alternativa);
 
             Paciente paciente = new Paciente();
