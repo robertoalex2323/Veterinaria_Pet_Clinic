@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
