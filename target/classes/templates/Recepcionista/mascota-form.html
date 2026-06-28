@@ -125,16 +125,28 @@
                                                 id="fechaNacimiento" onchange="calcularEdad()">
                                         </div>
                                         <div class="col-md-4">
+                                            <label class="form-label fw-bold">Sexo</label>
+                                            <select class="form-select" th:field="*{sexo}" required>
+                                                <option value="" th:selected="${mascota.sexo == null}">Seleccione...</option>
+                                                <option value="macho" th:selected="${mascota.sexo == 'macho'}">macho</option>
+                                                <option value="hembra" th:selected="${mascota.sexo == 'hembra'}">hembra</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
                                             <label class="form-label fw-bold">Edad (Años)</label>
                                             <input type="number" class="form-control bg-light" th:field="*{edad}"
                                                 id="edad" readonly>
                                         </div>
+                                    </div>
+
+                                    <div class="row gx-3 mb-3">
                                         <div class="col-md-4">
                                             <label class="form-label fw-bold">Peso (Kg)</label>
                                             <input type="number" step="0.01" class="form-control" th:field="*{peso}"
                                                 placeholder="0.00">
                                         </div>
                                     </div>
+
 
                                     <div class="mb-3">
                                         <label class="form-label fw-bold">Alergias o Condiciones</label>

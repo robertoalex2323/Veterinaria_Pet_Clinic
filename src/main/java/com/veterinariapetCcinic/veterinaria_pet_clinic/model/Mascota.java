@@ -34,7 +34,11 @@ public class Mascota {
 
     private LocalDate fechaNacimiento;
 
+    private String sexo;
+
     private Integer edad;
+
+
 
     @Column(columnDefinition = "TEXT")
     private String alergias;
@@ -99,7 +103,16 @@ public class Mascota {
         this.fechaNacimiento = fechaNacimiento;
     }
 
+    public String getSexo() {
+        return sexo;
+    }
+
+    public void setSexo(String sexo) {
+        this.sexo = sexo;
+    }
+
     public Integer getEdad() {
+
         return edad;
     }
 
