@@ -227,7 +227,12 @@ public class CitaService {
         nuevaCita.setFechaHora(nuevaFechaHora);
         nuevaCita.setObservaciones("Reprogramada desde cita ID " + citaId + ". Motivo: " + motivoReprogramacion);
         // 3. Guardar (pasa por validación de disponibilidad, bloqueo de agenda, notificaciones)
-        return guardar(nuevaCita);
+        Cita nuevaGuardada = guardar(nuevaCita);
+
+        // Correo adicional específico de reprogramación (sin tocar los ya existentes)
+        notificacionService.enviarReprogramacionCita(citaOriginal, nuevaGuardada, motivoReprogramacion);
+
+        return nuevaGuardada;
     }
 
 }

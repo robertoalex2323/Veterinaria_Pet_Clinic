@@ -70,6 +70,7 @@ public class NotificacionService {
     }
 
     public void enviarConfirmacionCita(Cita cita) {
+
         String mensaje = String.format("""
                 Hola %s,
 
@@ -105,6 +106,7 @@ public class NotificacionService {
     }
 
     public void enviarCancelacionCita(Cita cita) {
+
         String mensaje = String.format("""
                 ⚠️ Su cita para el %s ha sido CANCELADA.
                 🐕 Mascota: %s
@@ -140,6 +142,42 @@ public class NotificacionService {
                 "Recordatorio de Cita Veterinaria - " + cita.getMascota().getNombre(),
                 mensaje);
         addUINotification("info", "Recordatorio enviado para: " + cita.getMascota().getNombre() + " mañana " + cita.getFechaHora().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+    }
+
+    public void enviarReprogramacionCita(Cita citaOriginal, Cita citaNueva, String motivoReprogramacion) {
+        Cliente cliente = (citaNueva != null && citaNueva.getMascota() != null) ? citaNueva.getMascota().getCliente() : null;
+        if (cliente == null) return;
+
+        String mensaje = String.format("""
+                🔁 Su cita ha sido REPROGRAMADA.
+
+                Antes:
+                Fecha y hora: %s
+                Mascota: %s
+
+                Ahora:
+                Fecha y hora: %s
+                Mascota: %s
+
+                Motivo: %s
+
+                Si desea cancelar o volver a reprogramar, contáctenos por este medio.
+
+                Atentamente,
+                Veterinaria Pet Clinic
+                """,
+                citaOriginal != null && citaOriginal.getFechaHora() != null ? citaOriginal.getFechaHora().format(FORMATTER) : "---",
+                citaOriginal != null && citaOriginal.getMascota() != null ? citaOriginal.getMascota().getNombre() : "---",
+                citaNueva != null && citaNueva.getFechaHora() != null ? citaNueva.getFechaHora().format(FORMATTER) : "---",
+                citaNueva != null && citaNueva.getMascota() != null ? citaNueva.getMascota().getNombre() : "---",
+                motivoReprogramacion != null ? motivoReprogramacion : "---"
+        );
+
+        enviarEmail(cliente.getEmail(),
+                "Reprogramación de Cita Veterinaria - " + (citaNueva.getMascota() != null ? citaNueva.getMascota().getNombre() : "Mascota"),
+                mensaje);
+
+        addUINotification("info", "Cita reprogramada: " + (citaNueva.getMascota() != null ? citaNueva.getMascota().getNombre() : "Mascota"));
     }
 
     private void enviarEmail(String email, String asunto, String mensaje) {
