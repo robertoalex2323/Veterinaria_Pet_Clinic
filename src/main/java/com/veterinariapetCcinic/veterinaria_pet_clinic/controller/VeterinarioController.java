@@ -28,7 +28,7 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;
 
 @Controller
-@RequestMapping({"/veterinario", "/veterinaria"})
+@RequestMapping("/veterinario")
 public class VeterinarioController {
 
     private final CitaService citaService;
