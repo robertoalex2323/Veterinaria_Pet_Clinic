@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ClienteService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;

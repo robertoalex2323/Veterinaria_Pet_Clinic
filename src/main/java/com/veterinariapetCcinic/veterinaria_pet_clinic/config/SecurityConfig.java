@@ -54,7 +54,9 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
                         .requestMatchers("/api/chatbot/**").permitAll()
                         .requestMatchers("/login").permitAll()
-                        .requestMatchers("/veterinario/**").hasRole("VETERINARIO")`r`n                        .requestMatchers("/vendedor/**", "/api/v1/vendedor/**").hasRole("VENDEDOR")`r`n                        .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
+                        .requestMatchers("/veterinario/**").hasRole("VETERINARIO")
+                        .requestMatchers("/vendedor/**", "/api/v1/vendedor/**").hasRole("VENDEDOR")
+                        .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
                         
                         // Solo FARMACEUTICO puede acceder a estas rutas
                         .requestMatchers("/farmaceutico/**").hasRole("FARMACEUTICO")
