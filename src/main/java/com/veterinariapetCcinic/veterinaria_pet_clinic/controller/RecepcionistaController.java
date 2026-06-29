@@ -32,6 +32,8 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Pago;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
+import java.time.Year;
+
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ClienteService;
@@ -781,25 +783,26 @@ public class RecepcionistaController {
             pago.setMetodoPago(metodoPago);
             pago.setEstado("PAGADO");
 
-            // Generar número de comprobante
-            String ultimoMax = pagoService.obtenerMaxComprobantePet2026();
+            // Generar número de comprobante (año dinámico)
+            String prefijo = "PET" + Year.now().getValue() + "-";
+
+            String ultimoMax = pagoService.obtenerMaxComprobantePorPrefijo(prefijo);
 
             long consecutivo = 1;
 
-            if (ultimoMax != null
-                    && !ultimoMax.isBlank()
-                    && ultimoMax.startsWith("PET2026-")) {
-
+            if (ultimoMax != null && !ultimoMax.isBlank() && ultimoMax.startsWith(prefijo)) {
                 try {
-                    String sufijo = ultimoMax.substring("PET2026-".length());
+                    String sufijo = ultimoMax.substring(prefijo.length());
                     consecutivo = Long.parseLong(sufijo) + 1;
                 } catch (NumberFormatException e) {
                     consecutivo = 1;
                 }
             }
 
-            String comprobante = String.format("PET2026-%05d", consecutivo);
+            String comprobante = String.format(prefijo + "%05d", consecutivo);
             pago.setComprobante(comprobante);
+
+
 
             // Asociar cita si corresponde
             if (citaId != null && citaId > 0) {
@@ -809,6 +812,10 @@ public class RecepcionistaController {
 
             // Guardar pago
             pagoService.guardar(pago);
+
+            // Notificar UI (WebSocket) para que suene la campanita
+            notificacionService.enviarConfirmacionPago(cliente, monto, metodoPago);
+
 
             // Enviar comprobante PDF por correo
             if (cliente.getEmail() != null && !cliente.getEmail().isBlank()) {
