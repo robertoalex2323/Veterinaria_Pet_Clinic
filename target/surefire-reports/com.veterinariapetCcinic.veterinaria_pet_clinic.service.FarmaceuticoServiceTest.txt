@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoServiceTest
 -------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.197 s -- in com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoServiceTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.252 s -- in com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoServiceTest

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuracion Veterinaria</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+</head>
+
+<body class="settings-page">
+    <div class="app">
+        <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+        <main class="main settings-main">
+            <section class="settings-shell" aria-label="Configuracion del veterinario">
+                <aside class="settings-menu-panel">
+                    <div class="settings-title-row">
+                        <h1>Configuracion</h1>
+                        <a href="/veterinaria/dashboard" class="settings-close" aria-label="Cerrar configuracion">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+
+                    <div class="settings-user-card">
+                        <div class="settings-avatar">DG</div>
+                        <div>
+                            <strong th:text="${nombreUsuario != null ? nombreUsuario : 'Dr. Gomez'}">Dr. Gomez</strong>
+                            <span>Medico Veterinario</span>
+                        </div>
+                        <i class="settings-online"></i>
+                    </div>
+
+                    <nav class="settings-options" aria-label="Secciones de configuracion">
+                        <button class="settings-option active" type="button" data-settings-tab="perfil">
+                            <span class="option-icon lavender"><i class="far fa-user"></i></span>
+                            <strong>Perfil</strong>
+                            <i class="fas fa-chevron-down option-chevron"></i>
+                        </button>
+                        <button class="settings-option" type="button" data-settings-tab="apariencia">
+                            <span class="option-icon sky"><i class="fas fa-palette"></i></span>
+                            <strong>Apariencia</strong>
+                            <i class="fas fa-chevron-right option-chevron"></i>
+                        </button>
+                        <button class="settings-option" type="button" data-settings-tab="notificaciones">
+                            <span class="option-icon rose"><i class="far fa-bell"></i></span>
+                            <strong>Notificaciones</strong>
+                            <i class="fas fa-chevron-right option-chevron"></i>
+                        </button>
+                        <button class="settings-option" type="button" data-settings-tab="clinicas">
+                            <span class="option-icon mint"><i class="fas fa-stethoscope"></i></span>
+                            <strong>Preferencias Clinicas</strong>
+                            <i class="fas fa-chevron-right option-chevron"></i>
+                        </button>
+                        <button class="settings-option" type="button" data-settings-tab="seguridad">
+                            <span class="option-icon peach"><i class="fas fa-shield-alt"></i></span>
+                            <strong>Seguridad</strong>
+                            <i class="fas fa-chevron-right option-chevron"></i>
+                        </button>
+                        <button class="settings-option compact" type="button" data-settings-tab="atajos">
+                            <span class="option-icon neutral"><i class="far fa-keyboard"></i></span>
+                            <strong>Atajos de teclado</strong>
+                            <small><kbd>Ctrl</kbd><kbd>K</kbd></small>
+                        </button>
+                        <button class="settings-option compact" type="button" data-settings-tab="idioma">
+                            <span class="option-icon neutral"><i class="fas fa-language"></i></span>
+                            <strong>Idioma</strong>
+                            <small>Espanol</small>
+                        </button>
+                    </nav>
+
+                    <div class="settings-menu-footer">
+                        <div class="system-version">
+                            <span class="option-icon neutral"><i class="fas fa-sync-alt"></i></span>
+                            <div>
+                                <strong>Version del sistema</strong>
+                                <small>v2.4.1 - Actualizado</small>
+                            </div>
+                        </div>
+                        <a href="/logout" class="settings-logout">
+                            <span><i class="fas fa-sign-out-alt"></i></span>
+                            Cerrar sesion
+                        </a>
+                    </div>
+                </aside>
+
+                <section class="settings-detail-panel">
+                    <article class="settings-tab-panel active" data-settings-panel="perfil">
+                        <header class="settings-panel-header">
+                            <i class="far fa-user"></i>
+                            <h2>Perfil</h2>
+                        </header>
+                        <div class="profile-settings">
+                            <div class="profile-photo">
+                                <div class="settings-avatar large">DG</div>
+                                <button type="button">Cambiar foto</button>
+                            </div>
+                            <label>
+                                <span>Nombre completo</span>
+                                <input type="text" th:value="${nombreUsuario != null ? nombreUsuario : 'Dr. Gomez'}">
+                            </label>
+                            <label>
+                                <span>Correo</span>
+                                <input type="email" value="dr.gomez@petclinic.com">
+                            </label>
+                            <label>
+                                <span>Cedula profesional</span>
+                                <input type="text" value="VET-2019-04821">
+                            </label>
+                            <label>
+                                <span>Especialidad</span>
+                                <select>
+                                    <option>Pequenos animales</option>
+                                    <option>Animales exoticos</option>
+                                    <option>Cirugia veterinaria</option>
+                                </select>
+                            </label>
+                            <div class="profile-stats">
+                                <strong>Estadisticas del perfil</strong>
+                                <p><span>Consultas este mes</span><b>48</b></p>
+                                <p><span>Pacientes activos</span><b>12</b></p>
+                                <p><span>Diagnosticos IA</span><b>23</b></p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="settings-tab-panel" data-settings-panel="apariencia">
+                        <header class="settings-panel-header">
+                            <i class="fas fa-palette"></i>
+                            <h2>Apariencia</h2>
+                        </header>
+                        <div class="appearance-settings">
+                            <section>
+                                <h3>Modo de pantalla</h3>
+                                <div class="segmented-grid">
+                                    <button class="appearance-choice" type="button" data-theme-mode="light">
+                                        <i class="far fa-sun"></i><span>Claro</span>
+                                    </button>
+                                    <button class="appearance-choice" type="button" data-theme-mode="dark">
+                                        <i class="far fa-moon"></i><span>Oscuro</span>
+                                    </button>
+                                    <button class="appearance-choice" type="button" data-theme-mode="auto">
+                                        <i class="fas fa-desktop"></i><span>Auto</span>
+                                    </button>
+                                </div>
+                            </section>
+                            <section>
+                                <h3>Tema de color</h3>
+                                <div class="color-theme-list">
+                                    <button class="color-theme-option" type="button" data-theme-color="rose">
+                                        <i style="--swatch:#ffc6d6"></i><span>Rosa Suave</span><b class="fas fa-check"></b>
+                                    </button>
+                                    <button class="color-theme-option" type="button" data-theme-color="lavender">
+                                        <i style="--swatch:#e6d3fb"></i><span>Lavanda</span><b class="fas fa-check"></b>
+                                    </button>
+                                    <button class="color-theme-option" type="button" data-theme-color="mint">
+                                        <i style="--swatch:#d7f8df"></i><span>Menta</span><b class="fas fa-check"></b>
+                                    </button>
+                                    <button class="color-theme-option" type="button" data-theme-color="sky">
+                                        <i style="--swatch:#d8efff"></i><span>Cielo</span><b class="fas fa-check"></b>
+                                    </button>
+                                    <button class="color-theme-option" type="button" data-theme-color="peach">
+                                        <i style="--swatch:#ffe8aa"></i><span>Melocoton</span><b class="fas fa-check"></b>
+                                    </button>
+                                </div>
+                            </section>
+                            <section>
+                                <h3>Tamano de texto</h3>
+                                <div class="segmented-grid">
+                                    <button class="text-size-choice" type="button" data-text-size="small"><b>Aa</b><span>Pequeno</span></button>
+                                    <button class="text-size-choice" type="button" data-text-size="medium"><b>Aa</b><span>Mediano</span></button>
+                                    <button class="text-size-choice" type="button" data-text-size="large"><b>Aa</b><span>Grande</span></button>
+                                </div>
+                            </section>
+                        </div>
+                    </article>
+
+                    <article class="settings-tab-panel" data-settings-panel="notificaciones">
+                        <header class="settings-panel-header">
+                            <i class="far fa-bell"></i>
+                            <h2>Notificaciones</h2>
+                        </header>
+                        <div class="notification-settings">
+                            <label class="notification-card">
+                                <i class="dot rose-dot"></i>
+                                <span><strong>Alertas criticas de pacientes</strong><small>Temperatura, signos vitales anormales</small></span>
+                                <input type="checkbox" checked>
+                            </label>
+                            <label class="notification-card">
+                                <i class="dot mint-dot"></i>
+                                <span><strong>Recordatorio de citas</strong><small>15 min antes de cada consulta</small></span>
+                                <input type="checkbox" checked>
+                            </label>
+                            <label class="notification-card">
+                                <i class="dot sky-dot"></i>
+                                <span><strong>Solicitudes de farmacia</strong><small>Validacion y despacho de recetas</small></span>
+                                <input type="checkbox" checked>
+                            </label>
+                            <label class="notification-card">
+                                <i class="dot amber-dot"></i>
+                                <span><strong>Vacunas pendientes</strong><small>Recordatorios de calendario</small></span>
+                                <input type="checkbox">
+                            </label>
+                            <label class="notification-card">
+                                <i class="fas fa-volume-up muted-icon"></i>
+                                <span><strong>Sonido de alertas</strong><small>Reproducir audio al recibir alertas</small></span>
+                                <input type="checkbox" checked>
+                            </label>
+                        </div>
+                    </article>
+
+                    <article class="settings-tab-panel" data-settings-panel="clinicas">
+                        <header class="settings-panel-header">
+                            <i class="fas fa-stethoscope"></i>
+                            <h2>Preferencias Clinicas</h2>
+                        </header>
+                        <div class="simple-settings-list">
+                            <label><span>Unidad de peso</span><select><option>Kilogramos</option><option>Libras</option></select></label>
+                            <label><span>Temperatura</span><select><option>Celsius</option><option>Fahrenheit</option></select></label>
+                            <label><span>Prioridad por defecto</span><select><option>Media</option><option>Alta</option><option>Baja</option></select></label>
+                        </div>
+                    </article>
+
+                    <article class="settings-tab-panel" data-settings-panel="seguridad">
+                        <header class="settings-panel-header">
+                            <i class="fas fa-shield-alt"></i>
+                            <h2>Seguridad</h2>
+                        </header>
+                        <div class="simple-settings-list">
+                            <label><span>Sesion activa</span><input type="text" value="Veterinaria - navegador actual" readonly></label>
+                            <label><span>Verificacion de cuenta</span><input type="text" value="Activa" readonly></label>
+                            <button class="settings-secondary-button" type="button">Cambiar contrasena</button>
+                        </div>
+                    </article>
+
+                    <article class="settings-tab-panel" data-settings-panel="atajos">
+                        <header class="settings-panel-header">
+                            <i class="far fa-keyboard"></i>
+                            <h2>Atajos de teclado</h2>
+                        </header>
+                        <div class="shortcuts-list">
+                            <p><span>Buscar paciente</span><kbd>Ctrl</kbd><kbd>K</kbd></p>
+                            <p><span>Nueva nota rapida</span><kbd>N</kbd></p>
+                            <p><span>Abrir alertas</span><kbd>A</kbd></p>
+                        </div>
+                    </article>
+
+                    <article class="settings-tab-panel" data-settings-panel="idioma">
+                        <header class="settings-panel-header">
+                            <i class="fas fa-language"></i>
+                            <h2>Idioma</h2>
+                        </header>
+                        <div class="simple-settings-list">
+                            <label><span>Idioma del sistema</span><select><option>Espanol</option><option>English</option></select></label>
+                            <label><span>Region</span><select><option>Peru</option><option>Colombia</option><option>Mexico</option></select></label>
+                        </div>
+                    </article>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/dashboard-veterinaria.js"></script>
+    <script src="/js/settings-veterinaria.js"></script>
+</body>
+
+</html>

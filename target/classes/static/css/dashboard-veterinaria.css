@@ -1570,3 +1570,704 @@ body {
         justify-content: center;
     }
 }
+
+/* Veterinary settings and persisted appearance */
+html {
+    --vet-bg-start: #f7f8ff;
+    --vet-bg-end: #f5f6fb;
+    --vet-surface: rgba(255, 255, 255, 0.92);
+    --vet-surface-solid: #ffffff;
+    --vet-border: #edf0f7;
+    --vet-text: #23283a;
+    --vet-muted: #7b8496;
+    --vet-accent: #b792e4;
+    --vet-accent-soft: #ead9ff;
+    --vet-accent-rgb: 183, 146, 228;
+    --vet-font-scale: 1;
+}
+
+html[data-vet-theme-color="rose"] {
+    --vet-accent: #ff8fb1;
+    --vet-accent-soft: #ffdce8;
+    --vet-accent-rgb: 255, 143, 177;
+}
+
+html[data-vet-theme-color="lavender"] {
+    --vet-accent: #b792e4;
+    --vet-accent-soft: #ead9ff;
+    --vet-accent-rgb: 183, 146, 228;
+}
+
+html[data-vet-theme-color="mint"] {
+    --vet-accent: #70d995;
+    --vet-accent-soft: #dcfbe5;
+    --vet-accent-rgb: 112, 217, 149;
+}
+
+html[data-vet-theme-color="sky"] {
+    --vet-accent: #74bee9;
+    --vet-accent-soft: #ddf1ff;
+    --vet-accent-rgb: 116, 190, 233;
+}
+
+html[data-vet-theme-color="peach"] {
+    --vet-accent: #f3be5d;
+    --vet-accent-soft: #ffedc2;
+    --vet-accent-rgb: 243, 190, 93;
+}
+
+html[data-vet-theme-mode="dark"] {
+    --vet-bg-start: #151821;
+    --vet-bg-end: #222735;
+    --vet-surface: rgba(38, 43, 57, 0.92);
+    --vet-surface-solid: #282d3b;
+    --vet-border: rgba(255, 255, 255, 0.1);
+    --vet-text: #f5f7fb;
+    --vet-muted: #aeb7c9;
+}
+
+html[data-vet-text-size="small"] {
+    --vet-font-scale: .94;
+}
+
+html[data-vet-text-size="large"] {
+    --vet-font-scale: 1.08;
+}
+
+body {
+    background: linear-gradient(180deg, var(--vet-bg-start) 0%, var(--vet-bg-end) 100%);
+    color: var(--vet-text);
+    font-size: calc(16px * var(--vet-font-scale));
+}
+
+.panel,
+.patient-profile,
+.patient-item,
+.small-item,
+.status-pill,
+.search-box input {
+    background: var(--vet-surface-solid);
+    color: var(--vet-text);
+    border-color: var(--vet-border);
+}
+
+.panel h2,
+.hero h1,
+.profile-box strong,
+.profile-meta h3,
+.patient-info strong,
+.small-item strong {
+    color: var(--vet-text);
+}
+
+.hero p,
+.subtext,
+.profile-meta span,
+.patient-info p,
+.small-item p,
+.profile-box label {
+    color: var(--vet-muted);
+}
+
+.chip.active,
+.patient-item.active,
+.btn.purple {
+    background: var(--vet-accent-soft);
+    color: var(--vet-text);
+    border-color: rgba(var(--vet-accent-rgb), .36);
+}
+
+.nav-link.active,
+.nav-link:hover {
+    background: rgba(var(--vet-accent-rgb), .18);
+}
+
+.nav-link i,
+.nav-link.active i,
+.nav-link:hover i {
+    color: var(--vet-accent) !important;
+}
+
+html[data-vet-theme-mode="dark"] .stat-card,
+html[data-vet-theme-mode="dark"] .alert-panel,
+html[data-vet-theme-mode="dark"] .follow-panel,
+html[data-vet-theme-mode="dark"] .vaccines-panel,
+html[data-vet-theme-mode="dark"] .profile-box,
+html[data-vet-theme-mode="dark"] .triage-summary,
+html[data-vet-theme-mode="dark"] .settings-menu-panel,
+html[data-vet-theme-mode="dark"] .settings-detail-panel {
+    background: var(--vet-surface);
+    color: var(--vet-text);
+    border-color: var(--vet-border);
+}
+
+.settings-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 92% 14%, rgba(116, 190, 233, .20), transparent 26%),
+        radial-gradient(circle at 10% 90%, rgba(255, 143, 177, .18), transparent 22%),
+        linear-gradient(120deg, var(--vet-bg-start), var(--vet-bg-end));
+}
+
+.settings-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 34px;
+}
+
+.settings-shell {
+    width: min(920px, 100%);
+    min-height: 760px;
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) minmax(320px, 380px);
+    gap: 18px;
+}
+
+.settings-menu-panel,
+.settings-detail-panel {
+    border-radius: 30px;
+    background: rgba(255, 255, 255, .88);
+    border: 1px solid rgba(255, 255, 255, .75);
+    box-shadow: 0 26px 70px rgba(31, 41, 55, .18);
+    overflow: hidden;
+}
+
+.settings-menu-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 28px;
+}
+
+.settings-title-row,
+.settings-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.settings-title-row {
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.settings-title-row h1,
+.settings-panel-header h2 {
+    margin: 0;
+    color: var(--vet-text);
+    font-size: 20px;
+}
+
+.settings-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--vet-muted);
+    text-decoration: none;
+}
+
+.settings-user-card {
+    min-height: 70px;
+    border-radius: 18px;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(90deg, rgba(var(--vet-accent-rgb), .22), rgba(255, 255, 255, .58));
+    border: 1px solid rgba(var(--vet-accent-rgb), .22);
+}
+
+.settings-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: var(--vet-accent);
+    color: #fff;
+    font-weight: 800;
+    box-shadow: 0 10px 20px rgba(var(--vet-accent-rgb), .28);
+}
+
+.settings-avatar.large {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    font-size: 32px;
+}
+
+.settings-user-card strong,
+.system-version strong,
+.settings-option strong {
+    display: block;
+    color: var(--vet-text);
+    font-size: 14px;
+}
+
+.settings-user-card span,
+.system-version small,
+.settings-option small {
+    color: var(--vet-muted);
+    font-size: 12px;
+}
+
+.settings-online {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #9be7ad;
+}
+
+.settings-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 34px;
+}
+
+.settings-option {
+    width: 100%;
+    min-height: 58px;
+    border: 0;
+    border-radius: 16px;
+    background: transparent;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.settings-option:hover {
+    transform: translateY(-1px);
+    background: rgba(var(--vet-accent-rgb), .08);
+}
+
+.settings-option.active {
+    background: var(--vet-accent-soft);
+}
+
+.settings-option.compact small {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: flex-end;
+}
+
+.option-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+}
+
+.option-icon.lavender { background: #ead9ff; color: #9868d8; }
+.option-icon.sky { background: #d8efff; color: #4b9cd8; }
+.option-icon.rose { background: #ffd6e3; color: #ff6d91; }
+.option-icon.mint { background: #d9f9e2; color: #46bf6c; }
+.option-icon.peach { background: #ffecb8; color: #d89b2f; }
+.option-icon.neutral { background: #f3f5f8; color: #8b96a8; }
+
+.option-chevron {
+    color: #c1c8d4;
+    font-size: 12px;
+}
+
+kbd {
+    min-width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: 7px;
+    background: #eef2f7;
+    color: #9aa4b4;
+    display: inline-grid;
+    place-items: center;
+    padding: 0 6px;
+    font-size: 10px;
+    box-shadow: none;
+}
+
+.settings-menu-footer {
+    margin-top: auto;
+    padding-top: 24px;
+    display: grid;
+    gap: 18px;
+}
+
+.system-version,
+.settings-logout {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.settings-logout {
+    color: #ff5d68;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.settings-logout span {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #fff0f1;
+}
+
+.settings-detail-panel {
+    background: rgba(255, 255, 255, .92);
+}
+
+.settings-tab-panel {
+    display: none;
+    min-height: 100%;
+}
+
+.settings-tab-panel.active {
+    display: block;
+}
+
+.settings-panel-header {
+    min-height: 74px;
+    border-bottom: 1px solid var(--vet-border);
+    padding: 0 30px;
+}
+
+.settings-panel-header i {
+    color: var(--vet-accent);
+}
+
+.profile-settings,
+.appearance-settings,
+.notification-settings,
+.simple-settings-list,
+.shortcuts-list {
+    padding: 28px 30px;
+}
+
+.profile-settings {
+    display: grid;
+    gap: 18px;
+}
+
+.profile-photo {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+}
+
+.profile-photo button {
+    border: 0;
+    background: transparent;
+    color: var(--vet-accent);
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.profile-settings label,
+.simple-settings-list label {
+    display: grid;
+    gap: 8px;
+}
+
+.profile-settings label span,
+.simple-settings-list label span,
+.appearance-settings h3 {
+    color: #9aa4b4;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.profile-settings input,
+.profile-settings select,
+.simple-settings-list input,
+.simple-settings-list select {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 15px;
+    border: 1px solid var(--vet-border);
+    background: rgba(249, 250, 252, .72);
+    padding: 0 16px;
+    color: var(--vet-text);
+    font: inherit;
+    outline: none;
+}
+
+.profile-stats {
+    border-radius: 18px;
+    padding: 18px;
+    background: rgba(var(--vet-accent-rgb), .12);
+    border: 1px solid rgba(var(--vet-accent-rgb), .16);
+}
+
+.profile-stats strong {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--vet-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.profile-stats p,
+.shortcuts-list p {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    color: var(--vet-muted);
+    font-size: 13px;
+}
+
+.profile-stats b {
+    color: var(--vet-text);
+}
+
+.appearance-settings {
+    display: grid;
+    gap: 28px;
+}
+
+.appearance-settings h3 {
+    margin: 0 0 14px;
+}
+
+.segmented-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.appearance-choice,
+.text-size-choice {
+    min-height: 72px;
+    border-radius: 15px;
+    border: 1px solid var(--vet-border);
+    background: rgba(255, 255, 255, .74);
+    color: var(--vet-muted);
+    display: grid;
+    place-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.appearance-choice.active,
+.text-size-choice.active,
+.color-theme-option.active {
+    border-color: var(--vet-accent);
+    background: rgba(var(--vet-accent-rgb), .10);
+    color: var(--vet-accent);
+    box-shadow: 0 10px 18px rgba(var(--vet-accent-rgb), .10);
+}
+
+.appearance-choice span,
+.text-size-choice span {
+    font-size: 12px;
+}
+
+.color-theme-list {
+    display: grid;
+    gap: 8px;
+}
+
+.color-theme-option {
+    min-height: 58px;
+    border: 1px solid transparent;
+    border-radius: 15px;
+    background: transparent;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 12px;
+    color: var(--vet-text);
+    cursor: pointer;
+    text-align: left;
+}
+
+.color-theme-option i {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--swatch);
+}
+
+.color-theme-option b {
+    opacity: 0;
+    font-size: 12px;
+}
+
+.color-theme-option.active b {
+    opacity: 1;
+}
+
+.notification-settings {
+    display: grid;
+    gap: 16px;
+}
+
+.notification-card {
+    min-height: 76px;
+    border-radius: 18px;
+    border: 1px solid var(--vet-border);
+    background: rgba(255, 255, 255, .62);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 16px;
+}
+
+.notification-card .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin: 0;
+}
+
+.rose-dot { background: #ff6d91; }
+.mint-dot { background: #5bd180; }
+.sky-dot { background: #55aee6; }
+.amber-dot { background: #f1b84c; }
+
+.muted-icon {
+    color: #9aa4b4;
+    font-size: 14px;
+}
+
+.notification-card strong {
+    display: block;
+    color: var(--vet-text);
+    font-size: 14px;
+}
+
+.notification-card small {
+    display: block;
+    color: var(--vet-muted);
+    margin-top: 4px;
+}
+
+.notification-card input[type="checkbox"] {
+    appearance: none;
+    width: 46px;
+    height: 26px;
+    border-radius: 999px;
+    background: #e6eaf0;
+    position: relative;
+    cursor: pointer;
+    transition: background .18s ease;
+}
+
+.notification-card input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 3px 8px rgba(31, 41, 55, .18);
+    transition: transform .18s ease;
+}
+
+.notification-card input[type="checkbox"]:checked {
+    background: var(--vet-accent);
+}
+
+.notification-card input[type="checkbox"]:checked::after {
+    transform: translateX(20px);
+}
+
+.simple-settings-list {
+    display: grid;
+    gap: 18px;
+}
+
+.settings-secondary-button {
+    min-height: 46px;
+    border: 0;
+    border-radius: 15px;
+    background: var(--vet-accent-soft);
+    color: var(--vet-text);
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.shortcuts-list p {
+    min-height: 48px;
+    border-bottom: 1px solid var(--vet-border);
+}
+
+html[data-vet-theme-mode="dark"] .settings-user-card,
+html[data-vet-theme-mode="dark"] .profile-settings input,
+html[data-vet-theme-mode="dark"] .profile-settings select,
+html[data-vet-theme-mode="dark"] .simple-settings-list input,
+html[data-vet-theme-mode="dark"] .simple-settings-list select,
+html[data-vet-theme-mode="dark"] .appearance-choice,
+html[data-vet-theme-mode="dark"] .text-size-choice,
+html[data-vet-theme-mode="dark"] .notification-card {
+    background: rgba(255, 255, 255, .06);
+}
+
+@media (max-width: 980px) {
+    .settings-main {
+        padding: 20px;
+        align-items: flex-start;
+    }
+
+    .settings-shell {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+}
+
+@media (max-width: 560px) {
+    .settings-main {
+        padding: 12px;
+    }
+
+    .settings-menu-panel,
+    .settings-detail-panel {
+        border-radius: 22px;
+    }
+
+    .settings-menu-panel,
+    .profile-settings,
+    .appearance-settings,
+    .notification-settings,
+    .simple-settings-list,
+    .shortcuts-list {
+        padding: 22px;
+    }
+
+    .settings-panel-header {
+        padding: 0 22px;
+    }
+
+    .segmented-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .notification-card {
+        grid-template-columns: auto 1fr;
+    }
+
+    .notification-card input[type="checkbox"] {
+        grid-column: 2;
+        justify-self: start;
+    }
+}

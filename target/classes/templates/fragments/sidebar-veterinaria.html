@@ -60,7 +60,9 @@
     </nav>
     <div style="flex-grow: 1"></div>
     <div class="sidebar-user">
-        <a href="/veterinaria/settings" class="nav-link" title="Configuración">
+        <a href="/veterinaria/settings" class="nav-link"
+           th:classappend="${currentPage == 'settings' ? ' active' : ''}"
+           title="Configuración">
             <i class="fas fa-cog"></i>
         </a>
         <a href="/logout" class="nav-link logout-nav-link" title="Cerrar sesion">

@@ -1,3 +1,51 @@
+const VET_THEME_STORAGE_KEY = "vetDashboardTheme";
+
+(function initVeterinaryTheme() {
+    const defaults = { mode: "light", color: "lavender", text: "medium" };
+
+    function readTheme() {
+        try {
+            return { ...defaults, ...JSON.parse(localStorage.getItem(VET_THEME_STORAGE_KEY) || "{}") };
+        } catch (error) {
+            return { ...defaults };
+        }
+    }
+
+    function resolveMode(mode) {
+        if (mode !== "auto") return mode;
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+
+    function applyTheme(theme) {
+        const next = { ...defaults, ...theme };
+        const resolvedMode = resolveMode(next.mode);
+        document.documentElement.dataset.vetThemeMode = resolvedMode;
+        document.documentElement.dataset.vetThemeChoice = next.mode;
+        document.documentElement.dataset.vetThemeColor = next.color;
+        document.documentElement.dataset.vetTextSize = next.text;
+    }
+
+    window.vetThemeSettings = {
+        get: readTheme,
+        set(partial) {
+            const next = { ...readTheme(), ...partial };
+            localStorage.setItem(VET_THEME_STORAGE_KEY, JSON.stringify(next));
+            applyTheme(next);
+            return next;
+        }
+    };
+
+    applyTheme(readTheme());
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    if (media.addEventListener) {
+        media.addEventListener("change", () => {
+            const current = readTheme();
+            if (current.mode === "auto") applyTheme(current);
+        });
+    }
+})();
+
 document.addEventListener("DOMContentLoaded", () => {
     const lista = document.getElementById("listaPacientes");
     const pacientes = Array.from(document.querySelectorAll(".patient-item"));
