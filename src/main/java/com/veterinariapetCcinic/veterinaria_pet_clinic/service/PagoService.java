@@ -27,12 +27,6 @@ public class PagoService {
         return pagoRepository.save(pago);
     }
     
-    @Transactional
-    public Pago registrarPago(Pago pago, Long citaId) {
-        pago.setEstado("PAGADO");
-        return guardar(pago);
-    }
-    
     public Pago buscarPorId(Long id) {
         return pagoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Pago no encontrado con ID: " + id));
@@ -73,7 +67,24 @@ public class PagoService {
     public long contarPagosPendientes() {
         return pagoRepository.countByEstado("PENDIENTE");
     }
-    
+
+    public boolean estaPagadaLaCita(Long citaId) {
+        if (citaId == null) {
+            return false;
+        }
+        return pagoRepository.existsPagoPagadoPorCita(citaId);
+    }
+
+
+    /**
+     * Obtiene el comprobante máximo para el prefijo de año.
+     * El prefijo debe incluir el guion final, por ejemplo: "PET2027-".
+     */
+    public String obtenerMaxComprobantePorPrefijo(String prefijo) {
+        return pagoRepository.findMaxComprobantePorPrefijo(prefijo);
+    }
+
+
     @Transactional
     public void actualizarEstado(Long id, String nuevoEstado) {
         Pago pago = buscarPorId(id);

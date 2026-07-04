@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Veterinario</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+</head>
+
+<body>
+    <div class="app">
+        <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+        <main class="main">
+            <header class="header">
+                <div class="status-pill">Sistema Activo</div>
+                <div class="search-box">
+                    <input type="text" id="buscarPacienteDashboard" placeholder="Buscar paciente...">
+                </div>
+            </header>
+
+            <section class="hero">
+                <h1>Panel Veterinario</h1>
+                <p th:text="${#temporals.format(fecha, 'EEEE, dd ''de'' MMMM yyyy', new java.util.Locale('es'))}">Hoy</p>
+            </section>
+
+            <section class="stats-grid">
+                <article class="stat-card blue">
+                    <div class="stat-label">Atendidos Hoy</div>
+                    <div class="stat-value" th:text="${atendidosHoy}">0</div>
+                </article>
+                <article class="stat-card orange">
+                    <div class="stat-label">Pendientes</div>
+                    <div class="stat-value" th:text="${pendientesHoy}">0</div>
+                </article>
+                <article class="stat-card red">
+                    <div class="stat-label">Criticos</div>
+                    <div class="stat-value" th:text="${criticosHoy}">0</div>
+                </article>
+                <article class="stat-card green">
+                    <div class="stat-label">Registrados</div>
+                    <div class="stat-value" th:text="${totalMascotas}">0</div>
+                </article>
+            </section>
+
+            <section class="filter-bar">
+                <span>Filtrar por especie:</span>
+                <button class="chip active" data-especie="todas"><i class="fas fa-paw"></i> Todas</button>
+                <button class="chip" data-especie="perro"><i class="fas fa-dog"></i> Perros</button>
+                <button class="chip" data-especie="gato"><i class="fas fa-cat"></i> Gatos</button>
+                <button class="chip" data-especie="ave"><i class="fas fa-dove"></i> Aves</button>
+                <button class="chip" data-especie="reptil"><i class="fas fa-dragon"></i> Reptiles</button>
+            </section>
+
+            <section class="dashboard-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Pacientes Recientes</h2>
+                        <span class="badge" th:text="${totalMascotas + ' registrados'}">0 registrados</span>
+                    </div>
+
+                    <div class="patient-list" id="listaPacientes">
+                        <div th:each="mascota, iter : ${mascotas}"
+                             th:with="signo=${ultimoSignoPorMascota[mascota.id]}, cita=${citaHoyPorMascota[mascota.id]}"
+                             th:class="${iter.index == 0 ? 'patient-item active' : 'patient-item'}"
+                             th:attr="data-id=${mascota.id},
+                                      data-nombre=${mascota.nombre},
+                                      data-especie=${mascota.especie},
+                                      data-raza=${mascota.raza != null ? mascota.raza : ''},
+                                      data-edad=${mascota.edad != null ? mascota.edad + ' años' : 'No registrada'},
+                                      data-peso=${signo != null and signo.peso != null ? signo.peso + ' kg' : (mascota.peso != null ? mascota.peso + ' kg' : 'No registrado')},
+                                      data-color=${mascota.color != null ? mascota.color : 'No registrado'},
+                                      data-dueno=${mascota.cliente != null ? mascota.cliente.nombre : 'Sin dueño'},
+                                      data-telefono=${mascota.cliente != null and mascota.cliente.telefono != null ? mascota.cliente.telefono : ''},
+                                      data-historial-url=@{/veterinaria/historial/{id}(id=${mascota.id})},
+                                      data-estado=${estadoPorMascota[mascota.id]},
+                                      data-prioridad=${prioridadPorMascota[mascota.id]},
+                                      data-prioridad-texto=${prioridadTextoPorMascota[mascota.id]},
+                                      data-temperatura=${signo != null and signo.temperatura != null ? signo.temperatura + ' °C' : ''},
+                                      data-fc=${signo != null and signo.frecuenciaCardiaca != null ? signo.frecuenciaCardiaca + ' bpm' : ''},
+                                      data-fr=${signo != null and signo.frecuenciaRespiratoria != null ? signo.frecuenciaRespiratoria + ' rpm' : ''},
+                                      data-observaciones=${signo != null and signo.observaciones != null ? signo.observaciones : ''},
+                                      data-fecha-triaje=${signo != null and signo.fechaRegistro != null ? #temporals.format(signo.fechaRegistro, 'dd/MM/yyyy HH:mm') : ''},
+                                      data-cita-estado=${cita != null and cita.estado != null ? cita.estado : ''},
+                                      data-cita-motivo=${cita != null and cita.motivo != null ? cita.motivo : ''}">
+                            <div class="patient-info">
+                                <strong>
+                                    <i th:class="${mascota.especie != null and mascota.especie.toLowerCase() == 'perro' ? 'fas fa-dog' : (mascota.especie != null and mascota.especie.toLowerCase() == 'gato' ? 'fas fa-cat' : (mascota.especie != null and mascota.especie.toLowerCase() == 'ave' ? 'fas fa-dove' : 'fas fa-paw'))}"></i>
+                                    <span th:text="${mascota.nombre}">Paciente</span>
+                                    <span class="dot">•</span>
+                                </strong>
+                                <p th:text="${estadoPorMascota[mascota.id]}">Registrado</p>
+                            </div>
+                            <span th:class="'tag ' + ${prioridadPorMascota[mascota.id]}"
+                                  th:text="${prioridadTextoPorMascota[mascota.id]}">Media</span>
+                        </div>
+
+                        <div th:if="${mascotas.empty}" class="empty-state">
+                            <i class="fas fa-paw"></i>
+                            <p>No hay mascotas registradas desde recepcion.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Ficha del Paciente</h2>
+                        <span class="subtext" id="pacienteSeleccionadoTitulo">-</span>
+                    </div>
+                    <div class="patient-profile" id="fichaPaciente">
+                        <p>Selecciona un paciente de la lista</p>
+                    </div>
+                    <div class="action-buttons">
+                        <a class="btn purple" href="/veterinaria/diagnostico-ia">
+                            <i class="fas fa-wand-magic-sparkles"></i> Diagnostico IA
+                        </a>
+                        <a class="btn blue" id="btnHistorialPaciente" href="/veterinaria/historial">
+                            <i class="fas fa-file-medical"></i> Ver Historial Completo
+                        </a>
+                    </div>
+                    <div class="quick-note">
+                        <label>Nota Rapida</label>
+                        <textarea placeholder="Observaciones de la consulta actual..."></textarea>
+                    </div>
+                </div>
+
+                <div class="right-column">
+                   <div class="panel alert-panel">
+    <div class="panel-header">
+        <h2>Alertas Criticas</h2>
+        <span class="badge" th:text="${alertasCriticas.size() + ' activas'}">0 activas</span>
+    </div>
+
+    <div id="alertasCriticas" class="small-list">
+        <div th:each="alerta : ${alertasCriticas}" class="small-item">
+            <div>
+                <strong th:text="${alerta.mascota != null ? alerta.mascota.nombre : 'Paciente'}">Paciente</strong>
+                <p th:text="${alerta.descripcion}">Descripcion de alerta</p>
+            </div>
+            <a th:if="${alerta.mascota != null}"
+               th:href="@{/veterinaria/historial/{id}(id=${alerta.mascota.id})}"
+               class="tag danger"
+               style="text-decoration:none;">
+                Ver
+            </a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(alertasCriticas)}" class="small-item">
+            <div>
+                <strong>Sin alertas criticas</strong>
+                <p>No hay alertas activadas desde historial clinico.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+                    <div class="panel follow-panel">
+                        <div class="panel-header">
+                            <h2>Seguimiento Rapido</h2>
+                        </div>
+                        <div class="small-list">
+                            <div th:each="mascota : ${mascotas}"
+                                 th:with="signo=${ultimoSignoPorMascota[mascota.id]}"
+                                 th:if="${signo != null}"
+                                 class="small-item">
+                                <div>
+                                    <strong th:text="${mascota.nombre}">Paciente</strong>
+                                    <p th:text="${'Temp. ' + (signo.temperatura != null ? signo.temperatura + ' °C' : '-') + ' · Peso ' + (signo.peso != null ? signo.peso + ' kg' : '-')}">Signos vitales</p>
+                                </div>
+                                <span class="tag normal">Normal</span>
+                            </div>
+                            <div th:if="${ultimoSignoPorMascota.empty}" class="small-item">
+                                <div>
+                                    <strong>Sin triajes aun</strong>
+                                    <p>Cuando se registre un triaje aparecera aqui.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel vaccines-panel">
+                        <div class="panel-header">
+                            <h2>Vacunas Pendientes</h2>
+                        </div>
+                        <div class="small-list" id="vacunasPendientes">
+                            <div class="small-item">
+                                <div>
+                                    <strong>Sin vencimientos cargados</strong>
+                                    <p>Las vacunas apareceran cuando se registren en el modulo clinico.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/dashboard-veterinaria.js"></script>
+</body>
+
+</html>
