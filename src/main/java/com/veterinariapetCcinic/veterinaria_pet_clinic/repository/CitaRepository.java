@@ -37,8 +37,9 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     @Query("SELECT c FROM Cita c WHERE c.estado = 'AGENDADA' AND DATE(c.fechaHora) = :fecha")
     List<Cita> findCitasPendientesByFecha(@Param("fecha") LocalDate fecha);
 
-    @Query("SELECT c FROM Cita c WHERE c.estado = 'AGENDADA' AND DATE(c.fechaHora) = :fecha AND c.recordatorioEnviado = false")
+    @Query("SELECT c FROM Cita c WHERE DATE(c.fechaHora) = :fecha AND (c.recordatorioEnviado = false OR c.recordatorioEnviado IS NULL)")
     List<Cita> findCitasPendientesParaRecordatorio(@Param("fecha") LocalDate fecha);
+
 
     // ── NUEVO: trae mascota + cliente en una sola query para evitar LazyInitializationException ──
     @Query("SELECT DISTINCT c FROM Cita c " +

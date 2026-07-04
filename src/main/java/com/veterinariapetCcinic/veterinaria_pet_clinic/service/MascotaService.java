@@ -46,7 +46,9 @@ public class MascotaService {
         existente.setEspecie(mascota.getEspecie());
         existente.setRaza(mascota.getRaza());
         existente.setFechaNacimiento(mascota.getFechaNacimiento());
+        existente.setSexo(mascota.getSexo());
         existente.setEdad(mascota.getEdad());
+
         existente.setAlergias(mascota.getAlergias());
         existente.setColor(mascota.getColor());
         existente.setPeso(mascota.getPeso());

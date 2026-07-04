@@ -118,6 +118,12 @@
                         <i class="fas fa-clinic-medical"></i> Veterinaria Pet Clinic
                     </h4>
                     <div class="d-flex align-items-center">
+                        <link rel="stylesheet" th:href="@{/css/busqueda-universal.css}" th:if="${currentPage == 'agenda' || currentPage == 'citas'}">
+                        <div class="universal-search-wrap me-3" th:if="${currentPage == 'agenda' || currentPage == 'citas'}">
+                            <input id="universalSearchInput" type="text" class="universal-search-input" placeholder="Buscar: cliente o mascota (nombre/telefono)..." autocomplete="off" />
+                            <div id="universalSearchDropdown" class="universal-search-dropdown d-none dropdown-menu"></div>
+                        </div>
+
                         <!-- Historial de Notificaciones (Bandeja) -->
                         <div class="dropdown me-3">
                             <button class="btn btn-link text-dark position-relative p-0" id="notificationTray" data-bs-toggle="dropdown" aria-expanded="false">
@@ -188,6 +194,7 @@
     
     <!-- Script de notificaciones UI -->
     <script th:src="@{/js/notificaciones-ui.js}"></script>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

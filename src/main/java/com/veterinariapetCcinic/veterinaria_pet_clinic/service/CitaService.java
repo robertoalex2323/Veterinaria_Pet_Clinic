@@ -102,11 +102,48 @@ public class CitaService {
         return citaRepository.findAll();
     }
     
+    @Transactional(readOnly = true)
     public List<Cita> obtenerCitasDelDia(LocalDate fecha) {
         LocalDateTime inicio = fecha.atStartOfDay();
         LocalDateTime fin = fecha.atTime(LocalTime.MAX);
-        return citaRepository.findByFechaHoraBetween(inicio, fin);
+        
+        List<Cita> citas = citaRepository.findByFechaHoraBetween(inicio, fin);
+        
+        for (Cita cita : citas) {
+            // Inicializar mascota y sus relaciones
+            if (cita.getMascota() != null) {
+                cita.getMascota().getNombre();
+                cita.getMascota().getEspecie();
+                cita.getMascota().getRaza();
+                
+                // Inicializar cliente
+                if (cita.getMascota().getCliente() != null) {
+                    cita.getMascota().getCliente().getNombre();
+                    cita.getMascota().getCliente().getTelefono();
+                    cita.getMascota().getCliente().getEmail();
+                }
+            }
+            
+            // Inicializar veterinario
+            if (cita.getVeterinario() != null) {
+                cita.getVeterinario().getNombre();
+                cita.getVeterinario().getEmail();
+            }
+            
+            // Inicializar otros campos
+            cita.getMotivo();
+            cita.getEstado();
+            if (cita.getObservaciones() == null) {
+                cita.setObservaciones("");
+            }
+            if (cita.getMotivo() == null) {
+                cita.setMotivo("");
+            }
+        }
+        
+        return citas;
     }
+
     
     public List<Cita> obtenerCitasPorEstado(String estado) {
         return citaRepository.findByEstado(estado);
@@ -174,6 +211,30 @@ public class CitaService {
     @Transactional
     public void eliminar(Long id) {
         citaRepository.deleteById(id);
+    }
+
+    @Transactional
+    public Cita reprogramarCita(Long citaId, LocalDateTime nuevaFechaHora, String motivoReprogramacion) {
+        Cita citaOriginal = buscarPorId(citaId);
+
+        // 1. Cancelar la cita original (libera la agenda automáticamente)
+        cancelarCita(citaId, "Reprogramada: " + motivoReprogramacion);
+
+        // 2. Crear la nueva cita con los mismos datos básicos
+        Cita nuevaCita = new Cita();
+        nuevaCita.setMascota(citaOriginal.getMascota());
+        nuevaCita.setVeterinario(citaOriginal.getVeterinario());
+        nuevaCita.setMotivo(citaOriginal.getMotivo());
+        nuevaCita.setFechaHora(nuevaFechaHora);
+        nuevaCita.setObservaciones("Reprogramada desde cita ID " + citaId + ". Motivo: " + motivoReprogramacion);
+
+        // 3. Guardar (pasa por validación de disponibilidad, bloqueo de agenda, notificaciones)
+        Cita nuevaGuardada = guardar(nuevaCita);
+
+        // Correo adicional específico de reprogramación (sin tocar los ya existentes)
+        notificacionService.enviarReprogramacionCita(citaOriginal, nuevaGuardada, motivoReprogramacion);
+
+        return nuevaGuardada;
     }
 
 }

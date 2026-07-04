@@ -117,34 +117,47 @@
             </div>
         </div>
 
-        <!-- MODAL DE PAGO -->
+        <!-- MODAL DE PAGO (Professional) -->
         <div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
-                    <!-- Cabecera del Modal -->
-                    <div class="modal-header text-white" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);">
-                        <h5 class="modal-title fw-bold" id="modalPagoLabel"><i class="fas fa-cash-register me-2"></i> Registrar Nuevo Pago</h5>
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header modal-pagos-header text-white">
+                        <h5 class="modal-title fw-bold" id="modalPagoLabel">
+                            <i class="fas fa-cash-register me-2"></i> Registrar Nuevo Pago
+                        </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    
-                    <form id="pagoForm" th:action="@{/recepcionista/pagos/guardar}" method="post">
-                        <div class="modal-body p-4 bg-light">
-                            <!-- Monto Principal Destacado -->
-                            <div class="text-center mb-4 p-3 bg-white rounded border shadow-sm mx-auto" style="max-width: 350px;">
-                                <label class="form-label fw-bold text-success text-uppercase mb-2" style="letter-spacing: 1px;">Importe a Cobrar <span class="text-danger">*</span></label>
-                                <div class="input-group input-monto-group">
-                                    <span class="input-group-text bg-success text-white border-success">S/</span>
-                                    <input type="number" name="monto" id="monto" class="form-control form-control-lg text-center fs-3 text-success fw-bold border-success" step="0.01" min="0.10" placeholder="0.00" required>
-                                </div>
-                            </div>
 
+                    <form id="pagoForm" th:action="@{/recepcionista/pagos/guardar}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <div class="modal-body p-4">
                             <div class="row g-3">
+                                <div class="col-12 d-print-none">
+                                    <div class="alert alert-info pagos-form-alert mb-3" role="alert">
+                                        <i class="fas fa-shield-alt me-2"></i>
+                                        Completa los datos del recibo. El formulario valida el monto y el voucher según el método.
+                                    </div>
+                                </div>
+                                <!-- Monto Destacado -->
+                                <div class="col-12">
+                                    <div class="pago-monto-highlight mx-auto" style="max-width: 420px;">
+                                        <label class="form-label fw-bold text-success text-uppercase mb-2" style="letter-spacing: 0.08em;">
+                                            Importe a Cobrar <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group input-monto-group">
+                                            <span class="input-group-text">S/</span>
+                                            <input type="number" name="monto" id="monto" class="form-control form-control-lg text-center fs-3" step="0.01" min="0.10" placeholder="0.00" required>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Cliente -->
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold text-dark">Cliente <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white"><i class="fas fa-user text-muted"></i></span>
-                                        <select name="clienteId" id="clienteId" class="form-select" required style="width: 80%;">
+                                        <span class="input-group-text bg-white">
+                                            <i class="fas fa-user text-muted"></i>
+                                        </span>
+                                        <select name="clienteId" id="clienteId" class="form-select" required>
                                             <option value="">Seleccione un cliente...</option>
                                             <option th:each="cliente : ${clientes}" th:value="${cliente.id}"
                                                 th:text="${cliente.nombre + ' - DNI/Tel: ' + (cliente.telefono != null ? cliente.telefono : 'N/A')}">
@@ -153,61 +166,101 @@
                                     </div>
                                 </div>
 
-                                <!-- Método de Pago -->
+                                <!-- Método + Referencia -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-dark">Método de Pago <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white"><i class="fas fa-credit-card text-muted"></i></span>
+                                        <span class="input-group-text bg-white">
+                                            <i class="fas fa-credit-card text-muted"></i>
+                                        </span>
                                         <select name="metodoPago" id="metodoPago" class="form-select" required>
                                             <option value="Efectivo">💵 Efectivo</option>
                                             <option value="Tarjeta">💳 Tarjeta (Crédito/Débito)</option>
                                             <option value="Yape/Plin">📱 Yape / Plin</option>
                                             <option value="Transferencia">🏦 Transferencia Bancaria</option>
                                         </select>
+
+                                        <input type="hidden" name="numeroComprobanteYape" id="numeroComprobanteYape" value="">
                                     </div>
                                 </div>
 
-                                <!-- Cita Referencia -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-dark">ID Cita Referencia <span class="text-muted fw-normal">(Opcional)</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white"><i class="fas fa-hashtag text-muted"></i></span>
-                                        <input type="number" name="citaId" class="form-control" placeholder="Ej. 12" min="1">
+                                        <span class="input-group-text bg-white">
+                                            <i class="fas fa-hashtag text-muted"></i>
+                                        </span>
+                                        <input type="number" name="citaId" id="citaIdInput" class="form-control" placeholder="Ej. 12" min="1">
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Dynamic Payment Fields -->
-                            <div id="dynamicPaymentFields" class="mt-4">
+                            <!-- Campos Dinámicos -->
+                            <div class="mt-4">
+                                <!-- Info de Cita (se autocompleta desde la agenda) -->
+                                <div class="pago-cita-info mb-3 p-3 rounded-3 bg-white border shadow-sm d-print-none">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div class="cita-info-icon">
+                                            <i class="fas fa-calendar-check text-success"></i>
+                                        </div>
+                                        <div style="flex:1;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="m-0 fw-bold text-dark">
+                                                    <i class="fas fa-id-card me-2 text-muted"></i>
+                                                    Info de Cita
+                                                </h6>
+                                                <span id="citaEstadoBadge" class="badge bg-light text-muted border">Sin asignar</span>
+                                            </div>
+                                            <div class="mt-2 small text-muted">
+                                                <div><b>Mascota:</b> <span id="citaMascota">-</span></div>
+                                                <div><b>Fecha/Hora:</b> <span id="citaFechaHora">-</span></div>
+                                                <div><b>ID Referencia:</b> <span id="citaIdLabel">-</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="dynamicPaymentFields" class="mt-0">
                                 <!-- Tarjeta -->
-                                <div id="tarjetaFields" class="payment-method-fields d-none bg-white p-3 rounded border shadow-sm">
+                                <div id="tarjetaFields" class="payment-method-fields d-none">
+
                                     <label class="form-label fw-bold text-dark">Número de Tarjeta <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light" id="cardIcon"><i class="fas fa-credit-card"></i></span>
                                         <input type="text" id="numeroTarjeta" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19">
                                     </div>
-                                    <div class="form-text mt-2"><i class="fas fa-magic text-warning"></i> Visa, Mastercard, Amex detectado automáticamente.</div>
+                                    <div class="form-text mt-2 text-muted">
+                                        <i class="fas fa-magic text-warning"></i> Visa, Mastercard, Amex detectado automáticamente.
+                                    </div>
                                 </div>
 
                                 <!-- Transferencia -->
-                                <div id="transferenciaFields" class="payment-method-fields d-none bg-white p-3 rounded border shadow-sm">
+                                <div id="transferenciaFields" class="payment-method-fields d-none">
                                     <label class="form-label fw-bold text-dark">Voucher de Transferencia <span class="text-danger">*</span></label>
                                     <input type="file" id="comprobante" class="form-control" accept="image/*">
                                 </div>
 
                                 <!-- Yape / Plin -->
-                                <div id="yapeFields" class="payment-method-fields d-none text-center bg-white p-3 rounded border shadow-sm">
+                                <div id="yapeFields" class="payment-method-fields d-none">
                                     <label class="form-label fw-bold text-dark mb-3">Escanea el código QR para pagar <span class="text-danger">*</span></label>
                                     <div class="qr-container mx-auto mb-2">
-                                        <img th:src="@{/Imagen/Iconos/qr-yape.png}" alt="QR Yape/Plin" class="img-fluid rounded border shadow-sm" style="max-width: 180px;">
+                                        <img th:src="@{/Imagen/Iconos/qr-yape.png}" alt="QR Yape/Plin" class="img-fluid" style="max-width: 190px;">
                                     </div>
-                                    <div class="form-text text-muted"><i class="fas fa-info-circle"></i> Una vez escaneado y pagado, haz clic en procesar pago.</div>
+                                    <div class="form-text text-muted mb-3">
+                                        <i class="fas fa-info-circle"></i> Una vez escaneado y pagado, ingresa el <b>Número de operación / comprobante</b> y haz clic en <b>Procesar Pago</b>.
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label class="form-label fw-bold text-dark">Número de operación / comprobante Yape/Plin <span class="text-danger">*</span></label>
+                                        <input type="text" id="numeroComprobanteYapeVisible" class="form-control" placeholder="Ej. 123456789" maxlength="30">
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="modal-footer bg-white border-top-0 pt-0 pb-3 pe-4">
-                            <button type="button" class="btn btn-light border fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <div class="modal-footer modal-pagos-footer">
+                            <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-success fw-bold px-4">
                                 <i class="fas fa-check-circle me-1"></i> Procesar Pago
                             </button>
@@ -217,7 +270,16 @@
             </div>
         </div>
 
+
+
         <script th:src="@{/js/pagos.js}"></script>
+        <style th:inline="css">
+            /* Estilos impresos cuando se use Imprimir */
+            @media print {
+                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                .modal, .d-print-none { display: none !important; }
+            }
+        </style>
     </div>
 </body>
 </html>
