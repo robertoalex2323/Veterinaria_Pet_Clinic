@@ -10,7 +10,6 @@ com\veterinariapetCcinic\veterinaria_pet_clinic\repository\AgendaRepository.clas
 com\veterinariapetCcinic\veterinaria_pet_clinic\repository\VacunaAplicadaRepository.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\Agenda.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\service\ClienteService.class
-com\veterinariapetCcinic\veterinaria_pet_clinic\model\Producto.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\VeterinariaPetClinicApplication.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\Mascota.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\DetalleVenta.class
@@ -32,7 +31,6 @@ com\veterinariapetCcinic\veterinaria_pet_clinic\service\FarmaceuticoService$Disp
 com\veterinariapetCcinic\veterinaria_pet_clinic\controller\FarmaceuticoController.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\service\PagoService.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\service\RecetaService.class
-com\veterinariapetCcinic\veterinaria_pet_clinic\repository\ProductoRepository.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\VacunaAplicada.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\service\ConsultaService.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\repository\DetalleVentaRepository.class
@@ -54,7 +52,6 @@ com\veterinariapetCcinic\veterinaria_pet_clinic\repository\CitaRepository.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\controller\AdminController.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\Usuario.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\RecetaMedica.class
-com\veterinariapetCcinic\veterinaria_pet_clinic\service\ProductoService.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\Medicamento.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\controller\RecepcionistaAgendaController.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\Seguimiento.class
@@ -75,9 +72,7 @@ com\veterinariapetCcinic\veterinaria_pet_clinic\repository\SeguimientoRepository
 com\veterinariapetCcinic\veterinaria_pet_clinic\service\ProveedorService.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\service\PdfReportService.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\config\DataLoader.class
-com\veterinariapetCcinic\veterinaria_pet_clinic\controller\VendedorController.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\AlertaCritica.class
-com\veterinariapetCcinic\veterinaria_pet_clinic\controller\VendedorViewController.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\service\FarmaceuticoService$ValidacionReceta.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\model\Cliente.class
 com\veterinariapetCcinic\veterinaria_pet_clinic\controller\RecepcionistaController.class
