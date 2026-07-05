@@ -122,7 +122,7 @@
 }
 
 .agenda-cita-card {
-    border-left: 4px solid #4e73df;
+    border-left: 4px solid #4e73df;  /* color por defecto (azul) */
     background: #f8f9fc;
     padding: 12px;
     border-radius: 6px;
@@ -134,6 +134,7 @@
     transform: translateX(4px);
 }
 
+/* Estilos antiguos por estado (se mantienen por si acaso, pero ya no se usan) */
 .agenda-cita-card.cancelada {
     border-left-color: #e74a3b;
     opacity: 0.7;
@@ -142,6 +143,58 @@
 .agenda-cita-card.completada {
     border-left-color: #1cc88a;
 }
+
+/* ===================================================== */
+/* NUEVOS ESTILOS POR TIPO DE ATENCIÓN (según cita.motivo) */
+/* ===================================================== */
+
+/* Verde para Consulta General */
+.agenda-cita-card.cita-consulta-general {
+    border-left-color: #28a745 !important; /* verde */
+}
+
+/* Azul para Vacunación */
+.agenda-cita-card.cita-vacunacion {
+    border-left-color: #007bff !important; /* azul */
+}
+
+/* Rojo para Emergencia */
+.agenda-cita-card.cita-emergencia {
+    border-left-color: #dc3545 !important; /* rojo */
+}
+
+/* Gris para Canceladas (anula cualquier otro color) */
+.agenda-cita-card.cita-cancelada {
+    border-left-color: #6c757d !important; /* gris */
+    opacity: 0.7;
+}
+
+/* ===================================================== */
+/* BADGES con colores consistentes al tipo de atención   */
+/* ===================================================== */
+.badge.cita-consulta-general-badge {
+    background-color: #28a745 !important;
+    color: white;
+}
+
+.badge.cita-vacunacion-badge {
+    background-color: #007bff !important;
+    color: white;
+}
+
+.badge.cita-emergencia-badge {
+    background-color: #dc3545 !important;
+    color: white;
+}
+
+.badge.cita-cancelada-badge {
+    background-color: #6c757d !important;
+    color: white;
+}
+
+/* ===================================================== */
+/* FIN DE NUEVOS ESTILOS                                 */
+/* ===================================================== */
 
 .cita-time {
     font-weight: bold;

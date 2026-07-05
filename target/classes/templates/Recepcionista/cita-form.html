@@ -79,8 +79,7 @@
                                         <span class="input-group-text"><i class="far fa-clock"></i></span>
                                         <select id="horaCita" name="hora" class="form-select" required
                                             th:disabled="${cita.id == null and cita.fechaHora == null}">
-                                            <option value="" th:if="${cita.id == null}">Seleccione una fecha primero...
-                                            </option>
+                                            <option value="" th:if="${cita.id == null}">Seleccione una fecha primero...</option>
                                             <option th:if="${cita.id != null}"
                                                 th:value="${#temporals.format(cita.fechaHora, 'HH:mm')}"
                                                 th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}" selected>
@@ -113,6 +112,10 @@
                                     th:text="${cita.motivo}"></textarea>
                             </div>
 
+                            <!-- Reprogramación -->
+                            <input type="hidden" name="reprogramarDesdeId" id="reprogramarDesdeId" value="" />
+                            <input type="hidden" name="motivoReprogramacion" id="motivoReprogramacion" value="" />
+
                             <hr class="my-4">
 
                             <!-- Botones -->
@@ -131,8 +134,56 @@
             </div>
         </div>
 
+        <script>
+            // Precarga campos si venimos de "reprogramar" desde citas.html
+            (function () {
+                const params = new URLSearchParams(window.location.search);
+                const reprogramarDesdeId = params.get('reprogramarDesdeId');
+                const fechaNueva = params.get('fechaNueva');
+                const horaNueva = params.get('horaNueva');
+                const motivo = params.get('motivo');
+                const motivoReprogramacion = params.get('motivo') || '';
+
+                const fechaCita = document.getElementById('fechaCita');
+                const horaCita = document.getElementById('horaCita');
+                const inpReprogramarDesdeId = document.getElementById('reprogramarDesdeId');
+                const inpMotivoReprogramacion = document.getElementById('motivoReprogramacion');
+
+                if (inpReprogramarDesdeId && reprogramarDesdeId) inpReprogramarDesdeId.value = reprogramarDesdeId;
+                if (inpMotivoReprogramacion && motivoReprogramacion) inpMotivoReprogramacion.value = motivoReprogramacion;
+
+                if (fechaCita && fechaNueva) {
+                    fechaCita.value = fechaNueva;
+                    // Dispara carga de horarios disponibles
+                    fechaCita.dispatchEvent(new Event('change'));
+                }
+
+                // Cuando la lista de horas se carga, seleccionamos la horaNueva
+                const pickHora = () => {
+                    if (!horaCita || !horaNueva) return;
+                    for (const opt of horaCita.options) {
+                        if (opt.value === horaNueva) {
+                            horaCita.value = horaNueva;
+                            // dispara cambio para que setee veterinario
+                            horaCita.dispatchEvent(new Event('change'));
+                            break;
+                        }
+                    }
+                };
+
+                // Espera corta por carga asíncrona
+                setTimeout(pickHora, 600);
+                setTimeout(pickHora, 1200);
+
+                // Si viene un motivo de reprogramación, lo colocamos en el campo motivo (opcional)
+                const textareaMotivo = document.querySelector('textarea[name="motivo"]');
+                if (textareaMotivo && motivo) textareaMotivo.value = motivo;
+            })();
+        </script>
+
         <script th:src="@{/js/citas.js}"></script>
     </div>
 </body>
 
 </html>
+

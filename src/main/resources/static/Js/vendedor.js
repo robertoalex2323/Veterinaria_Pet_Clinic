@@ -1,10 +1,14 @@
 // ===== VARIABLES GLOBALES =====
 let salesChart = null;
 let productos = [];
+let descuentoCalculado = 0;
+let promocionesAplicadas = [];
 
 // ===== DOM CONTENT LOADED =====
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("🚀 Panel de Ventas iniciado");
+    console.log("Panel de Ventas iniciado");
+    
+    precargarAudio();
     
     initDate();
     initTabs();
@@ -14,56 +18,62 @@ document.addEventListener("DOMContentLoaded", function() {
     loadDashboardStats();
     loadChartData();
     setMaxDateFilter();
-    renderSalesChart();
     initHistoryFilters();
 });
 
-// ===== NAVEGACIÓN =====
+// ===== PRECARGAR AUDIO =====
+function precargarAudio() {
+    const audio = document.getElementById("audioConfirmacion");
+    if (audio) {
+        audio.load();
+        audio.volume = 1;
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            console.log("Audio precargado y listo");
+        }).catch(() => {
+            console.log("Audio bloqueado, esperando interaccion del usuario");
+        });
+    }
+}
+
+// ===== NAVEGACION =====
 function initTabs() {
     document.querySelectorAll(".nav-item").forEach(item => {
         item.addEventListener("click", function() {
-            const tabId = this.getAttribute("data-tab");
-            showPanel(tabId);
+            showPanel(this.getAttribute("data-tab"));
         });
     });
 }
 
 function showPanel(tabId) {
-    console.log("📌 Mostrando:", tabId);
-    
-    // Ocultar todos
     document.querySelectorAll(".panel-container").forEach(p => {
         p.style.display = "none";
         p.classList.remove("active");
     });
     
-    // Actualizar menú
     document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
     const nav = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
     if (nav) nav.classList.add("active");
     
-    // Mostrar panel
     const panel = document.getElementById(tabId + "Panel");
     if (panel) {
         panel.style.display = "block";
         panel.classList.add("active");
-        console.log("✅ Panel mostrado:", tabId);
-    } else {
-        console.error("❌ Panel no encontrado:", tabId);
     }
 }
 
-// ===== FUNCIONES DE FECHA =====
+// ===== FECHA =====
 function initDate() {
     const dateEl = document.getElementById("currentDate");
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    dateEl.textContent = new Date().toLocaleDateString('es-PE', options);
+    dateEl.textContent = new Date().toLocaleDateString('es-PE', { 
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+    });
 }
 
 function setMaxDateFilter() {
-    const today = new Date().toISOString().split('T')[0];
     const filterDate = document.getElementById("filterDate");
-    if (filterDate) filterDate.setAttribute("max", today);
+    if (filterDate) filterDate.setAttribute("max", new Date().toISOString().split('T')[0]);
 }
 
 // ===== PRODUCTOS =====
@@ -73,10 +83,10 @@ async function loadProducts() {
         if (!response.ok) throw new Error('Error al cargar productos');
         productos = await response.json();
         populateProductSelect(productos);
-        console.log("✅ Productos cargados:", productos.length);
+        console.log("Productos cargados:", productos.length);
     } catch (error) {
-        console.error("❌ Error cargando productos:", error);
-        showToast("❌ Error al cargar productos", "error");
+        console.error("Error cargando productos:", error);
+        showToast("Error al cargar productos", "error");
     }
 }
 
@@ -87,7 +97,7 @@ function populateProductSelect(productos) {
     const categorias = [...new Set(productos.map(p => p.categoria))];
     categorias.forEach(cat => {
         const group = document.createElement('optgroup');
-        group.label = `── ${cat} ──`;
+        group.label = `-- ${cat} --`;
         productos.filter(p => p.categoria === cat).forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.id;
@@ -102,16 +112,88 @@ function populateProductSelect(productos) {
     updateStockIndicator();
 }
 
-// ===== VENTAS =====
-function updatePrice() {
+// ===== AUDIO =====
+function reproducirSonidoConfirmacion() {
+    const audio = document.getElementById("audioConfirmacion");
+    if (!audio) return;
+    
+    audio.currentTime = 0;
+    audio.volume = 1;
+    audio.muted = false;
+    audio.playbackRate = 1;
+    
+    audio.play().catch(() => {});
+}
+
+// ===== DESCUENTO EN TIEMPO REAL =====
+async function calcularDescuentoEnTiempoReal() {
     const select = document.getElementById("saleProduct");
     const opt = select.options[select.selectedIndex];
-    const price = opt.getAttribute("data-price") || "0";
-    document.getElementById("salePrice").value = parseFloat(price).toFixed(2);
+    const productoId = parseInt(opt.getAttribute("data-id")) || 0;
+    const quantity = parseInt(document.getElementById("saleQuantity").value) || 0;
+    const price = parseFloat(opt.getAttribute("data-price")) || 0;
+    const clientName = document.getElementById("clientName").value.trim();
+
+    if (!productoId || quantity <= 0 || !clientName || clientName.length < 3) {
+        document.getElementById("saleDescuento").textContent = "-S/ 0.00";
+        document.getElementById("promocionesAplicables").style.display = "none";
+        descuentoCalculado = 0;
+        promocionesAplicadas = [];
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v1/vendedor/calcular-descuento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                productoId, cantidad: quantity, precioUnitario: price, clienteNombre: clientName
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            descuentoCalculado = result.descuento || 0;
+            promocionesAplicadas = result.promociones || [];
+
+            document.getElementById("saleDescuento").textContent = `-S/ ${descuentoCalculado.toFixed(2)}`;
+            
+            const promoContainer = document.getElementById("promocionesAplicables");
+            const promoList = document.getElementById("listaPromocionesAplicables");
+            
+            if (promocionesAplicadas.length > 0) {
+                promoContainer.style.display = "block";
+                promoList.innerHTML = promocionesAplicadas.map(p => 
+                    `<span style="background:#d1fae5;padding:0.15rem 0.75rem;border-radius:12px;margin:0.15rem;font-size:0.75rem;">
+                        <i class="fas fa-tag" style="color:#059669;"></i> ${p}
+                    </span>`
+                ).join(' ');
+                document.getElementById("saleDescuento").style.color = "#dc2626";
+                document.getElementById("saleDescuento").style.fontWeight = "700";
+            } else {
+                promoContainer.style.display = "none";
+                document.getElementById("saleDescuento").style.color = "#64748b";
+                document.getElementById("saleDescuento").style.fontWeight = "600";
+            }
+            
+            const subtotal = price * quantity;
+            const totalConDescuento = subtotal + (subtotal * 0.18) - descuentoCalculado;
+            document.getElementById("saleTotalWithIgv").textContent = `S/ ${totalConDescuento.toFixed(2)}`;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// ===== VENTAS =====
+function updatePrice() {
+    const opt = document.getElementById("saleProduct").options[document.getElementById("saleProduct").selectedIndex];
+    document.getElementById("salePrice").value = parseFloat(opt.getAttribute("data-price") || "0").toFixed(2);
     updateStockIndicator();
     validateQuantity();
     calculateTotal();
 }
+
 function calculateTotal() {
     const price = parseFloat(document.getElementById("salePrice").value) || 0;
     const quantity = parseInt(document.getElementById("saleQuantity").value) || 1;
@@ -123,29 +205,29 @@ function calculateTotal() {
     document.getElementById("saleIgv").textContent = `S/ ${igv.toFixed(2)}`;
     document.getElementById("saleTotalWithIgv").textContent = `S/ ${total.toFixed(2)}`;
     
+    calcularDescuentoEnTiempoReal();
     return total;
 }
+
 function resetSaleForm() {
     document.getElementById("saleProduct").selectedIndex = 0;
     document.getElementById("saleQuantity").value = 1;
     document.getElementById("salePrice").value = "0.00";
     document.getElementById("clientName").value = "";
     document.getElementById("clientPhone").value = "";
-    document.getElementById("clientName").classList.remove("input-error");
-    document.getElementById("clientPhone").classList.remove("input-error");
     document.getElementById("paymentMethod").selectedIndex = 0;
     document.getElementById("saleSubtotal").textContent = "S/ 0.00";
     document.getElementById("saleIgv").textContent = "S/ 0.00";
+    document.getElementById("saleDescuento").textContent = "-S/ 0.00";
     document.getElementById("saleTotalWithIgv").textContent = "S/ 0.00";
-    document.getElementById("quantityError").style.display = "none";
-    document.getElementById("clientError").style.display = "none";
-    document.getElementById("phoneError").style.display = "none";
+    document.getElementById("promocionesAplicables").style.display = "none";
+    descuentoCalculado = 0;
+    promocionesAplicadas = [];
     updateStockIndicator();
 }
 
 function processSale() {
-    const select = document.getElementById("saleProduct");
-    const opt = select.options[select.selectedIndex];
+    const opt = document.getElementById("saleProduct").options[document.getElementById("saleProduct").selectedIndex];
     const productoId = parseInt(opt.getAttribute("data-id")) || 0;
     const precio = parseFloat(opt.getAttribute("data-price")) || 0;
     const stock = parseInt(opt.getAttribute("data-stock")) || 0;
@@ -154,55 +236,34 @@ function processSale() {
     const clientPhone = document.getElementById("clientPhone").value.trim();
     const paymentMethod = document.getElementById("paymentMethod").value;
 
-    // Validaciones
-    if (!productoId) { showToast("❌ Seleccione un producto", "error"); return; }
-    if (quantity <= 0) { showToast("❌ Cantidad inválida", "error"); return; }
-    if (stock > 0 && stock < 999 && quantity > stock) { showToast(`❌ Stock: ${stock}`, "error"); return; }
-    if (!clientName || clientName.length < 3) { showToast("❌ Nombre inválido", "error"); return; }
+    if (!productoId) { showToast("Seleccione un producto", "error"); return; }
+    if (quantity <= 0) { showToast("Cantidad invalida", "error"); return; }
+    if (stock > 0 && stock < 999 && quantity > stock) { showToast(`Stock: ${stock}`, "error"); return; }
+    if (!clientName || clientName.length < 3) { showToast("Nombre invalido", "error"); return; }
     if (!clientPhone || !/^[0-9]{9}$/.test(clientPhone)) { 
-        showToast("❌ Teléfono inválido (9 dígitos)", "error"); 
+        showToast("Telefono invalido (9 digitos)", "error"); 
         return; 
     }
 
-    const subtotal = precio * quantity;
-    const igv = subtotal * 0.18;
-    const total = subtotal + igv;
+    showToast("Procesando...", "info");
 
-    const data = {
-        detalles: [
-            {
-                producto: { id: productoId },
-                cantidad: quantity,
-                precioUnitario: precio
-            }
-        ],
-        metodoPago: paymentMethod,
-        cliente: { 
-            nombre: clientName,
-            telefono: clientPhone
-        }
-    };
-
-    console.log("📦 Enviando:", data);
-
-    showToast("⏳ Procesando...", "info");
     fetch('/api/v1/vendedor/ventas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+            detalles: [{ producto: { id: productoId }, cantidad: quantity, precioUnitario: precio }],
+            metodoPago: paymentMethod,
+            cliente: { nombre: clientName, telefono: clientPhone },
+            descuentoAplicado: descuentoCalculado
+        })
     })
     .then(response => {
-        if (!response.ok) {
-            return response.text().then(text => {
-                console.error("❌ Error del backend:", text);
-                throw new Error(text);
-            });
-        }
+        if (!response.ok) throw new Error('Error al registrar');
         return response.json();
     })
     .then(result => {
-        console.log("✅ Venta creada:", result);
-        showToast(`✅ Venta #${result.id} registrada`, "success");
+        showToast(`Venta #${result.id} registrada`, "success");
+        setTimeout(reproducirSonidoConfirmacion, 300);
         resetSaleForm();
         loadHistoryFromAPI();
         loadDashboardStats();
@@ -210,8 +271,7 @@ function processSale() {
         loadProducts();
     })
     .catch(error => {
-        console.error("❌ Error:", error);
-        showToast("❌ Error al registrar: " + error.message, "error");
+        showToast("Error al registrar: " + error.message, "error");
     });
 }
 
@@ -228,40 +288,38 @@ function renderHistory(ventas) {
     tbody.innerHTML = "";
 
     if (!ventas || ventas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">
-            No hay ventas registradas.
-        </td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">No hay ventas registradas.</td></tr>`;
         return;
     }
 
     ventas.slice(0, 20).forEach(venta => {
-        const tr = document.createElement("tr");
         const fecha = new Date(venta.fecha);
-        
         let productoNombre = 'Producto';
-        if (venta.detalles && venta.detalles.length > 0) {
+        if (venta.detalles?.length > 0) {
             productoNombre = venta.detalles[0].producto?.nombre || 
                             venta.detalles[0].medicamento?.nombre || 'Producto';
         }
         
+        const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>#${venta.id}</strong></td>
-            <td style="color: var(--text-secondary); font-size: 0.85rem;">${fecha.toLocaleString('es-PE')}</td>
+            <td>${fecha.toLocaleString('es-PE')}</td>
             <td>${venta.cliente?.nombre || 'Cliente'}</td>
             <td>${productoNombre}</td>
             <td>S/ ${(venta.subtotal || 0).toFixed(2)}</td>
             <td>S/ ${(venta.igv || 0).toFixed(2)}</td>
-            <td style="font-weight: 600; color: #059669;">S/ ${(venta.total || 0).toFixed(2)}</td>
+            <td style="font-weight:600;color:#059669;">S/ ${(venta.total || 0).toFixed(2)}</td>
             <td><span class="badge badge-success">Pagado</span></td>
             <td>
-                <button class="btn btn-sm btn-primary" onclick="descargarBoletaPDF(${venta.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                    <i class="fa-solid fa-file-pdf"></i> PDF
+                <button class="btn btn-sm btn-primary" onclick="descargarBoletaPDF(${venta.id})">
+                    <i class="fas fa-file-pdf"></i> PDF
                 </button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
+
 // ===== DASHBOARD =====
 function loadDashboardStats() {
     fetch('/api/v1/vendedor/ventas/hoy')
@@ -273,20 +331,16 @@ function loadDashboardStats() {
         })
         .catch(() => {});
 }
+
 function descargarBoletaPDF(ventaId) {
-    showToast("📄 Generando boleta...", "info");
-    
-    // Abrir en nueva pestaña para ver el HTML
+    showToast("Generando boleta...", "info");
     window.open(`/api/v1/vendedor/ventas/${ventaId}/boleta-pdf`, '_blank');
-    
-    setTimeout(() => {
-        showToast("✅ Boleta generada", "success");
-    }, 2000);
+    setTimeout(() => showToast("Boleta generada", "success"), 2000);
 }
+
 function exportarPDF() {
-    showToast("📄 Generando PDF del historial...", "info");
+    showToast("Generando PDF del historial...", "info");
     
-    // Obtener datos de la tabla
     const rows = document.querySelectorAll("#salesTableBody tr");
     const data = [];
     
@@ -307,11 +361,10 @@ function exportarPDF() {
     });
     
     if (data.length === 0) {
-        showToast("❌ No hay datos para exportar", "error");
+        showToast("No hay datos para exportar", "error");
         return;
     }
     
-    // Crear tabla HTML para PDF
     let html = `
         <html>
         <head>
@@ -328,12 +381,12 @@ function exportarPDF() {
             </style>
         </head>
         <body>
-            <h1>🏥 Pet Clinic - Historial de Ventas</h1>
+            <h1>Pet Clinic - Historial de Ventas</h1>
             <p style="text-align: center; color: #64748b;">Fecha: ${new Date().toLocaleDateString('es-PE')}</p>
             <table>
                 <thead>
                     <tr>
-                        <th>N° Boleta</th>
+                        <th>N Boleta</th>
                         <th>Fecha</th>
                         <th>Cliente</th>
                         <th>Producto</th>
@@ -365,14 +418,13 @@ function exportarPDF() {
                 </tbody>
             </table>
             <div class="footer">
-                <p>Reporte generado automáticamente - Pet Clinic 2026</p>
+                <p>Reporte generado automaticamente - Pet Clinic 2026</p>
                 <p>Total de registros: ${data.length}</p>
             </div>
         </body>
         </html>
     `;
     
-    // Crear blob y descargar como PDF
     const blob = new Blob([html], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -381,7 +433,7 @@ function exportarPDF() {
     link.click();
     document.body.removeChild(link);
     
-    showToast("✅ PDF exportado correctamente", "success");
+    showToast("PDF exportado correctamente", "success");
 }
 
 // ===== PROMOCIONES =====
@@ -394,7 +446,7 @@ async function loadPromotions() {
         list.innerHTML = "";
         document.getElementById("activePromos").textContent = promos.length;
         promos.forEach(p => {
-            list.innerHTML += `<div class="glass-panel" style="padding:1rem;margin-bottom:0.5rem;"><i class="fa-solid fa-bolt" style="color:#3b82f6;"></i> ${p}</div>`;
+            list.innerHTML += `<div class="glass-panel" style="padding:1rem;margin-bottom:0.5rem;"><i class="fas fa-bolt" style="color:#3b82f6;"></i> ${p}</div>`;
         });
     } catch (e) {
         document.getElementById("promosList").innerHTML = '<p style="color:#64748b;">Sin promociones</p>';
@@ -403,13 +455,12 @@ async function loadPromotions() {
 
 // ===== VALIDACIONES =====
 function validateQuantity() {
-    const select = document.getElementById("saleProduct");
-    const opt = select.options[select.selectedIndex];
+    const opt = document.getElementById("saleProduct").options[document.getElementById("saleProduct").selectedIndex];
     const stock = parseInt(opt.getAttribute("data-stock")) || 0;
     const qty = parseInt(document.getElementById("saleQuantity").value) || 0;
     const err = document.getElementById("quantityError");
     if (stock > 0 && stock < 999 && qty > stock) {
-        err.textContent = `⚠️ Stock: ${stock}`;
+        err.textContent = `Stock: ${stock}`;
         err.style.display = "block";
     } else {
         err.style.display = "none";
@@ -420,18 +471,20 @@ function validateClientName() {
     const name = document.getElementById("clientName").value.trim();
     const err = document.getElementById("clientError");
     if (name && name.length < 3) {
-        err.textContent = "Mínimo 3 caracteres";
+        err.textContent = "Minimo 3 caracteres";
         err.style.display = "block";
     } else {
         err.style.display = "none";
+        if (name.length >= 3) calcularDescuentoEnTiempoReal();
     }
 }
+
 function validateClientPhone() {
     const phone = document.getElementById("clientPhone").value.trim();
     const errorEl = document.getElementById("phoneError");
     
     if (phone && !/^[0-9]{9}$/.test(phone)) {
-        errorEl.textContent = "⚠️ Ingrese 9 dígitos (ej: 987654321)";
+        errorEl.textContent = "Ingrese 9 digitos (ej: 987654321)";
         errorEl.style.display = "block";
         document.getElementById("clientPhone").classList.add("input-error");
         return false;
@@ -443,28 +496,27 @@ function validateClientPhone() {
 }
 
 function updateStockIndicator() {
-    const select = document.getElementById("saleProduct");
-    const selectedOption = select.options[select.selectedIndex];
-    const stock = parseInt(selectedOption.getAttribute("data-stock")) || 0;
+    const opt = document.getElementById("saleProduct").options[document.getElementById("saleProduct").selectedIndex];
+    const stock = parseInt(opt.getAttribute("data-stock")) || 0;
     const indicator = document.getElementById("stockIndicator");
     
-    if (!selectedOption.value) {
+    if (!opt.value) {
         indicator.textContent = "Seleccione un producto";
         indicator.className = "stock-indicator select-placeholder";
         return;
     }
     
     if (stock === 0) {
-        indicator.textContent = "❌ Sin Stock";
+        indicator.textContent = "Sin Stock";
         indicator.className = "stock-indicator out";
     } else if (stock <= 5) {
-        indicator.textContent = `⚠️ Stock bajo: ${stock} disponibles`;
+        indicator.textContent = `Stock bajo: ${stock} disponibles`;
         indicator.className = "stock-indicator low";
     } else if (stock >= 999) {
-        indicator.textContent = "📌 Stock Ilimitado";
+        indicator.textContent = "Stock Ilimitado";
         indicator.className = "stock-indicator";
     } else {
-        indicator.textContent = `✅ ${stock} disponibles`;
+        indicator.textContent = `${stock} disponibles`;
         indicator.className = "stock-indicator";
     }
 }
@@ -474,6 +526,7 @@ function filterHistory() {
     const date = document.getElementById("filterDate").value;
     const rows = document.querySelectorAll("#salesTableBody tr");
     let visible = 0;
+    
     rows.forEach(row => {
         const cells = row.querySelectorAll("td");
         if (cells.length >= 6) {
@@ -487,21 +540,20 @@ function filterHistory() {
 }
 
 function exportarHistorial() {
-    showToast("📥 Exportando...", "info");
-    setTimeout(() => showToast("✅ Exportado", "success"), 1500);
+    showToast("Exportando...", "info");
+    setTimeout(() => showToast("Exportado", "success"), 1500);
 }
-// ===== CARGAR DATOS PARA LA GRÁFICA DESDE LA API =====
+
+// ===== GRAFICA =====
 async function loadChartData() {
     try {
         const response = await fetch('/api/v1/vendedor/ventas/ultimos-7-dias');
-        if (!response.ok) throw new Error('Error al cargar datos de la gráfica');
+        if (!response.ok) throw new Error('Error al cargar datos de la grafica');
         
         const data = await response.json();
         renderSalesChart(data.labels, data.values);
-        
     } catch (error) {
-        console.error('Error cargando datos de la gráfica:', error);
-        // Si falla, usar datos vacíos
+        console.error('Error cargando datos de la grafica:', error);
         const today = new Date();
         const labels = [];
         for (let i = 6; i >= 0; i--) {
@@ -513,79 +565,47 @@ async function loadChartData() {
     }
 }
 
-// ===== TOAST =====
-function showToast(msg, type = "success") {
-    const toast = document.getElementById("toast");
-    const icon = toast.querySelector("i");
-    const msgEl = document.getElementById("toastMessage");
-    msgEl.textContent = msg;
-    if (type === "error") {
-        icon.className = "fa-solid fa-circle-exclamation";
-        icon.style.color = "#dc2626";
-        toast.style.borderLeftColor = "#dc2626";
-    } else {
-        icon.className = "fa-solid fa-circle-check";
-        icon.style.color = "#059669";
-        toast.style.borderLeftColor = "#059669";
-    }
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 4000);
-}
-
-// ===== GRÁFICA =====
-function getSalesData() {
-    const labels = [];
-    const data = [];
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        labels.push(d.toLocaleDateString('es-PE', { month: 'short', day: 'numeric' }));
-        data.push(0);
-    }
-    // Intentar obtener datos de la tabla
-    const rows = document.querySelectorAll("#salesTableBody tr");
-    rows.forEach(row => {
-        const cells = row.querySelectorAll("td");
-        if (cells.length >= 6) {
-            const date = cells[1].textContent.trim();
-            const total = parseFloat(cells[4].textContent.replace('S/ ', '')) || 0;
-            // Buscar en los últimos 7 días
-            for (let i = 0; i < labels.length; i++) {
-                if (date.includes(labels[i].replace(' ', ''))) {
-                    data[i] += total;
-                    break;
-                }
-            }
-        }
-    });
-    return { labels, data };
-}
-
-// ===== RENDERIZAR GRÁFICA =====
 function renderSalesChart(labels, data) {
     const canvas = document.getElementById("salesChart");
     if (!canvas) return;
     
-    // Destruir gráfica anterior si existe
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        const today = new Date();
+        const defaultLabels = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            defaultLabels.push(d.toLocaleDateString('es-PE', { month: 'short', day: 'numeric' }));
+        }
+        labels = defaultLabels;
+        data = Array(7).fill(0);
+    }
+    
+    if (!labels || !Array.isArray(labels) || labels.length === 0) {
+        const today = new Date();
+        labels = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            labels.push(d.toLocaleDateString('es-PE', { month: 'short', day: 'numeric' }));
+        }
+    }
+    
+    while (data.length < labels.length) data.push(0);
+    while (data.length > labels.length) data.pop();
+    
     if (salesChart) {
         salesChart.destroy();
         salesChart = null;
     }
     
-    // Calcular estadísticas
     const totalSales = data.reduce((a, b) => a + b, 0);
     const avgSales = data.length > 0 ? totalSales / data.length : 0;
     const maxSales = data.length > 0 ? Math.max(...data) : 0;
     
-    // Crear contexto de gráfica
     const ctx = canvas.getContext('2d');
-    
-    // Calcular línea de promedio
     const avgLine = Array(data.length).fill(avgSales);
-    
-    // Colores
     const color = '#059669';
-    const colorLight = 'rgba(5, 150, 105, 0.1)';
     const colorAvg = '#f59e0b';
     
     salesChart = new Chart(ctx, {
@@ -596,7 +616,7 @@ function renderSalesChart(labels, data) {
                 {
                     label: 'Ventas (S/)',
                     data: data,
-                    backgroundColor: data.map(v => v > 0 ? color : 'rgba(200, 200, 200, 0.3)'),
+                    backgroundColor: data.map(v => v > 0 ? color : 'rgba(200,200,200,0.3)'),
                     borderColor: color,
                     borderWidth: 2,
                     borderRadius: 6,
@@ -622,28 +642,18 @@ function renderSalesChart(labels, data) {
                     display: true,
                     position: 'top',
                     labels: {
-                        font: {
-                            size: 13,
-                            weight: '600',
-                            family: "'Playfair Display', serif"
-                        },
+                        font: { size: 13, weight: '600', family: "'Playfair Display', serif" },
                         color: '#64748b',
                         padding: 15,
                         usePointStyle: true
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    backgroundColor: 'rgba(0,0,0,0.8)',
                     padding: 12,
-                    titleFont: { size: 14, weight: 'bold' },
-                    bodyFont: { size: 13 },
                     callbacks: {
                         label: function(context) {
-                            if (context.datasetIndex === 0) {
-                                return 'Ventas: S/ ' + context.parsed.y.toFixed(2);
-                            } else {
-                                return 'Promedio: S/ ' + context.parsed.y.toFixed(2);
-                            }
+                            return context.dataset.label + ': S/ ' + context.parsed.y.toFixed(2);
                         }
                     }
                 }
@@ -652,60 +662,67 @@ function renderSalesChart(labels, data) {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
-                            return 'S/ ' + value.toFixed(0);
-                        },
-                        font: { size: 12 },
+                        callback: value => 'S/ ' + value.toFixed(0),
                         color: '#64748b'
                     },
-                    grid: {
-                        color: 'rgba(203, 213, 225, 0.1)',
-                        drawBorder: false
-                    }
+                    grid: { color: 'rgba(203,213,225,0.1)', drawBorder: false }
                 },
                 x: {
-                    ticks: {
-                        font: { size: 12 },
-                        color: '#64748b'
-                    },
-                    grid: {
-                        display: false,
-                        drawBorder: false
-                    }
+                    ticks: { color: '#64748b' },
+                    grid: { display: false }
                 }
             }
         }
     });
     
-    // Actualizar estadísticas
     updateChartStats(totalSales, avgSales, maxSales);
 }
 
-// ===== ACTUALIZAR ESTADÍSTICAS DE LA GRÁFICA =====
 function updateChartStats(total, avg, max) {
     const statsEl = document.getElementById("chartStats");
     if (!statsEl) return;
     
     statsEl.innerHTML = `
-        <div class="chart-stat" style="text-align: center; padding: 0.5rem;">
-            <div style="font-size: 0.85rem; color: #64748b;">Total 7 Días</div>
-            <div style="font-size: 1.2rem; font-weight: 700; color: #059669;">S/ ${total.toFixed(2)}</div>
+        <div style="text-align:center;padding:0.5rem;">
+            <div style="font-size:0.85rem;color:#64748b;">Total 7 Dias</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#059669;">S/ ${total.toFixed(2)}</div>
         </div>
-        <div class="chart-stat" style="text-align: center; padding: 0.5rem;">
-            <div style="font-size: 0.85rem; color: #64748b;">Promedio/Día</div>
-            <div style="font-size: 1.2rem; font-weight: 700; color: #3b82f6;">S/ ${avg.toFixed(2)}</div>
+        <div style="text-align:center;padding:0.5rem;">
+            <div style="font-size:0.85rem;color:#64748b;">Promedio/Dia</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#3b82f6;">S/ ${avg.toFixed(2)}</div>
         </div>
-        <div class="chart-stat" style="text-align: center; padding: 0.5rem;">
-            <div style="font-size: 0.85rem; color: #64748b;">Máximo/Día</div>
-            <div style="font-size: 1.2rem; font-weight: 700; color: #f59e0b;">S/ ${max.toFixed(2)}</div>
+        <div style="text-align:center;padding:0.5rem;">
+            <div style="font-size:0.85rem;color:#64748b;">Maximo/Dia</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#f59e0b;">S/ ${max.toFixed(2)}</div>
         </div>
     `;
 }
 
-// ===== REFRESCAR GRÁFICA =====
 function refreshChart() {
     loadChartData();
 }
+
+// ===== TOAST =====
+function showToast(msg, type = "success") {
+    const toast = document.getElementById("toast");
+    const icon = toast.querySelector("i");
+    const msgEl = document.getElementById("toastMessage");
+    msgEl.textContent = msg;
+    
+    if (type === "error") {
+        icon.className = "fas fa-circle-exclamation";
+        icon.style.color = "#dc2626";
+        toast.style.borderLeftColor = "#dc2626";
+    } else {
+        icon.className = "fas fa-circle-check";
+        icon.style.color = "#059669";
+        toast.style.borderLeftColor = "#059669";
+    }
+    
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 4000);
+}
+
 // ===== FILTROS =====
 function initHistoryFilters() {
     document.getElementById("searchClient")?.addEventListener("input", filterHistory);

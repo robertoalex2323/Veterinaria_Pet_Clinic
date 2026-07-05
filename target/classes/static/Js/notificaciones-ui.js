@@ -3,13 +3,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationBadge = document.getElementById('notificationBadge'); 
     const notificationList = document.getElementById('notificationList');   
 
+    // reset conteo visible
+    if (notificationBadge) notificationBadge.textContent = '0';
+
     let history = JSON.parse(localStorage.getItem('notificationHistory') || '[]');
 
     const updateUI = () => {
         if (!notificationList) return;
         
         if (history.length === 0) {
-            notificationList.innserHTML = '<li class="p-4 text-center text-muted small notification-empty-state"><i class="fas fa-bell-slash d-block mb-2 fa-2x opacity-25"></i>No hay notificaciones recientes</li>';
+            notificationList.innerHTML = '<li class="p-4 text-center text-muted small notification-empty-state"><i class="fas fa-bell-slash d-block mb-2 fa-2x opacity-25"></i>No hay notificaciones recientes</li>';
             if (notificationBadge) notificationBadge.classList.add('d-none');
         } else {
             if (notificationBadge) {
@@ -83,20 +86,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // 2. Recuperar pendientes del servidor (por ejemplo, después de refrescar por cancelar una cita)
-    const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/agenda/api/ui-notifications';
-    fetch(apiUrl, { method: 'GET', cache: 'no-store' })
-        .then(res => {
-            if (!res.ok) throw new Error("Error al obtener notificaciones");
-            return res.json();
-        })
+         // 2. Recuperar pendientes del servidor 
+        const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/api/ui-notifications';
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // ✅ un poco más de margen
+
+        fetch(apiUrl, { method: 'GET', cache: 'no-store', signal: controller.signal })
+            .then(res => {
+                if (!res.ok) return [];  // ✅ No lanzar excepción, retornar vacío silenciosamente
+                return res.json();
+            })
         .then(data => {
             if (Array.isArray(data) && data.length > 0) {
                 data.forEach(notif => handleNewNotif(notif, true));
             }
             // No llamamos a updateUI() aquí porque handleNewNotif ya lo hace
         })
-        .catch(err => console.warn("No hay notificaciones nuevas pendientes en el servidor."));
+        .catch(err => {
+            if (err && err.name === 'AbortError') {
+                console.warn("Timeout al cargar notificaciones; se ignora para no romper la UI.");
+            } else {
+                console.warn("No hay notificaciones nuevas pendientes en el servidor.");
+            }
+        })
+        .finally(() => clearTimeout(timeoutId));
+
 
     connectWS();
 });

@@ -18,6 +18,11 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     List<Pago> findByClienteId(Long clienteId);
     
     List<Pago> findByMetodoPago(String metodoPago);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Pago p WHERE p.cita.id = :citaId AND p.estado = 'PAGADO'")
+    boolean existsPagoPagadoPorCita(@Param("citaId") Long citaId);
+
+
     
     @Query("SELECT p FROM Pago p WHERE p.fechaPago BETWEEN :inicio AND :fin")
     List<Pago> findPagosByFechaRange(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
@@ -29,4 +34,12 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     Double sumPagosByFechaRange(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
     
     long countByEstado(String estado);
+
+    /**
+     * Obtiene el máximo comprobante para un prefijo de año (ej: PET2027-00000).
+     * Debe pasarse el prefijo completo tipo: "PET{YYYY}-".
+     */
+    @Query("SELECT COALESCE(MAX(p.comprobante), :prefijo) FROM Pago p WHERE p.comprobante LIKE CONCAT(:prefijo, '%')")
+    String findMaxComprobantePorPrefijo(@Param("prefijo") String prefijo);
 }
+
