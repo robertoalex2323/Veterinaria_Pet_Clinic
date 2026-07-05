@@ -66,8 +66,8 @@ public class Venta {
     private Boolean comprobanteEnviado = false;
 
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-@JsonIgnoreProperties({"venta", "hibernateLazyInitializer", "handler"})
-private List<DetalleVenta> detalles = new ArrayList<>();
+    @JsonIgnoreProperties({"venta", "hibernateLazyInitializer", "handler"})
+    private List<DetalleVenta> detalles = new ArrayList<>();
 
     public static final BigDecimal IGV_TASA = new BigDecimal("0.18");
 
