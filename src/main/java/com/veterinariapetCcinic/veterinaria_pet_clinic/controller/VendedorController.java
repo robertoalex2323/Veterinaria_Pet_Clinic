@@ -3,29 +3,43 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.DetalleVenta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.service.VentaService;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.VentaRepository;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 
 import java.math.BigDecimal;
+import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/vendedor")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*") 
 public class VendedorController {
 
     private final VentaService ventaService;
-    private final ProductoService productoService;
+    private final ProductoService productoService; 
 
     public VendedorController(VentaService ventaService, ProductoService productoService) {
         this.ventaService = ventaService;
@@ -35,7 +49,29 @@ public class VendedorController {
 
     @PostMapping("/ventas")
     public ResponseEntity<Venta> registrarVenta(@RequestBody Venta nuevaVenta) {
-        return new ResponseEntity<>(ventaService.procesarVenta(nuevaVenta), HttpStatus.CREATED);
+        Venta ventaProcesada = ventaService.procesarVenta(nuevaVenta);
+        return new ResponseEntity<>(ventaProcesada, HttpStatus.CREATED);
+    }
+
+    @PatchMapping("/pedidos/{id}/completar")
+    public ResponseEntity<Map<String, String>> atenderPedido(@PathVariable Long id) {
+        return ResponseEntity.ok(Map.of("mensaje", "Pedido #" + id + " ha sido marcado como COMPLETADO y ENTREGADO."));
+    }
+
+    @GetMapping("/ventas/{id}/boleta")
+    public ResponseEntity<Map<String, Object>> emitirBoleta(@PathVariable Long id) {
+        Map<String, Object> boleta = ventaService.generarBoletaDigital(id);
+        return ResponseEntity.ok(boleta);
+    }
+
+    @GetMapping("/promociones/activas")
+    public ResponseEntity<List<String>> listarPromociones() {
+        List<String> promociones = List.of(
+            "10% de descuento en Alimentos Premium por compras mayores a S/120",
+            "2x1 en Juguetes y Accesorios los días Martes y Viernes",
+            "Descuento especial en Camas para mascotas por fin de temporada 2026"
+        );
+        return ResponseEntity.ok(promociones);
     }
 
     @GetMapping("/ventas")
@@ -47,61 +83,40 @@ public class VendedorController {
     public ResponseEntity<Map<String, Object>> ventasHoy() {
         List<Venta> ventas = ventaService.listarVentasHoy();
         BigDecimal total = ventaService.calcularVentasHoy();
-
+        
         Map<String, Object> response = new HashMap<>();
         response.put("total", total != null ? total : BigDecimal.ZERO);
         response.put("cantidad", ventas != null ? ventas.size() : 0);
         response.put("ventas", ventas != null ? ventas : List.of());
-
+        
         return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/ventas/ultimos-7-dias")
-    public ResponseEntity<Map<String, Object>> ventasUltimos7Dias() {
-        Map<String, Object> response = new HashMap<>();
-        List<String> labels = new ArrayList<>();
-        List<Double> values = new ArrayList<>();
-
-        LocalDateTime hoy = LocalDateTime.now();
-
-        for (int i = 6; i >= 0; i--) {
-            LocalDateTime fecha = hoy.minusDays(i);
-            LocalDateTime inicio = fecha.withHour(0).withMinute(0).withSecond(0);
-            LocalDateTime fin = fecha.withHour(23).withMinute(59).withSecond(59);
-
-            labels.add(fecha.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM")));
-
-            BigDecimal totalDia = ventaService.calcularVentasEntreFechas(inicio, fin);
-            values.add(totalDia != null ? totalDia.doubleValue() : 0.0);
-        }
-
-        response.put("labels", labels);
-        response.put("values", values);
-
-        return ResponseEntity.ok(response);
-    }
-
+   
+@GetMapping("/ventas/ultimos-7-dias")
+public ResponseEntity<Map<String, Object>> ventasUltimos7Dias() {
+    Map<String, Object> response = new HashMap<>();
+    List<String> labels = new ArrayList<>();
+    List<Double> values = new ArrayList<>();
     
-    @GetMapping("/ventas/{id}/boleta")
-    public ResponseEntity<Map<String, Object>> emitirBoleta(@PathVariable Long id) {
-        return ResponseEntity.ok(ventaService.generarBoletaDigital(id));
+    LocalDateTime hoy = LocalDateTime.now();
+    
+    for (int i = 6; i >= 0; i--) {
+        LocalDateTime fecha = hoy.minusDays(i);
+        LocalDateTime inicio = fecha.withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime fin = fecha.withHour(23).withMinute(59).withSecond(59);
+        
+        String label = fecha.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM"));
+        labels.add(label);
+        
+        BigDecimal totalDia = ventaService.calcularVentasEntreFechas(inicio, fin);
+        values.add(totalDia != null ? totalDia.doubleValue() : 0.0);
     }
-
-    @GetMapping("/ventas/{id}/boleta-pdf")
-    public ResponseEntity<byte[]> generarBoletaPDF(@PathVariable Long id) {
-        try {
-            byte[] pdf = ventaService.generarBoletaPDFReal(id);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("attachment", "Boleta_Venta_" + id + ".pdf");
-
-            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+    
+    response.put("labels", labels);
+    response.put("values", values);
+    
+    return ResponseEntity.ok(response);
+}
 
    
     @GetMapping("/productos")
@@ -110,65 +125,20 @@ public class VendedorController {
     }
 
    
-    @PostMapping("/calcular-descuento")
-    public ResponseEntity<Map<String, Object>> calcularDescuento(@RequestBody Map<String, Object> request) {
+    @GetMapping("/ventas/{id}/boleta-pdf")
+    public ResponseEntity<byte[]> generarBoletaPDF(@PathVariable Long id) {
         try {
-            Long productoId = Long.valueOf(request.get("productoId").toString());
-            Integer cantidad = Integer.valueOf(request.get("cantidad").toString());
-            BigDecimal precioUnitario = new BigDecimal(request.get("precioUnitario").toString());
-            String clienteNombre = request.get("clienteNombre").toString();
-
-            Venta ventaTemp = new Venta();
-
-            Cliente cliente = new Cliente();
-            cliente.setNombre(clienteNombre);
-            ventaTemp.setCliente(cliente);
-
-            Producto producto = productoService.buscarPorId(productoId);
-            DetalleVenta detalle = new DetalleVenta();
-            detalle.setProducto(producto);
-            detalle.setCantidad(cantidad);
-            detalle.setPrecioUnitario(precioUnitario);
-            detalle.setVenta(ventaTemp);
-            detalle.calcularSubtotal();
-
-            List<DetalleVenta> detalles = new ArrayList<>();
-            detalles.add(detalle);
-            ventaTemp.setDetalles(detalles);
-            ventaTemp.recalcularTotales();
-
-            BigDecimal descuento = ventaService.calcularDescuentoPrevio(ventaTemp);
-            List<String> promociones = ventaService.obtenerPromocionesAplicables(ventaTemp);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("descuento", descuento != null ? descuento : BigDecimal.ZERO);
-            response.put("promociones", promociones != null ? promociones : new ArrayList<>());
-
-            return ResponseEntity.ok(response);
-
+            byte[] pdf = ventaService.generarBoletaPDFReal(id);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Boleta_Venta_" + id + ".pdf");
+            
+            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+            
         } catch (Exception e) {
             e.printStackTrace();
-            Map<String, Object> error = new HashMap<>();
-            error.put("descuento", BigDecimal.ZERO);
-            error.put("promociones", new ArrayList<>());
-            return ResponseEntity.ok(error);
-        }
-    }
-
-   
-    @DeleteMapping("/ventas/{id}")
-    public ResponseEntity<Map<String, Object>> eliminarVenta(@PathVariable Long id) {
-        try {
-            ventaService.eliminarVenta(id);
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("mensaje", "Venta eliminada correctamente");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

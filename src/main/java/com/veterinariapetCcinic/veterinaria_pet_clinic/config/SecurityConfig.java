@@ -53,8 +53,8 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
                         .requestMatchers("/login").permitAll()
                         
-                        // Solo VENDEDOR puede acceder a estas rutas (¡AGREGADO POR TI!)
-                        .requestMatchers("/vendedor/**", "/api/v1/vendedor/**").hasRole("VENDEDOR")
+                        // Solo VENDEDOR puede acceder a estas rutas 
+                        .requestMatchers("/vendedor/**").hasRole("VENDEDOR")
                         
                         // Solo VETERINARIO puede acceder a estas rutas
                         .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
@@ -87,11 +87,12 @@ public class SecurityConfig {
                             boolean esFarmaceutico = authentication.getAuthorities().stream()
                                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_FARMACEUTICO"));
                             
-                            // ¡AGREGADO POR TI! Redirección para VENDEDOR
                             boolean esVendedor = authentication.getAuthorities().stream()
                                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_VENDEDOR"));
 
+
                             if (esAdmin) {
+
                                 response.sendRedirect("/admin/dashboard");
                             } else if (esVeterinario) {
                                 response.sendRedirect("/veterinaria/dashboard");

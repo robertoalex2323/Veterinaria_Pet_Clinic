@@ -13,6 +13,7 @@ C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\RecepcionistaNotificationController.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\RecepcionistaReprogramarController.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\UniversalSearchController.java
+C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\VendedorController.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\controller\VeterinariaController.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\model\Agenda.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\model\AlertaCritica.java
@@ -24,6 +25,7 @@ C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\model\Medicamento.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\model\Paciente.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\model\Pago.java
+C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\model\Producto.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\model\Proveedor.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\model\Receta.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\model\RecetaEstado.java
@@ -46,6 +48,7 @@ C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\repository\MedicamentoRepository.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\repository\PacienteRepository.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\repository\PagoRepository.java
+C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\repository\ProductoRepository.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\repository\ProveedorRepository.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\repository\RecetaMedicaRepository.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\repository\RecetaRepository.java
@@ -68,6 +71,7 @@ C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\NotificacionService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\PagoService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\PdfReportService.java
+C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\ProductoService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\ProveedorService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\RecetaService.java
 C:\Users\Roberto\OneDrive\Documentos\GitHub\Veterinaria_Pet_Clinic\src\main\java\com\veterinariapetCcinic\veterinaria_pet_clinic\service\SeguimientoService.java
