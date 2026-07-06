@@ -1,15 +1,18 @@
-// ===== VARIABLES GLOBALES =====
 let salesChart = null;
 let productos = [];
 let descuentoCalculado = 0;
 let promocionesAplicadas = [];
 
-// ===== DOM CONTENT LOADED =====
+let ventasCompletas = [];
+let ventasFiltradas = [];
+let paginaActual = 1;
+let pageSize = 10;
+let busquedaActiva = false;
+
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Panel de Ventas iniciado");
     
     precargarAudio();
-    
     initDate();
     initTabs();
     loadProducts();
@@ -18,10 +21,8 @@ document.addEventListener("DOMContentLoaded", function() {
     loadDashboardStats();
     loadChartData();
     setMaxDateFilter();
-    initHistoryFilters();
 });
 
-// ===== PRECARGAR AUDIO =====
 function precargarAudio() {
     const audio = document.getElementById("audioConfirmacion");
     if (audio) {
@@ -30,14 +31,10 @@ function precargarAudio() {
         audio.play().then(() => {
             audio.pause();
             audio.currentTime = 0;
-            console.log("Audio precargado y listo");
-        }).catch(() => {
-            console.log("Audio bloqueado, esperando interaccion del usuario");
-        });
+        }).catch(() => {});
     }
 }
 
-// ===== NAVEGACION =====
 function initTabs() {
     document.querySelectorAll(".nav-item").forEach(item => {
         item.addEventListener("click", function() {
@@ -63,7 +60,6 @@ function showPanel(tabId) {
     }
 }
 
-// ===== FECHA =====
 function initDate() {
     const dateEl = document.getElementById("currentDate");
     dateEl.textContent = new Date().toLocaleDateString('es-PE', { 
@@ -76,7 +72,6 @@ function setMaxDateFilter() {
     if (filterDate) filterDate.setAttribute("max", new Date().toISOString().split('T')[0]);
 }
 
-// ===== PRODUCTOS =====
 async function loadProducts() {
     try {
         const response = await fetch('/api/v1/vendedor/productos');
@@ -85,7 +80,6 @@ async function loadProducts() {
         populateProductSelect(productos);
         console.log("Productos cargados:", productos.length);
     } catch (error) {
-        console.error("Error cargando productos:", error);
         showToast("Error al cargar productos", "error");
     }
 }
@@ -112,26 +106,21 @@ function populateProductSelect(productos) {
     updateStockIndicator();
 }
 
-// ===== AUDIO =====
 function reproducirSonidoConfirmacion() {
     const audio = document.getElementById("audioConfirmacion");
     if (!audio) return;
-    
     audio.currentTime = 0;
     audio.volume = 1;
     audio.muted = false;
-    audio.playbackRate = 1;
-    
     audio.play().catch(() => {});
 }
 
-// ===== DESCUENTO EN TIEMPO REAL =====
-async function calcularDescuentoEnTiempoReal() {
+function calcularDescuentoEnTiempoReal() {
     const select = document.getElementById("saleProduct");
-    const opt = select.options[select.selectedIndex];
-    const productoId = parseInt(opt.getAttribute("data-id")) || 0;
+    const selectedOption = select.options[select.selectedIndex];
+    const productoId = parseInt(selectedOption.getAttribute("data-id")) || 0;
     const quantity = parseInt(document.getElementById("saleQuantity").value) || 0;
-    const price = parseFloat(opt.getAttribute("data-price")) || 0;
+    const price = parseFloat(selectedOption.getAttribute("data-price")) || 0;
     const clientName = document.getElementById("clientName").value.trim();
 
     if (!productoId || quantity <= 0 || !clientName || clientName.length < 3) {
@@ -142,50 +131,112 @@ async function calcularDescuentoEnTiempoReal() {
         return;
     }
 
-    try {
-        const response = await fetch('/api/v1/vendedor/calcular-descuento', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                productoId, cantidad: quantity, precioUnitario: price, clienteNombre: clientName
-            })
-        });
+    const subtotal = price * quantity;
+    let descuento = 0;
+    let promociones = [];
 
-        if (response.ok) {
-            const result = await response.json();
-            descuentoCalculado = result.descuento || 0;
-            promocionesAplicadas = result.promociones || [];
+    const categoria = selectedOption.parentElement?.label || '';
+    const nombre = selectedOption.text.toLowerCase();
 
-            document.getElementById("saleDescuento").textContent = `-S/ ${descuentoCalculado.toFixed(2)}`;
-            
-            const promoContainer = document.getElementById("promocionesAplicables");
-            const promoList = document.getElementById("listaPromocionesAplicables");
-            
-            if (promocionesAplicadas.length > 0) {
-                promoContainer.style.display = "block";
-                promoList.innerHTML = promocionesAplicadas.map(p => 
-                    `<span style="background:#d1fae5;padding:0.15rem 0.75rem;border-radius:12px;margin:0.15rem;font-size:0.75rem;">
-                        <i class="fas fa-tag" style="color:#059669;"></i> ${p}
-                    </span>`
-                ).join(' ');
-                document.getElementById("saleDescuento").style.color = "#dc2626";
-                document.getElementById("saleDescuento").style.fontWeight = "700";
-            } else {
-                promoContainer.style.display = "none";
-                document.getElementById("saleDescuento").style.color = "#64748b";
-                document.getElementById("saleDescuento").style.fontWeight = "600";
-            }
-            
-            const subtotal = price * quantity;
-            const totalConDescuento = subtotal + (subtotal * 0.18) - descuentoCalculado;
-            document.getElementById("saleTotalWithIgv").textContent = `S/ ${totalConDescuento.toFixed(2)}`;
-        }
-    } catch (error) {
-        console.error('Error:', error);
+    // DESCUENTOS POR CATEGORIA
+    if (categoria.includes('Alimentos') && subtotal >= 120) {
+        descuento += subtotal * 0.10;
+        promociones.push('10% en Alimentos (min S/120)');
     }
+
+    if (categoria.includes('Antipulgas')) {
+        descuento += subtotal * 0.20;
+        promociones.push('20% en Antipulgas');
+    }
+
+    if (categoria.includes('Accesorios')) {
+        descuento += subtotal * 0.15;
+        promociones.push('15% en Accesorios');
+    }
+
+    if (categoria.includes('Servicios')) {
+        if (nombre.includes('baño') || nombre.includes('corte')) {
+            descuento += subtotal * 0.15;
+            promociones.push('15% en Baño y Corte');
+        }
+        if (nombre.includes('esterilización')) {
+            descuento += 30;
+            promociones.push('S/30 en Esterilización');
+        }
+    }
+
+    // DESCUENTOS POR MONTO
+    if (subtotal > 500) {
+        descuento += subtotal * 0.20;
+        promociones.push('20% en compras > S/500');
+    } else if (subtotal > 350) {
+        descuento += subtotal * 0.15;
+        promociones.push('15% en compras > S/350');
+    } else if (subtotal > 200) {
+        descuento += subtotal * 0.10;
+        promociones.push('10% en compras > S/200');
+    }
+
+    // DESCUENTOS POR PRODUCTO ESPECIFICO
+    if (productoId === 1) {
+        descuento += 20;
+        promociones.push('S/20 en Alimento Ricocan');
+    } else if (productoId === 2) {
+        descuento += 15;
+        promociones.push('S/15 en Alimento Purina');
+    } else if (productoId === 5) {
+        descuento += 10;
+        promociones.push('S/10 en Bravecto');
+    } else if (productoId === 12 || productoId === 13) {
+        descuento += subtotal * 0.25;
+        promociones.push('25% en Camas');
+    }
+
+    // DESCUENTOS POR DIA DE SEMANA
+    const dia = new Date().getDay();
+    if (dia === 1 && categoria.includes('Alimentos')) {
+        descuento += subtotal * 0.10;
+        promociones.push('10% en Alimentos (Lunes)');
+    }
+    if (dia === 2 && categoria.includes('Accesorios')) {
+        const gratis = Math.floor(quantity / 2);
+        descuento += gratis * price;
+        promociones.push('2x1 en Accesorios (Martes)');
+    }
+
+    // ELIMINAR DUPLICADOS
+    promociones = [...new Set(promociones)];
+
+    // MOSTRAR DESCUENTO
+    document.getElementById("saleDescuento").textContent = `-S/ ${descuento.toFixed(2)}`;
+    
+    const promoContainer = document.getElementById("promocionesAplicables");
+    const promoList = document.getElementById("listaPromocionesAplicables");
+    
+    if (promociones.length > 0) {
+        promoContainer.style.display = "block";
+        promoList.innerHTML = promociones.map(p => 
+            `<span style="display: inline-block; background: #d1fae5; padding: 0.15rem 0.75rem; border-radius: 12px; margin: 0.15rem; font-size: 0.75rem;">
+                <i class="fas fa-tag" style="color: #059669;"></i> ${p}
+            </span>`
+        ).join(' ');
+        document.getElementById("saleDescuento").style.color = "#dc2626";
+        document.getElementById("saleDescuento").style.fontWeight = "700";
+    } else {
+        promoContainer.style.display = "none";
+        document.getElementById("saleDescuento").style.color = "#64748b";
+        document.getElementById("saleDescuento").style.fontWeight = "600";
+    }
+
+    // ACTUALIZAR TOTAL
+    const igv = subtotal * 0.18;
+    const totalConDescuento = subtotal + igv - descuento;
+    document.getElementById("saleTotalWithIgv").textContent = `S/ ${totalConDescuento.toFixed(2)}`;
+    
+    descuentoCalculado = descuento;
+    promocionesAplicadas = promociones;
 }
 
-// ===== VENTAS =====
 function updatePrice() {
     const opt = document.getElementById("saleProduct").options[document.getElementById("saleProduct").selectedIndex];
     document.getElementById("salePrice").value = parseFloat(opt.getAttribute("data-price") || "0").toFixed(2);
@@ -275,24 +326,49 @@ function processSale() {
     });
 }
 
-// ===== HISTORIAL =====
+// ===== HISTORIAL CON PAGINACION =====
 function loadHistoryFromAPI() {
     fetch('/api/v1/vendedor/ventas')
         .then(r => r.json())
-        .then(ventas => renderHistory(ventas))
-        .catch(() => document.getElementById("salesTableBody").innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;">Error al cargar</td></tr>');
+        .then(ventas => {
+            ventasCompletas = ventas;
+            if (!busquedaActiva) {
+                ventasFiltradas = [...ventasCompletas];
+            }
+            paginaActual = 1;
+            renderizarTabla();
+        })
+        .catch(() => {
+            document.getElementById("salesTableBody").innerHTML = '<tr><td colspan="9" style="text-align:center;color:#64748b;">Error al cargar</td></tr>';
+        });
 }
 
-function renderHistory(ventas) {
+function renderizarTabla() {
+    const datos = busquedaActiva ? ventasFiltradas : ventasCompletas;
+    const datosOrdenados = [...datos].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    
+    const total = datosOrdenados.length;
+    const totalPaginas = Math.ceil(total / pageSize) || 1;
+    
+    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+    
+    const inicio = (paginaActual - 1) * pageSize;
+    const fin = Math.min(inicio + pageSize, total);
+    const paginaDatos = datosOrdenados.slice(inicio, fin);
+    
     const tbody = document.getElementById("salesTableBody");
     tbody.innerHTML = "";
-
-    if (!ventas || ventas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">No hay ventas registradas.</td></tr>`;
+    
+    if (paginaDatos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+            <i class="fas fa-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+            <p>No hay ventas registradas</p>
+        </td></tr>`;
         return;
     }
-
-    ventas.slice(0, 20).forEach(venta => {
+    
+    paginaDatos.forEach((venta, index) => {
+        const tr = document.createElement("tr");
         const fecha = new Date(venta.fecha);
         let productoNombre = 'Producto';
         if (venta.detalles?.length > 0) {
@@ -300,9 +376,10 @@ function renderHistory(ventas) {
                             venta.detalles[0].medicamento?.nombre || 'Producto';
         }
         
-        const tr = document.createElement('tr');
+        const numero = total - (inicio + index);
+        
         tr.innerHTML = `
-            <td><strong>#${venta.id}</strong></td>
+            <td><strong>#${numero}</strong></td>
             <td>${fecha.toLocaleString('es-PE')}</td>
             <td>${venta.cliente?.nombre || 'Cliente'}</td>
             <td>${productoNombre}</td>
@@ -311,12 +388,220 @@ function renderHistory(ventas) {
             <td style="font-weight:600;color:#059669;">S/ ${(venta.total || 0).toFixed(2)}</td>
             <td><span class="badge badge-success">Pagado</span></td>
             <td>
-                <button class="btn btn-sm btn-primary" onclick="descargarBoletaPDF(${venta.id})">
-                    <i class="fas fa-file-pdf"></i> PDF
-                </button>
+                <div class="acciones-container">
+                    <button class="btn-accion btn-accion-pdf" onclick="descargarBoletaPDF(${venta.id})" title="Descargar PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                    <button class="btn-accion btn-accion-eliminar" onclick="eliminarVenta(${venta.id})" title="Eliminar venta">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </td>
         `;
         tbody.appendChild(tr);
+    });
+    
+    document.getElementById("paginaDesde").textContent = total > 0 ? inicio + 1 : 0;
+    document.getElementById("paginaHasta").textContent = fin;
+    document.getElementById("totalRegistros").textContent = total;
+    
+    document.getElementById("btnPrimera").disabled = paginaActual === 1;
+    document.getElementById("btnAnterior").disabled = paginaActual === 1;
+    document.getElementById("btnSiguiente").disabled = paginaActual === totalPaginas;
+    document.getElementById("btnUltima").disabled = paginaActual === totalPaginas;
+    
+    const paginasContainer = document.getElementById("paginasNumeros");
+    paginasContainer.innerHTML = "";
+    
+    let inicioPaginas = Math.max(1, paginaActual - 2);
+    let finPaginas = Math.min(totalPaginas, paginaActual + 2);
+    
+    if (inicioPaginas > 1) {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-sm";
+        btn.style.cssText = "padding:0.3rem 0.7rem;font-size:0.8rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;";
+        btn.textContent = "1";
+        btn.onclick = () => irPagina(1);
+        paginasContainer.appendChild(btn);
+        if (inicioPaginas > 2) {
+            const span = document.createElement("span");
+            span.textContent = "...";
+            span.style.cssText = "padding:0.3rem 0.3rem;color:#64748b;";
+            paginasContainer.appendChild(span);
+        }
+    }
+    
+    for (let i = inicioPaginas; i <= finPaginas; i++) {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-sm";
+        btn.style.cssText = `padding:0.3rem 0.7rem;font-size:0.8rem;background:${i === paginaActual ? '#059669' : '#f1f5f9'};color:${i === paginaActual ? 'white' : '#1e293b'};border:1px solid ${i === paginaActual ? '#059669' : '#e2e8f0'};border-radius:4px;cursor:pointer;`;
+        btn.textContent = i;
+        btn.onclick = () => irPagina(i);
+        paginasContainer.appendChild(btn);
+    }
+    
+    if (finPaginas < totalPaginas) {
+        if (finPaginas < totalPaginas - 1) {
+            const span = document.createElement("span");
+            span.textContent = "...";
+            span.style.cssText = "padding:0.3rem 0.3rem;color:#64748b;";
+            paginasContainer.appendChild(span);
+        }
+        const btn = document.createElement("button");
+        btn.className = "btn btn-sm";
+        btn.style.cssText = "padding:0.3rem 0.7rem;font-size:0.8rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;";
+        btn.textContent = totalPaginas;
+        btn.onclick = () => irPagina(totalPaginas);
+        paginasContainer.appendChild(btn);
+    }
+}
+
+function irPagina(pagina) {
+    const total = Math.ceil((ventasFiltradas.length || ventasCompletas.length) / pageSize);
+    if (pagina < 1 || pagina > total) return;
+    paginaActual = pagina;
+    renderizarTabla();
+}
+
+function cambiarPageSize() {
+    pageSize = parseInt(document.getElementById("pageSize").value);
+    paginaActual = 1;
+    renderizarTabla();
+}
+
+function buscarVentas() {
+    const searchTerm = document.getElementById("searchClient").value.toLowerCase().trim();
+    const filterDate = document.getElementById("filterDate").value;
+    
+    if (!searchTerm && !filterDate) {
+        showToast("Ingrese un criterio de búsqueda", "info");
+        return;
+    }
+    
+    busquedaActiva = true;
+    ventasFiltradas = ventasCompletas.filter(venta => {
+        let coincide = true;
+        if (searchTerm) {
+            coincide = coincide && (venta.cliente?.nombre || '').toLowerCase().includes(searchTerm);
+        }
+        if (filterDate) {
+            const fechaStr = new Date(venta.fecha).toISOString().split('T')[0];
+            coincide = coincide && fechaStr === filterDate;
+        }
+        return coincide;
+    });
+    
+    paginaActual = 1;
+    renderizarTabla();
+    showToast(`Se encontraron ${ventasFiltradas.length} resultados`, "success");
+}
+
+function limpiarFiltros() {
+    document.getElementById("searchClient").value = "";
+    document.getElementById("filterDate").value = "";
+    busquedaActiva = false;
+    ventasFiltradas = [...ventasCompletas];
+    paginaActual = 1;
+    renderizarTabla();
+    showToast("Filtros limpiados", "info");
+}
+
+// ===== ELIMINAR VENTA CON SWEETALERT2 =====
+function eliminarVenta(id) {
+    Swal.fire({
+        title: '¿Eliminar venta?',
+        html: `
+            <div style="text-align: left; padding: 0.5rem 0;">
+                <p style="margin: 0 0 0.5rem 0; color: #1e293b; font-size: 1.1rem;">
+                    Estás a punto de eliminar la venta <strong style="color: #059669;">#${id}</strong>
+                </p>
+                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #fef2f2; border-radius: 10px; border-left: 4px solid #dc2626; margin-top: 0.5rem;">
+                    <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 1.2rem;"></i>
+                    <div>
+                        <p style="margin: 0; color: #64748b; font-size: 0.9rem;">
+                            <strong style="color: #dc2626;">Esta acción no se puede deshacer.</strong>
+                        </p>
+                        <p style="margin: 0.25rem 0 0 0; color: #94a3b8; font-size: 0.85rem;">
+                            <i class="fas fa-undo-alt" style="margin-right: 0.3rem;"></i>
+                            Se restaurará el stock de los productos
+                        </p>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <span style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; color: #64748b;">
+                        <i class="fas fa-receipt"></i> Venta #${id}
+                    </span>
+                    <span style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; color: #64748b;">
+                        <i class="fas fa-calendar"></i> ${new Date().toLocaleDateString('es-PE')}
+                    </span>
+                </div>
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        background: '#ffffff',
+        backdrop: 'rgba(0,0,0,0.5)',
+        borderRadius: '16px',
+        padding: '2rem'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Eliminando venta...',
+                text: 'Por favor espera un momento',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+                background: '#ffffff',
+                borderRadius: '16px',
+                padding: '2rem'
+            });
+            
+            fetch(`/api/v1/vendedor/ventas/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.mensaje || 'Error al eliminar');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Venta eliminada!',
+                    text: `La venta #${id} se eliminó correctamente`,
+                    confirmButtonColor: '#059669',
+                    confirmButtonText: 'Aceptar',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    background: '#ffffff',
+                    borderRadius: '16px',
+                    padding: '2rem'
+                });
+                
+                loadHistoryFromAPI();
+                loadDashboardStats();
+                setTimeout(reproducirSonidoConfirmacion, 300);
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al eliminar',
+                    text: error.message || 'No se pudo eliminar la venta',
+                    confirmButtonColor: '#dc2626',
+                    confirmButtonText: 'Aceptar',
+                    background: '#ffffff',
+                    borderRadius: '16px',
+                    padding: '2rem'
+                });
+            });
+        }
     });
 }
 
@@ -340,7 +625,6 @@ function descargarBoletaPDF(ventaId) {
 
 function exportarPDF() {
     showToast("Generando PDF del historial...", "info");
-    
     const rows = document.querySelectorAll("#salesTableBody tr");
     const data = [];
     
@@ -365,65 +649,28 @@ function exportarPDF() {
         return;
     }
     
-    let html = `
-        <html>
-        <head>
-            <title>Historial de Ventas</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                h1 { color: #059669; text-align: center; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th { background: #059669; color: white; padding: 10px; text-align: left; }
-                td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
-                .total { font-weight: bold; color: #059669; }
-                .footer { margin-top: 30px; text-align: center; color: #64748b; font-size: 12px; }
-                .badge { background: #dcfce7; color: #059669; padding: 2px 8px; border-radius: 12px; }
-            </style>
-        </head>
-        <body>
-            <h1>Pet Clinic - Historial de Ventas</h1>
-            <p style="text-align: center; color: #64748b;">Fecha: ${new Date().toLocaleDateString('es-PE')}</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>N Boleta</th>
-                        <th>Fecha</th>
-                        <th>Cliente</th>
-                        <th>Producto</th>
-                        <th>Subtotal</th>
-                        <th>IGV</th>
-                        <th>Total</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
+    let html = `<html><head><title>Historial de Ventas</title>
+        <style>body{font-family:Arial;padding:20px}h1{color:#059669;text-align:center}
+        table{width:100%;border-collapse:collapse;margin-top:20px}
+        th{background:#059669;color:white;padding:10px;text-align:left}
+        td{padding:8px;border-bottom:1px solid #e2e8f0}
+        .total{font-weight:bold;color:#059669}
+        .badge{background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px}
+        .footer{margin-top:30px;text-align:center;color:#64748b;font-size:12px}
+    </style></head><body>
+        <h1>Pet Clinic - Historial de Ventas</h1>
+        <p style="text-align:center;color:#64748b;">Fecha: ${new Date().toLocaleDateString('es-PE')}</p>
+        <table><thead><tr><th>N Boleta</th><th>Fecha</th><th>Cliente</th><th>Producto</th>
+        <th>Subtotal</th><th>IGV</th><th>Total</th><th>Estado</th></tr></thead><tbody>`;
     
     data.forEach(item => {
-        html += `
-            <tr>
-                <td>${item.id}</td>
-                <td>${item.fecha}</td>
-                <td>${item.cliente}</td>
-                <td>${item.producto}</td>
-                <td>${item.subtotal}</td>
-                <td>${item.igv}</td>
-                <td class="total">${item.total}</td>
-                <td><span class="badge">${item.estado}</span></td>
-            </tr>
-        `;
+        html += `<tr><td>${item.id}</td><td>${item.fecha}</td><td>${item.cliente}</td>
+        <td>${item.producto}</td><td>${item.subtotal}</td><td>${item.igv}</td>
+        <td class="total">${item.total}</td><td><span class="badge">${item.estado}</span></td></tr>`;
     });
     
-    html += `
-                </tbody>
-            </table>
-            <div class="footer">
-                <p>Reporte generado automaticamente - Pet Clinic 2026</p>
-                <p>Total de registros: ${data.length}</p>
-            </div>
-        </body>
-        </html>
-    `;
+    html += `</tbody></table><div class="footer"><p>Reporte generado automaticamente - Pet Clinic 2026</p>
+        <p>Total de registros: ${data.length}</p></div></body></html>`;
     
     const blob = new Blob([html], { type: 'application/pdf' });
     const link = document.createElement('a');
@@ -432,7 +679,6 @@ function exportarPDF() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
     showToast("PDF exportado correctamente", "success");
 }
 
@@ -459,11 +705,9 @@ function validateQuantity() {
     const stock = parseInt(opt.getAttribute("data-stock")) || 0;
     const qty = parseInt(document.getElementById("saleQuantity").value) || 0;
     const err = document.getElementById("quantityError");
+    err.style.display = (stock > 0 && stock < 999 && qty > stock) ? "block" : "none";
     if (stock > 0 && stock < 999 && qty > stock) {
         err.textContent = `Stock: ${stock}`;
-        err.style.display = "block";
-    } else {
-        err.style.display = "none";
     }
 }
 
@@ -482,17 +726,15 @@ function validateClientName() {
 function validateClientPhone() {
     const phone = document.getElementById("clientPhone").value.trim();
     const errorEl = document.getElementById("phoneError");
-    
     if (phone && !/^[0-9]{9}$/.test(phone)) {
-        errorEl.textContent = "Ingrese 9 digitos (ej: 987654321)";
+        errorEl.textContent = "Ingrese 9 digitos";
         errorEl.style.display = "block";
         document.getElementById("clientPhone").classList.add("input-error");
         return false;
-    } else {
-        errorEl.style.display = "none";
-        document.getElementById("clientPhone").classList.remove("input-error");
-        return true;
     }
+    errorEl.style.display = "none";
+    document.getElementById("clientPhone").classList.remove("input-error");
+    return true;
 }
 
 function updateStockIndicator() {
@@ -521,39 +763,14 @@ function updateStockIndicator() {
     }
 }
 
-function filterHistory() {
-    const search = document.getElementById("searchClient").value.toLowerCase();
-    const date = document.getElementById("filterDate").value;
-    const rows = document.querySelectorAll("#salesTableBody tr");
-    let visible = 0;
-    
-    rows.forEach(row => {
-        const cells = row.querySelectorAll("td");
-        if (cells.length >= 6) {
-            const matchClient = cells[2].textContent.toLowerCase().includes(search);
-            const matchDate = !date || cells[1].textContent.includes(date);
-            row.style.display = (matchClient && matchDate) ? "" : "none";
-            if (matchClient && matchDate) visible++;
-        }
-    });
-    document.getElementById("noResults").style.display = visible === 0 ? "block" : "none";
-}
-
-function exportarHistorial() {
-    showToast("Exportando...", "info");
-    setTimeout(() => showToast("Exportado", "success"), 1500);
-}
-
 // ===== GRAFICA =====
 async function loadChartData() {
     try {
         const response = await fetch('/api/v1/vendedor/ventas/ultimos-7-dias');
         if (!response.ok) throw new Error('Error al cargar datos de la grafica');
-        
         const data = await response.json();
         renderSalesChart(data.labels, data.values);
     } catch (error) {
-        console.error('Error cargando datos de la grafica:', error);
         const today = new Date();
         const labels = [];
         for (let i = 6; i >= 0; i--) {
@@ -602,7 +819,6 @@ function renderSalesChart(labels, data) {
     const totalSales = data.reduce((a, b) => a + b, 0);
     const avgSales = data.length > 0 ? totalSales / data.length : 0;
     const maxSales = data.length > 0 ? Math.max(...data) : 0;
-    
     const ctx = canvas.getContext('2d');
     const avgLine = Array(data.length).fill(avgSales);
     const color = '#059669';
@@ -610,91 +826,31 @@ function renderSalesChart(labels, data) {
     
     salesChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Ventas (S/)',
-                    data: data,
-                    backgroundColor: data.map(v => v > 0 ? color : 'rgba(200,200,200,0.3)'),
-                    borderColor: color,
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    barPercentage: 0.6
-                },
-                {
-                    label: 'Promedio (S/)',
-                    data: avgLine,
-                    borderColor: colorAvg,
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0,
-                    type: 'line'
-                }
-            ]
-        },
+        data: { labels, datasets: [
+            { label: 'Ventas (S/)', data, backgroundColor: data.map(v => v > 0 ? color : 'rgba(200,200,200,0.3)'), borderColor: color, borderWidth: 2, borderRadius: 6, barPercentage: 0.6 },
+            { label: 'Promedio (S/)', data: avgLine, borderColor: colorAvg, borderWidth: 2, borderDash: [5,5], fill: false, pointRadius: 0, type: 'line' }
+        ] },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        font: { size: 13, weight: '600', family: "'Playfair Display', serif" },
-                        color: '#64748b',
-                        padding: 15,
-                        usePointStyle: true
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    padding: 12,
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': S/ ' + context.parsed.y.toFixed(2);
-                        }
-                    }
-                }
+                legend: { display: true, position: 'top', labels: { font: { size: 13, weight: '600', family: "'Playfair Display', serif" }, color: '#64748b', padding: 15, usePointStyle: true } },
+                tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, callbacks: { label: function(context) { return context.dataset.label + ': S/ ' + context.parsed.y.toFixed(2); } } }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => 'S/ ' + value.toFixed(0),
-                        color: '#64748b'
-                    },
-                    grid: { color: 'rgba(203,213,225,0.1)', drawBorder: false }
-                },
-                x: {
-                    ticks: { color: '#64748b' },
-                    grid: { display: false }
-                }
+                y: { beginAtZero: true, ticks: { callback: value => 'S/ ' + value.toFixed(0), color: '#64748b' }, grid: { color: 'rgba(203,213,225,0.1)', drawBorder: false } },
+                x: { ticks: { color: '#64748b' }, grid: { display: false } }
             }
         }
     });
     
-    updateChartStats(totalSales, avgSales, maxSales);
-}
-
-function updateChartStats(total, avg, max) {
-    const statsEl = document.getElementById("chartStats");
-    if (!statsEl) return;
-    
-    statsEl.innerHTML = `
-        <div style="text-align:center;padding:0.5rem;">
-            <div style="font-size:0.85rem;color:#64748b;">Total 7 Dias</div>
-            <div style="font-size:1.2rem;font-weight:700;color:#059669;">S/ ${total.toFixed(2)}</div>
-        </div>
-        <div style="text-align:center;padding:0.5rem;">
-            <div style="font-size:0.85rem;color:#64748b;">Promedio/Dia</div>
-            <div style="font-size:1.2rem;font-weight:700;color:#3b82f6;">S/ ${avg.toFixed(2)}</div>
-        </div>
-        <div style="text-align:center;padding:0.5rem;">
-            <div style="font-size:0.85rem;color:#64748b;">Maximo/Dia</div>
-            <div style="font-size:1.2rem;font-weight:700;color:#f59e0b;">S/ ${max.toFixed(2)}</div>
-        </div>
+    document.getElementById("chartStats").innerHTML = `
+        <div style="text-align:center;padding:0.5rem;"><div style="font-size:0.85rem;color:#64748b;">Total 7 Dias</div>
+        <div style="font-size:1.2rem;font-weight:700;color:#059669;">S/ ${totalSales.toFixed(2)}</div></div>
+        <div style="text-align:center;padding:0.5rem;"><div style="font-size:0.85rem;color:#64748b;">Promedio/Dia</div>
+        <div style="font-size:1.2rem;font-weight:700;color:#3b82f6;">S/ ${avgSales.toFixed(2)}</div></div>
+        <div style="text-align:center;padding:0.5rem;"><div style="font-size:0.85rem;color:#64748b;">Maximo/Dia</div>
+        <div style="font-size:1.2rem;font-weight:700;color:#f59e0b;">S/ ${maxSales.toFixed(2)}</div></div>
     `;
 }
 
@@ -702,7 +858,6 @@ function refreshChart() {
     loadChartData();
 }
 
-// ===== TOAST =====
 function showToast(msg, type = "success") {
     const toast = document.getElementById("toast");
     const icon = toast.querySelector("i");
@@ -721,10 +876,4 @@ function showToast(msg, type = "success") {
     
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 4000);
-}
-
-// ===== FILTROS =====
-function initHistoryFilters() {
-    document.getElementById("searchClient")?.addEventListener("input", filterHistory);
-    document.getElementById("filterDate")?.addEventListener("change", filterHistory);
 }

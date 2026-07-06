@@ -1,15 +1,18 @@
-// ===== VARIABLES GLOBALES =====
 let salesChart = null;
 let productos = [];
 let descuentoCalculado = 0;
 let promocionesAplicadas = [];
 
-// ===== DOM CONTENT LOADED =====
+let ventasCompletas = [];
+let ventasFiltradas = [];
+let paginaActual = 1;
+let pageSize = 10;
+let busquedaActiva = false;
+
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Panel de Ventas iniciado");
     
     precargarAudio();
-    
     initDate();
     initTabs();
     loadProducts();
@@ -18,10 +21,8 @@ document.addEventListener("DOMContentLoaded", function() {
     loadDashboardStats();
     loadChartData();
     setMaxDateFilter();
-    initHistoryFilters();
 });
 
-// ===== PRECARGAR AUDIO =====
 function precargarAudio() {
     const audio = document.getElementById("audioConfirmacion");
     if (audio) {
@@ -30,14 +31,10 @@ function precargarAudio() {
         audio.play().then(() => {
             audio.pause();
             audio.currentTime = 0;
-            console.log("Audio precargado y listo");
-        }).catch(() => {
-            console.log("Audio bloqueado, esperando interaccion del usuario");
-        });
+        }).catch(() => {});
     }
 }
 
-// ===== NAVEGACION =====
 function initTabs() {
     document.querySelectorAll(".nav-item").forEach(item => {
         item.addEventListener("click", function() {
@@ -85,7 +82,6 @@ async function loadProducts() {
         populateProductSelect(productos);
         console.log("Productos cargados:", productos.length);
     } catch (error) {
-        console.error("Error cargando productos:", error);
         showToast("Error al cargar productos", "error");
     }
 }
@@ -116,12 +112,9 @@ function populateProductSelect(productos) {
 function reproducirSonidoConfirmacion() {
     const audio = document.getElementById("audioConfirmacion");
     if (!audio) return;
-    
     audio.currentTime = 0;
     audio.volume = 1;
     audio.muted = false;
-    audio.playbackRate = 1;
-    
     audio.play().catch(() => {});
 }
 
@@ -275,24 +268,47 @@ function processSale() {
     });
 }
 
-// ===== HISTORIAL =====
+// ===== HISTORIAL CON PAGINACION =====
 function loadHistoryFromAPI() {
     fetch('/api/v1/vendedor/ventas')
         .then(r => r.json())
-        .then(ventas => renderHistory(ventas))
-        .catch(() => document.getElementById("salesTableBody").innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;">Error al cargar</td></tr>');
+        .then(ventas => {
+            ventasCompletas = ventas;
+            if (!busquedaActiva) {
+                ventasFiltradas = [...ventasCompletas];
+            }
+            paginaActual = 1;
+            renderizarTabla();
+        })
+        .catch(() => {
+            document.getElementById("salesTableBody").innerHTML = '<tr><td colspan="9" style="text-align:center;color:#64748b;">Error al cargar</td></tr>';
+        });
 }
 
-function renderHistory(ventas) {
+function renderizarTabla() {
+    const datos = busquedaActiva ? ventasFiltradas : ventasCompletas;
+    const total = datos.length;
+    const totalPaginas = Math.ceil(total / pageSize) || 1;
+    
+    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+    
+    const inicio = (paginaActual - 1) * pageSize;
+    const fin = Math.min(inicio + pageSize, total);
+    const paginaDatos = datos.slice(inicio, fin);
+    
     const tbody = document.getElementById("salesTableBody");
     tbody.innerHTML = "";
-
-    if (!ventas || ventas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">No hay ventas registradas.</td></tr>`;
+    
+    if (paginaDatos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+            <i class="fas fa-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+            <p>No hay ventas registradas</p>
+        </td></tr>`;
         return;
     }
-
-    ventas.slice(0, 20).forEach(venta => {
+    
+    paginaDatos.forEach(venta => {
+        const tr = document.createElement("tr");
         const fecha = new Date(venta.fecha);
         let productoNombre = 'Producto';
         if (venta.detalles?.length > 0) {
@@ -300,7 +316,6 @@ function renderHistory(ventas) {
                             venta.detalles[0].medicamento?.nombre || 'Producto';
         }
         
-        const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>#${venta.id}</strong></td>
             <td>${fecha.toLocaleString('es-PE')}</td>
@@ -311,13 +326,134 @@ function renderHistory(ventas) {
             <td style="font-weight:600;color:#059669;">S/ ${(venta.total || 0).toFixed(2)}</td>
             <td><span class="badge badge-success">Pagado</span></td>
             <td>
-                <button class="btn btn-sm btn-primary" onclick="descargarBoletaPDF(${venta.id})">
-                    <i class="fas fa-file-pdf"></i> PDF
+                <button class="btn btn-sm btn-primary" onclick="descargarBoletaPDF(${venta.id})" title="PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="eliminarVenta(${venta.id})" title="Eliminar" style="background:#dc2626;color:white;border:none;border-radius:4px;padding:0.25rem 0.5rem;cursor:pointer;">
+                    <i class="fas fa-trash"></i>
                 </button>
             </td>
         `;
         tbody.appendChild(tr);
     });
+    
+    // Actualizar paginacion
+    document.getElementById("paginaDesde").textContent = total > 0 ? inicio + 1 : 0;
+    document.getElementById("paginaHasta").textContent = fin;
+    document.getElementById("totalRegistros").textContent = total;
+    
+    document.getElementById("btnPrimera").disabled = paginaActual === 1;
+    document.getElementById("btnAnterior").disabled = paginaActual === 1;
+    document.getElementById("btnSiguiente").disabled = paginaActual === totalPaginas;
+    document.getElementById("btnUltima").disabled = paginaActual === totalPaginas;
+    
+    const paginasContainer = document.getElementById("paginasNumeros");
+    paginasContainer.innerHTML = "";
+    
+    let inicioPaginas = Math.max(1, paginaActual - 2);
+    let finPaginas = Math.min(totalPaginas, paginaActual + 2);
+    
+    if (inicioPaginas > 1) {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-sm";
+        btn.style.cssText = "padding:0.3rem 0.7rem;font-size:0.8rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;";
+        btn.textContent = "1";
+        btn.onclick = () => irPagina(1);
+        paginasContainer.appendChild(btn);
+        if (inicioPaginas > 2) {
+            const span = document.createElement("span");
+            span.textContent = "...";
+            span.style.cssText = "padding:0.3rem 0.3rem;color:#64748b;";
+            paginasContainer.appendChild(span);
+        }
+    }
+    
+    for (let i = inicioPaginas; i <= finPaginas; i++) {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-sm";
+        btn.style.cssText = `padding:0.3rem 0.7rem;font-size:0.8rem;background:${i === paginaActual ? '#059669' : '#f1f5f9'};color:${i === paginaActual ? 'white' : '#1e293b'};border:1px solid ${i === paginaActual ? '#059669' : '#e2e8f0'};border-radius:4px;cursor:pointer;`;
+        btn.textContent = i;
+        btn.onclick = () => irPagina(i);
+        paginasContainer.appendChild(btn);
+    }
+    
+    if (finPaginas < totalPaginas) {
+        if (finPaginas < totalPaginas - 1) {
+            const span = document.createElement("span");
+            span.textContent = "...";
+            span.style.cssText = "padding:0.3rem 0.3rem;color:#64748b;";
+            paginasContainer.appendChild(span);
+        }
+        const btn = document.createElement("button");
+        btn.className = "btn btn-sm";
+        btn.style.cssText = "padding:0.3rem 0.7rem;font-size:0.8rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;";
+        btn.textContent = totalPaginas;
+        btn.onclick = () => irPagina(totalPaginas);
+        paginasContainer.appendChild(btn);
+    }
+}
+
+function irPagina(pagina) {
+    const total = Math.ceil((ventasFiltradas.length || ventasCompletas.length) / pageSize);
+    if (pagina < 1 || pagina > total) return;
+    paginaActual = pagina;
+    renderizarTabla();
+}
+
+function cambiarPageSize() {
+    pageSize = parseInt(document.getElementById("pageSize").value);
+    paginaActual = 1;
+    renderizarTabla();
+}
+
+function buscarVentas() {
+    const searchTerm = document.getElementById("searchClient").value.toLowerCase().trim();
+    const filterDate = document.getElementById("filterDate").value;
+    
+    if (!searchTerm && !filterDate) {
+        showToast("Ingrese un criterio de búsqueda", "info");
+        return;
+    }
+    
+    busquedaActiva = true;
+    ventasFiltradas = ventasCompletas.filter(venta => {
+        let coincide = true;
+        if (searchTerm) {
+            coincide = coincide && (venta.cliente?.nombre || '').toLowerCase().includes(searchTerm);
+        }
+        if (filterDate) {
+            const fechaStr = new Date(venta.fecha).toISOString().split('T')[0];
+            coincide = coincide && fechaStr === filterDate;
+        }
+        return coincide;
+    });
+    
+    paginaActual = 1;
+    renderizarTabla();
+    showToast(`Se encontraron ${ventasFiltradas.length} resultados`, "success");
+}
+
+function limpiarFiltros() {
+    document.getElementById("searchClient").value = "";
+    document.getElementById("filterDate").value = "";
+    busquedaActiva = false;
+    ventasFiltradas = [...ventasCompletas];
+    paginaActual = 1;
+    renderizarTabla();
+    showToast("Filtros limpiados", "info");
+}
+
+// ===== ELIMINAR VENTA =====
+function eliminarVenta(id) {
+    if (!confirm(`¿Eliminar venta #${id}?`)) return;
+    
+    fetch(`/api/v1/vendedor/ventas/${id}`, { method: 'DELETE' })
+        .then(response => {
+            if (!response.ok) throw new Error('Error al eliminar');
+            showToast(`Venta #${id} eliminada`, "success");
+            loadHistoryFromAPI();
+        })
+        .catch(error => showToast("Error al eliminar: " + error.message, "error"));
 }
 
 // ===== DASHBOARD =====
@@ -340,7 +476,6 @@ function descargarBoletaPDF(ventaId) {
 
 function exportarPDF() {
     showToast("Generando PDF del historial...", "info");
-    
     const rows = document.querySelectorAll("#salesTableBody tr");
     const data = [];
     
@@ -365,65 +500,28 @@ function exportarPDF() {
         return;
     }
     
-    let html = `
-        <html>
-        <head>
-            <title>Historial de Ventas</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                h1 { color: #059669; text-align: center; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th { background: #059669; color: white; padding: 10px; text-align: left; }
-                td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
-                .total { font-weight: bold; color: #059669; }
-                .footer { margin-top: 30px; text-align: center; color: #64748b; font-size: 12px; }
-                .badge { background: #dcfce7; color: #059669; padding: 2px 8px; border-radius: 12px; }
-            </style>
-        </head>
-        <body>
-            <h1>Pet Clinic - Historial de Ventas</h1>
-            <p style="text-align: center; color: #64748b;">Fecha: ${new Date().toLocaleDateString('es-PE')}</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>N Boleta</th>
-                        <th>Fecha</th>
-                        <th>Cliente</th>
-                        <th>Producto</th>
-                        <th>Subtotal</th>
-                        <th>IGV</th>
-                        <th>Total</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
+    let html = `<html><head><title>Historial de Ventas</title>
+        <style>body{font-family:Arial;padding:20px}h1{color:#059669;text-align:center}
+        table{width:100%;border-collapse:collapse;margin-top:20px}
+        th{background:#059669;color:white;padding:10px;text-align:left}
+        td{padding:8px;border-bottom:1px solid #e2e8f0}
+        .total{font-weight:bold;color:#059669}
+        .badge{background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px}
+        .footer{margin-top:30px;text-align:center;color:#64748b;font-size:12px}
+    </style></head><body>
+        <h1>Pet Clinic - Historial de Ventas</h1>
+        <p style="text-align:center;color:#64748b;">Fecha: ${new Date().toLocaleDateString('es-PE')}</p>
+        <table><thead><tr><th>N Boleta</th><th>Fecha</th><th>Cliente</th><th>Producto</th>
+        <th>Subtotal</th><th>IGV</th><th>Total</th><th>Estado</th></tr></thead><tbody>`;
     
     data.forEach(item => {
-        html += `
-            <tr>
-                <td>${item.id}</td>
-                <td>${item.fecha}</td>
-                <td>${item.cliente}</td>
-                <td>${item.producto}</td>
-                <td>${item.subtotal}</td>
-                <td>${item.igv}</td>
-                <td class="total">${item.total}</td>
-                <td><span class="badge">${item.estado}</span></td>
-            </tr>
-        `;
+        html += `<tr><td>${item.id}</td><td>${item.fecha}</td><td>${item.cliente}</td>
+        <td>${item.producto}</td><td>${item.subtotal}</td><td>${item.igv}</td>
+        <td class="total">${item.total}</td><td><span class="badge">${item.estado}</span></td></tr>`;
     });
     
-    html += `
-                </tbody>
-            </table>
-            <div class="footer">
-                <p>Reporte generado automaticamente - Pet Clinic 2026</p>
-                <p>Total de registros: ${data.length}</p>
-            </div>
-        </body>
-        </html>
-    `;
+    html += `</tbody></table><div class="footer"><p>Reporte generado automaticamente - Pet Clinic 2026</p>
+        <p>Total de registros: ${data.length}</p></div></body></html>`;
     
     const blob = new Blob([html], { type: 'application/pdf' });
     const link = document.createElement('a');
@@ -432,11 +530,9 @@ function exportarPDF() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
     showToast("PDF exportado correctamente", "success");
 }
 
-// ===== PROMOCIONES =====
 async function loadPromotions() {
     try {
         const r = await fetch('/api/v1/vendedor/promociones/activas');
@@ -453,17 +549,14 @@ async function loadPromotions() {
     }
 }
 
-// ===== VALIDACIONES =====
 function validateQuantity() {
     const opt = document.getElementById("saleProduct").options[document.getElementById("saleProduct").selectedIndex];
     const stock = parseInt(opt.getAttribute("data-stock")) || 0;
     const qty = parseInt(document.getElementById("saleQuantity").value) || 0;
     const err = document.getElementById("quantityError");
+    err.style.display = (stock > 0 && stock < 999 && qty > stock) ? "block" : "none";
     if (stock > 0 && stock < 999 && qty > stock) {
         err.textContent = `Stock: ${stock}`;
-        err.style.display = "block";
-    } else {
-        err.style.display = "none";
     }
 }
 
@@ -482,17 +575,15 @@ function validateClientName() {
 function validateClientPhone() {
     const phone = document.getElementById("clientPhone").value.trim();
     const errorEl = document.getElementById("phoneError");
-    
     if (phone && !/^[0-9]{9}$/.test(phone)) {
-        errorEl.textContent = "Ingrese 9 digitos (ej: 987654321)";
+        errorEl.textContent = "Ingrese 9 digitos";
         errorEl.style.display = "block";
         document.getElementById("clientPhone").classList.add("input-error");
         return false;
-    } else {
-        errorEl.style.display = "none";
-        document.getElementById("clientPhone").classList.remove("input-error");
-        return true;
     }
+    errorEl.style.display = "none";
+    document.getElementById("clientPhone").classList.remove("input-error");
+    return true;
 }
 
 function updateStockIndicator() {
@@ -521,39 +612,14 @@ function updateStockIndicator() {
     }
 }
 
-function filterHistory() {
-    const search = document.getElementById("searchClient").value.toLowerCase();
-    const date = document.getElementById("filterDate").value;
-    const rows = document.querySelectorAll("#salesTableBody tr");
-    let visible = 0;
-    
-    rows.forEach(row => {
-        const cells = row.querySelectorAll("td");
-        if (cells.length >= 6) {
-            const matchClient = cells[2].textContent.toLowerCase().includes(search);
-            const matchDate = !date || cells[1].textContent.includes(date);
-            row.style.display = (matchClient && matchDate) ? "" : "none";
-            if (matchClient && matchDate) visible++;
-        }
-    });
-    document.getElementById("noResults").style.display = visible === 0 ? "block" : "none";
-}
-
-function exportarHistorial() {
-    showToast("Exportando...", "info");
-    setTimeout(() => showToast("Exportado", "success"), 1500);
-}
-
 // ===== GRAFICA =====
 async function loadChartData() {
     try {
         const response = await fetch('/api/v1/vendedor/ventas/ultimos-7-dias');
         if (!response.ok) throw new Error('Error al cargar datos de la grafica');
-        
         const data = await response.json();
         renderSalesChart(data.labels, data.values);
     } catch (error) {
-        console.error('Error cargando datos de la grafica:', error);
         const today = new Date();
         const labels = [];
         for (let i = 6; i >= 0; i--) {
@@ -602,7 +668,6 @@ function renderSalesChart(labels, data) {
     const totalSales = data.reduce((a, b) => a + b, 0);
     const avgSales = data.length > 0 ? totalSales / data.length : 0;
     const maxSales = data.length > 0 ? Math.max(...data) : 0;
-    
     const ctx = canvas.getContext('2d');
     const avgLine = Array(data.length).fill(avgSales);
     const color = '#059669';
@@ -610,91 +675,31 @@ function renderSalesChart(labels, data) {
     
     salesChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Ventas (S/)',
-                    data: data,
-                    backgroundColor: data.map(v => v > 0 ? color : 'rgba(200,200,200,0.3)'),
-                    borderColor: color,
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    barPercentage: 0.6
-                },
-                {
-                    label: 'Promedio (S/)',
-                    data: avgLine,
-                    borderColor: colorAvg,
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0,
-                    type: 'line'
-                }
-            ]
-        },
+        data: { labels, datasets: [
+            { label: 'Ventas (S/)', data, backgroundColor: data.map(v => v > 0 ? color : 'rgba(200,200,200,0.3)'), borderColor: color, borderWidth: 2, borderRadius: 6, barPercentage: 0.6 },
+            { label: 'Promedio (S/)', data: avgLine, borderColor: colorAvg, borderWidth: 2, borderDash: [5,5], fill: false, pointRadius: 0, type: 'line' }
+        ] },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        font: { size: 13, weight: '600', family: "'Playfair Display', serif" },
-                        color: '#64748b',
-                        padding: 15,
-                        usePointStyle: true
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    padding: 12,
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': S/ ' + context.parsed.y.toFixed(2);
-                        }
-                    }
-                }
+                legend: { display: true, position: 'top', labels: { font: { size: 13, weight: '600', family: "'Playfair Display', serif" }, color: '#64748b', padding: 15, usePointStyle: true } },
+                tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, callbacks: { label: function(context) { return context.dataset.label + ': S/ ' + context.parsed.y.toFixed(2); } } }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => 'S/ ' + value.toFixed(0),
-                        color: '#64748b'
-                    },
-                    grid: { color: 'rgba(203,213,225,0.1)', drawBorder: false }
-                },
-                x: {
-                    ticks: { color: '#64748b' },
-                    grid: { display: false }
-                }
+                y: { beginAtZero: true, ticks: { callback: value => 'S/ ' + value.toFixed(0), color: '#64748b' }, grid: { color: 'rgba(203,213,225,0.1)', drawBorder: false } },
+                x: { ticks: { color: '#64748b' }, grid: { display: false } }
             }
         }
     });
     
-    updateChartStats(totalSales, avgSales, maxSales);
-}
-
-function updateChartStats(total, avg, max) {
-    const statsEl = document.getElementById("chartStats");
-    if (!statsEl) return;
-    
-    statsEl.innerHTML = `
-        <div style="text-align:center;padding:0.5rem;">
-            <div style="font-size:0.85rem;color:#64748b;">Total 7 Dias</div>
-            <div style="font-size:1.2rem;font-weight:700;color:#059669;">S/ ${total.toFixed(2)}</div>
-        </div>
-        <div style="text-align:center;padding:0.5rem;">
-            <div style="font-size:0.85rem;color:#64748b;">Promedio/Dia</div>
-            <div style="font-size:1.2rem;font-weight:700;color:#3b82f6;">S/ ${avg.toFixed(2)}</div>
-        </div>
-        <div style="text-align:center;padding:0.5rem;">
-            <div style="font-size:0.85rem;color:#64748b;">Maximo/Dia</div>
-            <div style="font-size:1.2rem;font-weight:700;color:#f59e0b;">S/ ${max.toFixed(2)}</div>
-        </div>
+    document.getElementById("chartStats").innerHTML = `
+        <div style="text-align:center;padding:0.5rem;"><div style="font-size:0.85rem;color:#64748b;">Total 7 Dias</div>
+        <div style="font-size:1.2rem;font-weight:700;color:#059669;">S/ ${totalSales.toFixed(2)}</div></div>
+        <div style="text-align:center;padding:0.5rem;"><div style="font-size:0.85rem;color:#64748b;">Promedio/Dia</div>
+        <div style="font-size:1.2rem;font-weight:700;color:#3b82f6;">S/ ${avgSales.toFixed(2)}</div></div>
+        <div style="text-align:center;padding:0.5rem;"><div style="font-size:0.85rem;color:#64748b;">Maximo/Dia</div>
+        <div style="font-size:1.2rem;font-weight:700;color:#f59e0b;">S/ ${maxSales.toFixed(2)}</div></div>
     `;
 }
 
@@ -702,7 +707,6 @@ function refreshChart() {
     loadChartData();
 }
 
-// ===== TOAST =====
 function showToast(msg, type = "success") {
     const toast = document.getElementById("toast");
     const icon = toast.querySelector("i");
@@ -721,10 +725,4 @@ function showToast(msg, type = "success") {
     
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 4000);
-}
-
-// ===== FILTROS =====
-function initHistoryFilters() {
-    document.getElementById("searchClient")?.addEventListener("input", filterHistory);
-    document.getElementById("filterDate")?.addEventListener("change", filterHistory);
 }

@@ -32,7 +32,7 @@ public class VendedorController {
         this.productoService = productoService;
     }
 
-    // ===== VENTAS =====
+
     @PostMapping("/ventas")
     public ResponseEntity<Venta> registrarVenta(@RequestBody Venta nuevaVenta) {
         return new ResponseEntity<>(ventaService.procesarVenta(nuevaVenta), HttpStatus.CREATED);
@@ -81,7 +81,7 @@ public class VendedorController {
         return ResponseEntity.ok(response);
     }
 
-    // ===== BOLETAS =====
+    
     @GetMapping("/ventas/{id}/boleta")
     public ResponseEntity<Map<String, Object>> emitirBoleta(@PathVariable Long id) {
         return ResponseEntity.ok(ventaService.generarBoletaDigital(id));
@@ -103,14 +103,13 @@ public class VendedorController {
         }
     }
 
-    // ===== PRODUCTOS =====
+   
     @GetMapping("/productos")
     public ResponseEntity<List<Producto>> listarProductos() {
         return ResponseEntity.ok(productoService.listarTodos());
     }
 
-
-    // ===== DESCUENTO EN TIEMPO REAL =====
+   
     @PostMapping("/calcular-descuento")
     public ResponseEntity<Map<String, Object>> calcularDescuento(@RequestBody Map<String, Object> request) {
         try {
@@ -119,7 +118,6 @@ public class VendedorController {
             BigDecimal precioUnitario = new BigDecimal(request.get("precioUnitario").toString());
             String clienteNombre = request.get("clienteNombre").toString();
 
-            // Crear venta temporal para calcular descuentos
             Venta ventaTemp = new Venta();
 
             Cliente cliente = new Cliente();
@@ -154,6 +152,23 @@ public class VendedorController {
             error.put("descuento", BigDecimal.ZERO);
             error.put("promociones", new ArrayList<>());
             return ResponseEntity.ok(error);
+        }
+    }
+
+   
+    @DeleteMapping("/ventas/{id}")
+    public ResponseEntity<Map<String, Object>> eliminarVenta(@PathVariable Long id) {
+        try {
+            ventaService.eliminarVenta(id);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("mensaje", "Venta eliminada correctamente");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 }

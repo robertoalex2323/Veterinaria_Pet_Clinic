@@ -19,6 +19,7 @@ import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
@@ -72,9 +73,7 @@ public class VentaService {
     public Venta procesarVenta(Venta venta) {
         Cliente cliente = obtenerCliente(venta.getCliente());
         venta.setCliente(cliente);
-
         procesarDetalles(venta);
-
         venta.setFecha(LocalDateTime.now());
         venta.recalcularTotales();
 
@@ -167,118 +166,196 @@ public class VentaService {
         }
     }
 
-    // ============================================
-    // 2. PROMOCIONES
-    // ============================================
     public BigDecimal aplicarPromociones(Venta venta) {
-        List<Promocion> promociones = promocionRepository.findPromocionesActivas(LocalDate.now());
-        BigDecimal descuentoTotal = BigDecimal.ZERO;
+    List<Promocion> promociones = promocionRepository.findPromocionesActivas(LocalDate.now());
+    
+    BigDecimal mejorDescuentoCategoria = BigDecimal.ZERO;
+    BigDecimal mejorDescuentoMonto = BigDecimal.ZERO;
+    BigDecimal descuentoProducto = BigDecimal.ZERO;
 
-        for (Promocion promo : promociones) {
-            descuentoTotal = descuentoTotal.add(aplicarPromocion(venta, promo));
+    for (Promocion promo : promociones) {
+        if (!promocionAplicaAlProducto(venta, promo)) {
+            continue;
         }
-
-        return descuentoTotal;
-    }
-
-    private BigDecimal aplicarPromocion(Venta venta, Promocion promo) {
+        
         if (!aplicaDiaSemana(promo) || !aplicaMontoMinimo(venta, promo)) {
-            return BigDecimal.ZERO;
+            continue;
         }
-
-        return switch (promo.getTipo().toUpperCase()) {
-            case "PORCENTAJE" -> aplicarDescuentoPorcentaje(venta, promo);
-            case "2X1" -> aplicarDescuento2x1(venta, promo);
-            case "FIJO" -> aplicarDescuentoFijo(venta, promo);
-            default -> BigDecimal.ZERO;
-        };
+        
+        BigDecimal descuento = calcularDescuento(venta, promo);
+        
+       
+        if (promo.getCategoriaAplicable() != null && !promo.getCategoriaAplicable().isEmpty()) {
+            if (descuento.compareTo(mejorDescuentoCategoria) > 0) {
+                mejorDescuentoCategoria = descuento;
+            }
+        } else if (promo.getProductoId() != null || promo.getTipo().equals("FIJO")) {
+            descuentoProducto = descuentoProducto.add(descuento);
+        } else {
+            if (descuento.compareTo(mejorDescuentoMonto) > 0) {
+                mejorDescuentoMonto = descuento;
+            }
+        }
     }
+    
+    BigDecimal descuentoTotal = mejorDescuentoCategoria
+        .add(mejorDescuentoMonto)
+        .add(descuentoProducto);
+    
+    if (descuentoTotal.compareTo(venta.getSubtotal()) > 0) {
+        descuentoTotal = venta.getSubtotal();
+    }
+    
+    System.out.println(" Descuento total aplicado: S/ " + descuentoTotal);
+    return descuentoTotal;
+}
 
-    private boolean aplicaDiaSemana(Promocion promo) {
-        if (promo.getDiasSemana() == null || promo.getDiasSemana().isEmpty()) {
-            return true;
-        }
 
-        int diaActual = LocalDate.now().getDayOfWeek().getValue();
-        for (String d : promo.getDiasSemana().split(",")) {
-            if (Integer.parseInt(d.trim()) == diaActual) {
+private boolean promocionAplicaAlProducto(Venta venta, Promocion promo) {
+    if (promo.getTipo().equals("PORCENTAJE") && 
+        (promo.getCategoriaAplicable() == null || promo.getCategoriaAplicable().isEmpty()) &&
+        promo.getProductoId() == null) {
+        return true;
+    }
+    
+    if (promo.getTipo().equals("2X1") && 
+        (promo.getCategoriaAplicable() == null || promo.getCategoriaAplicable().isEmpty())) {
+        return true;
+    }
+    
+    for (DetalleVenta detalle : venta.getDetalles()) {
+        Producto producto = detalle.getProducto();
+        if (producto == null) continue;
+        
+        if (promo.getCategoriaAplicable() != null && !promo.getCategoriaAplicable().isEmpty()) {
+            if (promo.getCategoriaAplicable().equals(producto.getCategoria())) {
                 return true;
             }
         }
-        return false;
-    }
-
-    private boolean aplicaMontoMinimo(Venta venta, Promocion promo) {
-        return promo.getMontoMinimo() == null ||
-                venta.getTotal().compareTo(promo.getMontoMinimo()) >= 0;
-    }
-
-    private BigDecimal aplicarDescuentoPorcentaje(Venta venta, Promocion promo) {
-        if (promo.getCategoriaAplicable() != null) {
-            BigDecimal montoCategoria = calcularMontoPorCategoria(venta, promo.getCategoriaAplicable());
-            return montoCategoria.multiply(promo.getDescuento().divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP));
+        
+        if (promo.getProductoId() != null && promo.getProductoId().equals(producto.getId())) {
+            return true;
         }
-        return venta.getTotal().multiply(promo.getDescuento().divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP));
+    }
+    
+    return false;
+}
+
+private BigDecimal calcularDescuento(Venta venta, Promocion promo) {
+    return switch (promo.getTipo().toUpperCase()) {
+        case "PORCENTAJE" -> aplicarDescuentoPorcentaje(venta, promo);
+        case "2X1" -> aplicarDescuento2x1(venta, promo);
+        case "FIJO" -> aplicarDescuentoFijo(venta, promo);
+        default -> BigDecimal.ZERO;
+    };
+}
+
+private boolean aplicaDiaSemana(Promocion promo) {
+    if (promo.getDiasSemana() == null || promo.getDiasSemana().isEmpty()) {
+        return true;
     }
 
-    private BigDecimal aplicarDescuento2x1(Venta venta, Promocion promo) {
-        BigDecimal descuento = BigDecimal.ZERO;
+    int diaActual = LocalDate.now().getDayOfWeek().getValue();
+    for (String d : promo.getDiasSemana().split(",")) {
+        if (Integer.parseInt(d.trim()) == diaActual) {
+            return true;
+        }
+    }
+    return false;
+}
 
-        for (DetalleVenta detalle : venta.getDetalles()) {
-            if (detalle.getProducto() != null && detalle.getCantidad() >= 2) {
-                String categoria = detalle.getProducto().getCategoria();
-                if (promo.getCategoriaAplicable() == null || promo.getCategoriaAplicable().equals(categoria)) {
-                    int pares = detalle.getCantidad() / 2;
-                    descuento = descuento.add(detalle.getPrecioUnitario().multiply(BigDecimal.valueOf(pares)));
-                }
+private boolean aplicaMontoMinimo(Venta venta, Promocion promo) {
+    return promo.getMontoMinimo() == null ||
+            venta.getTotal().compareTo(promo.getMontoMinimo()) >= 0;
+}
+
+private BigDecimal aplicarDescuentoPorcentaje(Venta venta, Promocion promo) {
+    if (promo.getCategoriaAplicable() != null && !promo.getCategoriaAplicable().isEmpty()) {
+        BigDecimal montoCategoria = calcularMontoPorCategoria(venta, promo.getCategoriaAplicable());
+        return montoCategoria.multiply(promo.getDescuento().divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP));
+    }
+    return venta.getTotal().multiply(promo.getDescuento().divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP));
+}
+
+private BigDecimal aplicarDescuento2x1(Venta venta, Promocion promo) {
+    BigDecimal descuento = BigDecimal.ZERO;
+
+    for (DetalleVenta detalle : venta.getDetalles()) {
+        if (detalle.getProducto() != null && detalle.getCantidad() >= 2) {
+            String categoria = detalle.getProducto().getCategoria();
+            if (promo.getCategoriaAplicable() == null || promo.getCategoriaAplicable().equals(categoria)) {
+                int pares = detalle.getCantidad() / 2;
+                descuento = descuento.add(detalle.getPrecioUnitario().multiply(BigDecimal.valueOf(pares)));
             }
         }
-        return descuento;
+    }
+    return descuento;
+}
+
+private BigDecimal aplicarDescuentoFijo(Venta venta, Promocion promo) {
+    if (promo.getProductoId() == null) {
+        return promo.getDescuento();
     }
 
-    private BigDecimal aplicarDescuentoFijo(Venta venta, Promocion promo) {
-        if (promo.getProductoId() == null) {
+    for (DetalleVenta detalle : venta.getDetalles()) {
+        if (detalle.getProducto() != null && detalle.getProducto().getId().equals(promo.getProductoId())) {
             return promo.getDescuento();
         }
+    }
+    return BigDecimal.ZERO;
+}
 
+private BigDecimal calcularMontoPorCategoria(Venta venta, String categoria) {
+    return venta.getDetalles().stream()
+            .filter(d -> d.getProducto() != null && categoria.equals(d.getProducto().getCategoria()))
+            .map(d -> d.getPrecioUnitario().multiply(BigDecimal.valueOf(d.getCantidad())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+}
+
+
+public BigDecimal calcularDescuentoPrevio(Venta venta) {
+    return aplicarPromociones(venta);
+}
+
+public List<String> obtenerPromocionesAplicables(Venta venta) {
+    List<Promocion> promociones = promocionRepository.findPromocionesActivas(LocalDate.now());
+    List<String> nombres = new ArrayList<>();
+
+    for (Promocion promo : promociones) {
+        if (!promocionAplicaAlProducto(venta, promo)) {
+            continue;
+        }
+        
+        if (!aplicaDiaSemana(promo) || !aplicaMontoMinimo(venta, promo)) {
+            continue;
+        }
+        
+        BigDecimal desc = calcularDescuento(venta, promo);
+        if (desc.compareTo(BigDecimal.ZERO) > 0) {
+            nombres.add(promo.getNombre() + " (-S/ " + desc + ")");
+        }
+    }
+
+    return nombres;
+}
+
+    @Transactional
+    public void eliminarVenta(Long id) {
+        Venta venta = ventaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
+        
         for (DetalleVenta detalle : venta.getDetalles()) {
-            if (detalle.getProducto() != null && detalle.getProducto().getId().equals(promo.getProductoId())) {
-                return promo.getDescuento();
+            if (detalle.getProducto() != null) {
+                Producto producto = detalle.getProducto();
+                producto.setStock(producto.getStock() + detalle.getCantidad());
+                productoRepository.save(producto);
             }
         }
-        return BigDecimal.ZERO;
-    }
-
-    private BigDecimal calcularMontoPorCategoria(Venta venta, String categoria) {
-        return venta.getDetalles().stream()
-                .filter(d -> d.getProducto() != null && categoria.equals(d.getProducto().getCategoria()))
-                .map(d -> d.getPrecioUnitario().multiply(BigDecimal.valueOf(d.getCantidad())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        ventaRepository.delete(venta);
     }
 
     // ============================================
-    // 3. CALCULAR DESCUENTO PREVIO
-    // ============================================
-    public BigDecimal calcularDescuentoPrevio(Venta venta) {
-        return aplicarPromociones(venta);
-    }
-
-    public List<String> obtenerPromocionesAplicables(Venta venta) {
-        List<Promocion> promociones = promocionRepository.findPromocionesActivas(LocalDate.now());
-        List<String> nombres = new ArrayList<>();
-
-        for (Promocion promo : promociones) {
-            BigDecimal desc = aplicarPromocion(venta, promo);
-            if (desc.compareTo(BigDecimal.ZERO) > 0) {
-                nombres.add(promo.getNombre() + " (-S/ " + desc + ")");
-            }
-        }
-
-        return nombres;
-    }
-
-    // ============================================
-    // 4. VENTA DESDE RECETA
+    // 5. CREAR VENTA DESDE RECETA
     // ============================================
     @Transactional
     public Venta crearVentaDesdeReceta(Long recetaId, String metodoPago, Usuario usuario) {
@@ -326,7 +403,7 @@ public class VentaService {
     }
 
     // ============================================
-    // 5. LISTAR VENTAS
+    // 6. LISTAR VENTAS
     // ============================================
     public List<Venta> listarVentas() {
         return ventaRepository.findByOrderByFechaDesc();
@@ -351,7 +428,7 @@ public class VentaService {
     }
 
     // ============================================
-    // 6. BOLETA DIGITAL
+    // 7. BOLETA DIGITAL
     // ============================================
     public Map<String, Object> generarBoletaDigital(Long id) {
         Venta venta = ventaRepository.findById(id)
@@ -388,7 +465,7 @@ public class VentaService {
     }
 
     // ============================================
-    // 7. BOLETA PDF
+    // 8. BOLETA PDF
     // ============================================
     public byte[] generarBoletaPDFReal(Long id) {
         Venta venta = ventaRepository.findByIdWithDetalles(id)
@@ -409,12 +486,27 @@ public class VentaService {
             Font footerFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Font.NORMAL);
             Font descuentoFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Font.BOLD, new Color(220, 38, 38));
 
-            // Header
+            try {
+                String imagePath = "src/main/resources/static/Imagen/Iconos/logo.png";
+                Image logo = Image.getInstance(imagePath);
+                logo.setAlignment(Element.ALIGN_CENTER);
+                logo.scaleToFit(120, 120);
+                document.add(logo);
+                document.add(new Paragraph(" "));
+            } catch (Exception e) {
+                System.out.println("⚠️ Logo no encontrado: " + e.getMessage());
+                Paragraph fallback = new Paragraph("🏥 Pet Clinic", 
+                    FontFactory.getFont(FontFactory.HELVETICA, 24, Font.BOLD, verdePet));
+                fallback.setAlignment(Element.ALIGN_CENTER);
+                document.add(fallback);
+                document.add(new Paragraph(" "));
+            }
+
             Paragraph title = new Paragraph("Pet Clinic", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
 
-            Paragraph subtitle = new Paragraph("Boleta de Venta N " + venta.getId(), headerFont);
+            Paragraph subtitle = new Paragraph("Boleta de Venta N° " + venta.getId(), headerFont);
             subtitle.setAlignment(Element.ALIGN_CENTER);
             document.add(subtitle);
 
@@ -422,22 +514,19 @@ public class VentaService {
             document.add(new Paragraph("Fecha: " + venta.getFechaFormateada(), normalFont));
             document.add(new Paragraph(" "));
 
-            // Separador
             PdfPTable separator = crearSeparador(verdePet);
             document.add(separator);
             document.add(new Paragraph(" "));
 
-            // Datos cliente
             document.add(new Paragraph("Cliente: " + (venta.getCliente() != null ? venta.getCliente().getNombre() : "N/A"), normalFont));
-            document.add(new Paragraph("Telefono: " + (venta.getCliente() != null ? venta.getCliente().getTelefono() : "N/A"), normalFont));
-            document.add(new Paragraph("Metodo de Pago: " + venta.getMetodoPago(), normalFont));
+            document.add(new Paragraph("Teléfono: " + (venta.getCliente() != null ? venta.getCliente().getTelefono() : "N/A"), normalFont));
+            document.add(new Paragraph("Método de Pago: " + venta.getMetodoPago(), normalFont));
 
             if (venta.getDescuentoAplicado().compareTo(BigDecimal.ZERO) > 0) {
                 document.add(new Paragraph("Descuento aplicado: S/ " + venta.getDescuentoAplicado(), descuentoFont));
             }
             document.add(new Paragraph(" "));
 
-            // Tabla productos
             PdfPTable table = new PdfPTable(4);
             table.setWidthPercentage(100);
             table.setWidths(new float[]{3f, 1f, 1.5f, 1.5f});
@@ -464,12 +553,10 @@ public class VentaService {
             document.add(table);
             document.add(new Paragraph(" "));
 
-            // Separador
             PdfPTable separator2 = crearSeparador(verdePet);
             document.add(separator2);
             document.add(new Paragraph(" "));
 
-            // Totales
             addTotal(document, "Subtotal: S/ " + venta.getSubtotal(), normalFont);
             addTotal(document, "IGV (18%): S/ " + venta.getIgv(), normalFont);
             if (venta.getDescuentoAplicado().compareTo(BigDecimal.ZERO) > 0) {
@@ -479,15 +566,13 @@ public class VentaService {
 
             document.add(new Paragraph(" "));
 
-            // Estado
             Paragraph estado = new Paragraph("PAGADO", estadoFont);
             estado.setAlignment(Element.ALIGN_CENTER);
             document.add(estado);
 
             document.add(new Paragraph(" "));
 
-            // Footer
-            Paragraph footer = new Paragraph("Gracias por su compra!", normalFont);
+            Paragraph footer = new Paragraph("¡Gracias por su compra!", normalFont);
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
 
