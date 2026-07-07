@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Veterinaria Pet Clinic</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}" />
+</head>
+<body>
+ 
+<div class="login-container">
+ 
+    <!-- ===== PANEL IZQUIERDO ===== -->
+    <div class="login-left">
+        <div class="logo-wrapper">
+            <img th:src="@{/Imagen/Iconos/logo.png}" alt="Logo Pet Clinic" class="logo">
+        </div>
+        <h1 class="brand-name">Pet Clinic</h1>
+        <p class="brand-sub">Cuidando tus mascotas con amor y profesionalismo</p>
+ 
+        <ul class="features-list">
+            <li>
+                <span class="feature-icon"><i class="fa-solid fa-calendar-check"></i></span>
+                <span>Gestión de citas en línea</span>
+            </li>
+            <li>
+                <span class="feature-icon"><i class="fa-solid fa-notes-medical"></i></span>
+                <span>Historial médico digital</span>
+            </li>
+            <li>
+                <span class="feature-icon"><i class="fa-solid fa-syringe"></i></span>
+                <span>Recordatorios de vacunas</span>
+            </li>
+            <li>
+                <span class="feature-icon"><i class="fa-solid fa-paw"></i></span>
+                <span>Atención personalizada 24/7</span>
+            </li>
+        </ul>
+ 
+        <div class="left-footer">
+            <span>© 2026 Veterinaria Pet Clinic</span>
+        </div>
+    </div>
+ 
+    <!-- ===== PANEL DERECHO ===== -->
+    <div class="login-right">
+        <div class="login-card">
+ 
+            <div class="card-header">
+                <div class="paw-badge">
+                    <i class="fa-solid fa-paw"></i>
+                </div>
+                <h2>Bienvenido de vuelta</h2>
+                <p>Ingresa tus credenciales para continuar</p>
+            </div>
+ 
+            <!-- Alerta: credenciales inválidas -->
+            <div th:if="${param.error}" class="alert alert-error" role="alert">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>Usuario o contraseña inválidos. Intenta nuevamente.</span>
+            </div>
+ 
+            <!-- Alerta: cierre de sesión exitoso -->
+            <div th:if="${param.logout}" class="alert alert-success" role="alert">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Has cerrado sesión correctamente.</span>
+            </div>
+ 
+            <form th:action="@{/login}" method="POST" id="loginForm" novalidate>
+ 
+                <!-- CSRF token - CORREGIDO: Maneja null -->
+                <input type="hidden" name="_csrf" th:value="${_csrf != null ? _csrf.token : ''}" />
+ 
+                <div class="input-group">
+                    <label for="username">Usuario</label>
+                    <div class="input-field">
+                        <i class="fa-regular fa-user input-icon"></i>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            placeholder="Ingrese su usuario"
+                            autocomplete="username"
+                            required
+                        >
+                    </div>
+                    <span class="field-error" id="usernameError"></span>
+                </div>
+ 
+                <div class="input-group">
+                    <label for="password">Contraseña</label>
+                    <div class="input-field">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Ingrese su contraseña"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <button type="button" id="togglePassword" class="toggle-btn" aria-label="Mostrar contraseña">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                    <span class="field-error" id="passwordError"></span>
+                </div>
+ 
+                <div class="form-footer">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember-me" id="rememberMe">
+                        <span>Recordarme</span>
+                    </label>
+                    <a href="/recuperar-contrasena" class="forgot-link">¿Olvidaste tu contraseña?</a>
+                </div>
+ 
+                <button type="submit" class="btn-login" id="btnLogin">
+                    <span class="btn-text">Ingresar</span>
+                    <i class="fa-solid fa-arrow-right btn-arrow"></i>
+                </button>
+ 
+            </form>
+ 
+        </div>
+    </div>
+ 
+</div>
+ 
+<script th:src="@{/js/login.js}"></script>
+</body>
+</html>

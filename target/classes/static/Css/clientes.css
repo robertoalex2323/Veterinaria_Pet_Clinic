@@ -1,0 +1,101 @@
+/* Tarjetas (Cards) */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e3e6f0;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+    padding: 1.25rem 1.5rem;
+}
+
+/* Tabla de Clientes */
+.table th {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: #4a5568;
+    background-color: #f8f9fc;
+    border-bottom: 2px solid #e3e6f0;
+    padding: 1rem;
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+    color: #5a5c69;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fc;
+}
+
+/* Botones de Acción */
+.btn-action,
+.btn-sm {
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.btn-action:hover,
+.btn-sm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Detalles del Cliente */
+.list-group-item {
+    background-color: #f8f9fc;
+    border-radius: 8px !important;
+    border: none;
+    margin-bottom: 0.5rem;
+    padding: 1rem 1.25rem;
+}
+
+/* Formularios */
+.form-label {
+    color: #4a5568;
+}
+
+.input-group-text {
+    background-color: #f8f9fc;
+    color: #6e707e;
+    border: 1px solid #e3e6f0;
+}
+
+.form-control {
+    border: 1px solid #e3e6f0;
+}
+
+.form-control:focus {
+    border-color: #bac8f3;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Iconos de perfil */
+.bg-light.rounded-circle {
+    background-color: #f8f9fc !important;
+    border: 3px solid #eaecf4;
+}

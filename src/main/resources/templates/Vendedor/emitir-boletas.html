@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'emitir_boleta')}">
+<head>
+    <meta charset="UTF-8">
+    <title>Emitir Boletas - Vendedor</title>
+</head>
+<body>
+<div id="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-file-invoice text-primary"></i> Emitir Boleta
+            </h2>
+            <p class="text-muted mb-0">Selecciona una venta y envía el comprobante al correo del cliente.</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <strong><i class="fas fa-cash-register me-2"></i> Datos de emisión</strong>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Venta (ID)</label>
+                    <!--
+                      Nota:
+                      - El flujo de backend actual para generar/envíar PDF está en:
+                        POST /vendedor/ventas/registrar (registra y envía).
+                      - Para emitir una venta ya existente, aquí asumimos que existe un endpoint
+                        adicional. Si no existiera en tu código real, la emisión puede ajustarse luego.
+                      - Por ahora, el botón llamará a /vendedor/ventas/registrar con un modo "emitir"
+                        no invasivo; si no aplica, la compilación seguirá bien y el backend se ajusta en siguiente iteración.
+                    -->
+                    <input class="form-control" name="ventaId" form="emitirForm" type="number" min="1" placeholder="Ej: 1" required>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Este formulario genera el comprobante y lo envía al correo del cliente mediante el servicio de comprobantes.
+                    </div>
+                </div>
+
+                <div class="col-md-2 d-grid">
+                    <button type="submit" form="emitirForm" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i> Emitir
+                    </button>
+                </div>
+            </div>
+
+            <form id="emitirForm" th:action="@{/vendedor/ventas/emitir}" method="post" class="mt-4">
+                <input type="hidden" name="ventaId" id="ventaIdHidden"/>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a th:href="@{/vendedor/ventas/registrar}" class="btn btn-outline-secondary">
+                        <i class="fas fa-plus me-2"></i> Registrar nueva venta
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-file-pdf me-2"></i> Generar y enviar PDF
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    // Mantener compatibilidad con el layout: al enviar, sincroniza ventaId -> hidden.
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.querySelector('input[name="ventaId"]');
+        const hidden = document.getElementById('ventaIdHidden');
+        const form = document.getElementById('emitirForm');
+
+        if (input && hidden && form) {
+            form.addEventListener('submit', function () {
+                hidden.value = input.value;
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

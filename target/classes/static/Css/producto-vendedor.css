@@ -1,0 +1,259 @@
+/* Producto - Vendedor (CSS unificada para productos.html, producto-ver.html y producto-form.html) */
+
+:root{
+  --pc-border: rgba(226,232,240,0.85);
+  --pc-bg: rgba(255,255,255,0.70);
+  --pc-shadow: 0 10px 30px rgba(15,23,42,0.06);
+  --pc-primary: #3B82F6;
+  --pc-emerald: #10B981;
+}
+
+/* Card contenedora */
+.producto-card{
+  border: 1px solid var(--pc-border);
+  border-radius: 16px;
+  background: var(--pc-bg);
+  box-shadow: var(--pc-shadow);
+  overflow: hidden;
+}
+
+.producto-card-header{
+  background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(16,185,129,0.08));
+  border-bottom: 1px solid rgba(226,232,240,0.95);
+}
+
+/* Títulos */
+.producto-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* ========== Formularios (producto-form.html) ========== */
+.producto-card form label{
+  letter-spacing: 0.2px;
+}
+
+.producto-card .form-control,
+.producto-card .form-select{
+  border-radius: 12px;
+  border: 1px solid rgba(226,232,240,0.95);
+  background: rgba(17, 0, 0, 0.88);
+  box-shadow: none;
+  padding-top: 0.72rem;
+  padding-bottom: 0.72rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.producto-card textarea.form-control{
+  border-radius: 14px;
+  resize: vertical;
+  min-height: 110px;
+}
+
+.producto-card .form-control:focus,
+.producto-card .form-select:focus{
+  border-color: rgba(59,130,246,0.65);
+  box-shadow: 0 0 0 0.25rem rgba(59,130,246,0.15);
+}
+
+/* Icono dentro input */
+.producto-card .input-group-text{
+  border-radius: 12px;
+  border: 1px solid rgba(226,232,240,0.95);
+  background: rgba(11, 11, 11, 0.98);
+  color: #64748b;
+}
+
+/* Quitar redondeo duplicado en grupos de Bootstrap */
+.producto-card .input-group .form-control{
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.producto-card .input-group .input-group-text{
+  border-right: none;
+}
+
+.producto-card input[type="file"].form-control{
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+/* Botones */
+.producto-card .btn{
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+}
+
+.producto-card .btn-primary{
+  background: linear-gradient(135deg, var(--pc-primary), #1D4ED8);
+  border: none;
+  box-shadow: 0 10px 20px rgba(59,130,246,0.18);
+}
+
+.producto-card .btn-primary:hover{
+  filter: brightness(1.02);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(59,130,246,0.22);
+}
+
+.producto-card .btn-outline-secondary{
+  border-color: rgba(226,232,240,0.95);
+  color: #475569;
+  background: rgba(255,255,255,0.35);
+}
+
+.producto-card .btn-outline-secondary:hover{
+  background: rgba(148,163,184,0.08);
+  border-color: rgba(148,163,184,0.25);
+}
+
+.producto-card hr{
+  border-color: rgba(226,232,240,0.9) !important;
+}
+
+/* Espaciado en grid del form */
+.producto-card form .row.g-4 > [class^="col-"]{
+  margin-bottom: 0;
+}
+
+.producto-card form .producto-form-grid{
+  gap: 1.25rem;
+}
+
+.producto-card form .producto-form-grid .col-md-12{
+  margin-top: 0.25rem;
+}
+
+.producto-card form .form-label{
+  margin-bottom: 0.55rem;
+}
+
+/* ====== Responsive form ====== */
+@media (max-width: 576px){
+  .producto-card form .row.g-4{ gap: 1rem !important; }
+  .producto-card form .input-group{ border-radius: 14px; }
+}
+
+/* Validación */
+.producto-card .form-control:invalid,
+.producto-card .form-select:invalid{
+  border-color: rgba(239,68,68,0.45);
+}
+
+/* ========== Badge categoría (productos.html y producto-ver.html) ========== */
+.producto-badge{
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(59,130,246,0.12);
+  /* Fuerza contraste: a veces bootstrap/global pone blanco */
+  color: #1d4ed8 !important;
+  border: 1px solid rgba(59,130,246,0.45) !important;
+  font-weight: 800;
+  font-size: 1.02rem;
+  letter-spacing: 0.2px;
+  text-transform: none;
+}
+
+.badge.producto-badge,
+.badge.producto-badge:visited,
+.badge.producto-badge:hover{
+  color: #1d4ed8 !important;
+}
+
+/* ========== Tabla / Lista (productos.html) ========== */
+.producto-card .table{
+  margin-bottom: 0;
+}
+
+.producto-card thead th{
+  border-bottom: 1px solid rgba(226,232,240,0.9) !important;
+  color: #334155;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.producto-card tbody td{
+  color: #334155;
+}
+
+.producto-card tbody tr{
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.producto-card tbody tr:hover{
+  background: rgba(59,130,246,0.04);
+}
+
+/* Miniatura (productos.html) */
+.producto-list-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.producto-thumb-wrap{
+  width:52px;
+  height:52px;
+  flex: 0 0 52px;
+  border-radius: 14px;
+  overflow:hidden;
+  border: 1px solid rgba(226,232,240,0.9);
+  background: rgba(255,255,255,0.45);
+}
+
+.producto-thumb{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+}
+
+.producto-thumb-placeholder{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color: rgba(71,85,105,0.85);
+  background: rgba(255,255,255,0.25);
+}
+
+/* ========== Detalle (producto-ver.html) ========== */
+.pc-money{ color: #0f172a; }
+
+.producto-detail-image{
+  display:flex;
+  flex-direction:column;
+}
+
+.producto-detail-img,
+.producto-detail-img-placeholder{
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(226,232,240,0.9);
+  background: rgba(255,255,255,0.55);
+}
+
+.producto-detail-img-placeholder{
+  height: 220px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.producto-desc{
+  white-space: pre-wrap;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.producto-actions .btn{
+  border-radius: 12px;
+}
+

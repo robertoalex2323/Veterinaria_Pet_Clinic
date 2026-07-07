@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Agenda - Panel Veterinario</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" th:href="@{/css/agenda-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+    <main class="main agenda-page">
+        <header class="header">
+            <div class="status-pill"><span></span> Sistema Activo</div>
+        </header>
+
+        <section class="hero agenda-hero">
+            <h1>Agenda y Citas</h1>
+            <p th:text="${#temporals.format(fecha, 'EEEE, dd ''de'' MMMM yyyy', new java.util.Locale('es'))}">Fecha</p>
+        </section>
+
+        <form class="agenda-filter" th:action="@{/veterinaria/agenda}" method="get">
+            <div>
+                <h2>Agenda del Día</h2>
+                <p>Gestión de citas y horarios programados</p>
+            </div>
+            <div class="agenda-filter-actions">
+                <input type="date" name="fecha" th:value="${fecha}">
+                <button type="submit"><i class="fas fa-calendar-check"></i> Ver día</button>
+                <a th:href="@{/veterinaria/agenda}">Hoy</a>
+            </div>
+        </form>
+
+        <section class="agenda-layout">
+            <div class="agenda-panel">
+                <div class="agenda-panel-title">
+                    <i class="far fa-clock"></i>
+                    <span>Horarios Disponibles</span>
+                </div>
+
+                <div class="schedule-scroll">
+                    <div th:each="horario : ${horarios}"
+                         class="schedule-slot"
+                         th:classappend="${horario.disponible == true} ? ' disponible' : ' ocupado'">
+                        <div class="slot-left">
+                            <div class="slot-icon">
+                                <i th:class="${horario.disponible == true} ? 'far fa-clock' : 'fas fa-lock'"></i>
+                            </div>
+                            <div>
+                                <strong th:text="${#temporals.format(horario.horaInicio, 'HH:mm') + ' - ' + #temporals.format(horario.horaFin, 'HH:mm')}">
+                                    08:00 - 08:30
+                                </strong>
+                                <span th:text="${horario.veterinario != null ? horario.veterinario.nombre : 'Sin veterinario'}">Veterinario</span>
+                            </div>
+                        </div>
+
+                        <span class="slot-badge"
+                              th:text="${horario.disponible == true} ? 'Disponible' : 'Ocupado'">
+                            Estado
+                        </span>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(horarios)}" class="agenda-empty">
+                        <i class="far fa-calendar-times"></i>
+                        <p>No hay horarios generados para esta fecha.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="agenda-panel citas-panel">
+                <div class="agenda-panel-title">
+                    <i class="fas fa-calendar-day"></i>
+                    <span>Citas Programadas</span>
+                    <b th:text="${#lists.size(citas)}">0</b>
+                </div>
+
+                <div class="citas-scroll">
+                    <div th:each="cita : ${citas}" class="agenda-cita">
+                        <div class="agenda-cita-time">
+                            <strong th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">09:00</strong>
+                            <span th:text="${cita.estado}">AGENDADA</span>
+                        </div>
+
+                        <div class="agenda-cita-body">
+                            <h3 th:text="${cita.mascota != null ? cita.mascota.nombre : 'Paciente'}">Luna</h3>
+                            <p>
+                                <i class="fas fa-user"></i>
+                                <span th:text="${cita.mascota != null && cita.mascota.cliente != null ? cita.mascota.cliente.nombre : 'Sin dueño'}">Dueño</span>
+                            </p>
+                            <p>
+                                <i class="fas fa-stethoscope"></i>
+                                <span th:text="${cita.motivo != null ? cita.motivo : 'Sin motivo registrado'}">Motivo</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(citas)}" class="agenda-empty">
+                        <i class="far fa-calendar-check"></i>
+                        <p>No hay citas programadas para este día.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

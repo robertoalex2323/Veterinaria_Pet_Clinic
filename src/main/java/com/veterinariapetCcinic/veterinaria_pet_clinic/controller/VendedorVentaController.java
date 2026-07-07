@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/vendedor/ventas")
@@ -122,6 +123,40 @@ public class VendedorVentaController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage() != null ? e.getMessage() : "Error al registrar la venta");
             return "redirect:/vendedor/ventas/registrar";
+        }
+    }
+
+    @PostMapping("/emitir")
+    public String emitirBoleta(
+            @RequestParam Long ventaId,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            if (ventaId == null || ventaId <= 0) {
+                redirectAttributes.addFlashAttribute("error", "Venta inválida. Selecciona un ID válido.");
+                return "redirect:/vendedor/ventas/emitir";
+            }
+
+            // Nota:
+            // - La generación y el envío del comprobante ya están implementados en VentaService y NotificacionService.
+            // - Usamos el método existente: generarBoletaPDFReal(ventaId) y enviarVentaConComprobante(venta, pdf).
+            Venta venta = ventaService.buscarPorId(ventaId);
+            if (venta == null) {
+                redirectAttributes.addFlashAttribute("error", "No se encontró la venta con ID: " + ventaId);
+                return "redirect:/vendedor/ventas/emitir";
+            }
+
+            byte[] pdf = ventaService.generarBoletaPDFReal(ventaId);
+
+            notificacionService.enviarVentaConComprobante(venta, pdf);
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Comprobante generado y enviado al correo del cliente (si existe).");
+            return "redirect:/vendedor/ventas/emitir";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    Objects.requireNonNullElse(e.getMessage(), "Error al emitir la boleta."));
+            return "redirect:/vendedor/ventas/emitir";
         }
     }
 
