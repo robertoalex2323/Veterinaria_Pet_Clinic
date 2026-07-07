@@ -11,6 +11,7 @@
     <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     <link rel="stylesheet" th:if="${currentPage == 'dashboard'}" th:href="@{/css/dashboard-vendedor.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'registrar_venta'}" th:href="@{/css/producto-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'registrar_venta'}" th:href="@{/css/registrar_venta-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'caja'}" th:href="@{/css/caja-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'historial_venta'}" th:href="@{/css/historial_ventas-vendedor.css}">
@@ -45,6 +46,14 @@
                     </a>
                 </li>
 
+                <!-- Productos -->
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'productos'} ? 'active' : ''" class="nav-link"
+                        href="/vendedor/productos">
+                        <i class="fas fa-box-open"></i>
+                        <span>Productos</span>
+                    </a>
+                </li>
                 <!-- Registrar Venta -->
                 <li class="nav-item">
                     <a th:classappend="${currentPage == 'registrar_venta'} ? 'active' : ''" class="nav-link"

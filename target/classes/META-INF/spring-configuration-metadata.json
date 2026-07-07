@@ -1,0 +1,38 @@
+{
+  "groups": [
+    {
+      "name": "app",
+      "type": "com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties",
+      "sourceType": "com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties"
+    },
+    {
+      "name": "app.business",
+      "type": "com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties$Business",
+      "sourceType": "com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties",
+      "sourceMethod": "public com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties.Business getBusiness() "
+    }
+  ],
+  "properties": [
+    {
+      "name": "app.business.default-slot-duration",
+      "type": "java.lang.Integer",
+      "sourceType": "com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties$Business"
+    },
+    {
+      "name": "app.business.end-time",
+      "type": "java.lang.String",
+      "sourceType": "com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties$Business"
+    },
+    {
+      "name": "app.business.start-time",
+      "type": "java.lang.String",
+      "sourceType": "com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties$Business"
+    },
+    {
+      "name": "app.cancellation-phone",
+      "type": "java.lang.String",
+      "sourceType": "com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties"
+    }
+  ],
+  "hints": []
+}

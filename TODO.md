@@ -1,10 +1,9 @@
-# TODO - Ajuste comprobante de pago PET{año}
+# TODO
 
-- [x] Cambiar `PdfPagoController` para que el fallback de comprobante use `Year.now()` (PET{año}-00001) en vez de `PET2026-00001`.
-
-- [x] Refactor en `PagoRepository`: reemplazar queries hardcodeadas `PET2026-%` por queries parametrizadas por prefijo/año (por ejemplo `PET2026-%` => `:prefijo-%`).
-
-- [x] Refactor en `PagoService`: reemplazar `obtenerMaxComprobantePet2026()` por un método genérico que use el año actual (`Year.now()`).
-
-- [ ] Asegurar que compila: ejecutar `mvn -q test` (o al menos `mvn -q -DskipTests=false test`) y/o `mvn -q test` luego de los cambios.
+## Pendiente: Mejoras UI en Productos (Vendedor)
+- [ ] Agregar columna/visual del producto con imagen (thumbnail) en `src/main/resources/templates/Vendedor/productos.html`.
+- [ ] Ajustar CSS para que el badge de categoría y los textos se vean más grandes/claros (no blanco/pequeño).
+- [ ] Proteger contra productos sin foto (mostrar placeholder).
+- [ ] Revisar compatibilidad con `producto-vendedor.css` para el nuevo layout.
+- [ ] Probar en navegador (cargar listado y detalle) y verificar que la imagen aparece y el texto es legible.
 

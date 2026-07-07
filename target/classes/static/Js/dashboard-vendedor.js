@@ -30,7 +30,12 @@
 
   function drawLineChart(data7) {
     const canvas = document.getElementById('ventas7diasChart');
+
     if (!canvas) return;
+
+    // Si no hay datos, no dibujamos con valores inventados.
+    if (!data7 || !Array.isArray(data7) || data7.length === 0) return;
+
 
     const labels = data7 && data7.length ? data7.map(d => d.label) : [];
     const values = data7 && data7.length ? data7.map(d => d.value) : [];
@@ -104,6 +109,10 @@
     const canvas = document.getElementById('ventasPorCategoriaChart');
     if (!canvas) return;
 
+    // Si no hay datos, no dibujamos con valores inventados.
+    if (!categorias || !Array.isArray(categorias) || categorias.length === 0) return;
+
+
     const labels = categorias && categorias.length ? categorias.map(c => c.label) : [];
     const values = categorias && categorias.length ? categorias.map(c => c.value) : [];
 
@@ -174,6 +183,7 @@
       updateStats(data);
       drawLineChart(data.ventas7dias);
       drawBarChart(data.categorias);
+
     } else {
       drawLineChart([]);
       drawBarChart([]);

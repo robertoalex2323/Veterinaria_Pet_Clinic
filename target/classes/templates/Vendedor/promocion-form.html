@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'promociones')}">
+
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${modo} == 'editar' ? 'Editar Promoción - Vendedor' : 'Nueva Promoción - Vendedor'">Promoción - Vendedor</title>
+    <link rel="stylesheet" th:href="@{/css/promociones-vendedor.css}" />
+</head>
+
+<body>
+<div id="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-percent text-primary"></i>
+                <span th:text="${modo} == 'editar' ? 'Editar Promoción' : 'Nueva Promoción'">Promoción</span>
+            </h2>
+            <p class="text-muted mb-0">Configura el descuento de un producto</p>
+        </div>
+        <div>
+            <a class="btn btn-outline-secondary shadow-sm" th:href="@{/vendedor/promociones}">
+                <i class="fas fa-arrow-left me-2"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+            <form th:action="@{/vendedor/promociones/guardar}" method="post">
+
+                <input type="hidden" name="id" th:value="${promocion != null && promocion.id != null ? promocion.id : ''}" />
+
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold text-dark">Producto <span class="text-danger">*</span></label>
+                        <select class="form-select" name="productoId" required>
+                            <option value="" disabled th:selected="${promocion == null || promocion.producto == null}" >Selecciona un producto</option>
+                            <option th:each="prod : ${productos}"
+                                    th:value="${prod.id}"
+                                    th:selected="${promocion != null && promocion.producto != null && promocion.producto.id == prod.id}">
+                                <span th:text="${prod.nombre}"></span>
+                            </option>
+                        </select>
+                        <div class="text-muted small mt-1">Permite múltiples promociones por producto (regla 2).</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Descuento (%) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" min="0" max="100" class="form-control" name="descuento"
+                               th:value="${promocion != null && promocion.descuento != null ? promocion.descuento : 0}" required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Estado</label>
+                        <select class="form-select" name="activa">
+                            <option value="true" th:selected="${promocion != null && promocion.activa != null && promocion.activa}">Activa</option>
+                            <option value="false" th:selected="${promocion != null && promocion.activa != null && !promocion.activa}">Inactiva</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a class="btn btn-outline-secondary" th:href="@{/vendedor/promociones}">Cancelar</a>
+                    <button type="submit" class="btn btn-primary shadow-sm">
+                        <i class="fas fa-save me-2"></i> Guardar
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
+

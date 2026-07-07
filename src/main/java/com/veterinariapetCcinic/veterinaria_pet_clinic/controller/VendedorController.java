@@ -3,9 +3,11 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.VentaRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -127,13 +129,6 @@ public class VendedorController {
         return resp;
     }
 
-    // --- Ejemplo: listado de productos activos para usar en registrar venta ---
-    @GetMapping("/api/productos-activos")
-    @ResponseBody
-    public List<Producto> productosActivos() {
-        return productoService.listarTodos();
-    }
-
     private String getNombreUsuario() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? auth.getName() : "Vendedor";
@@ -232,7 +227,119 @@ public class VendedorController {
     }
 
     
-    // --- Crea aquí el resto de endpoints cuando exista la lógica completa de ventas/boletas/promos ---
+    // =========================
+    // PRODUCTOS (Vendedor)
+    // =========================
+
+    @GetMapping("/productos")
+    public String listarProductos(@RequestParam(required = false, defaultValue = "") String buscar, Model model) {
+        model.addAttribute("nombreUsuario", getNombreUsuario());
+        model.addAttribute("buscar", buscar);
+
+        // Búsqueda simple en memoria (ajustar si luego necesitas query en BD)
+        List<Producto> productos = productoService.listarTodos();
+        if (buscar != null && !buscar.trim().isEmpty()) {
+            String q = buscar.trim().toLowerCase();
+            productos = productos.stream()
+                    .filter(p -> (p.getNombre() != null && p.getNombre().toLowerCase().contains(q))
+                            || (p.getCategoria() != null && p.getCategoria().toLowerCase().contains(q)))
+                    .collect(Collectors.toList());
+        }
+
+        model.addAttribute("productos", productos);
+        return "Vendedor/productos";
+    }
+
+    @GetMapping("/productos/nuevo")
+    public String nuevoProducto(Model model) {
+        model.addAttribute("nombreUsuario", getNombreUsuario());
+        model.addAttribute("producto", new Producto());
+        return "Vendedor/producto-form";
+    }
+
+    @GetMapping("/productos/editar/{id}")
+    public String editarProducto(@org.springframework.web.bind.annotation.PathVariable Long id, Model model) {
+        model.addAttribute("nombreUsuario", getNombreUsuario());
+        Producto producto = productoService.buscarPorId(id);
+        model.addAttribute("producto", producto);
+        return "Vendedor/producto-form";
+    }
+
+
+    @GetMapping("/productos/ver/{id}")
+    public String verProducto(@org.springframework.web.bind.annotation.PathVariable Long id, Model model) {
+        model.addAttribute("nombreUsuario", getNombreUsuario());
+        Producto producto;
+        try {
+            producto = productoService.buscarPorId(id);
+        } catch (Exception e) {
+            producto = null;
+        }
+        model.addAttribute("producto", producto);
+        return "Vendedor/producto-ver";
+    }
+
+    @GetMapping("/productos/eliminar/{id}")
+    public String eliminarProducto(@org.springframework.web.bind.annotation.PathVariable Long id, Model model,
+                                     RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("error", "Eliminar no implementado aún.");
+        return "redirect:/vendedor/productos";
+    }
+
+    @PostMapping("/productos/guardar")
+    public String guardarProducto(
+                                   @RequestParam(required = false) Long id,
+                                   @RequestParam String nombre,
+                                   @RequestParam String categoria,
+                                   @RequestParam(required = false) Double precio,
+                                   @RequestParam(required = false, defaultValue = "0") Integer stock,
+                                   @RequestParam(required = false) String descripcion,
+                                   @org.springframework.web.bind.annotation.RequestParam(required = false) org.springframework.web.multipart.MultipartFile foto,
+                                   RedirectAttributes redirectAttributes) {
+
+        try {
+
+            // Validaciones mínimas
+            if (nombre == null || nombre.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "El nombre del producto es obligatorio.");
+                return "redirect:/vendedor/productos/nuevo";
+            }
+            if (categoria == null || categoria.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "La categoría es obligatoria.");
+                return "redirect:/vendedor/productos/nuevo";
+            }
+
+            Producto producto;
+            if (id != null) {
+                // Editar: cargamos el producto existente para que no quede “vacío”
+                producto = productoService.buscarPorId(id);
+            } else {
+                // Crear: producto nuevo
+                producto = new Producto();
+            }
+
+            producto.setNombre(nombre.trim());
+            producto.setCategoria(categoria.trim());
+            producto.setPrecio(precio != null ? java.math.BigDecimal.valueOf(precio) : java.math.BigDecimal.ZERO);
+            producto.setStock(stock != null ? stock : 0);
+            producto.setDescripcion(descripcion != null ? descripcion : "");
+
+            // Foto: por ahora no se actualiza en editar/guardar, para no romper el flujo.
+            // Si luego quieres guardar la imagen, lo añadimos en ProductoService/Controller.
+
+            productoService.guardar(producto);
+
+            redirectAttributes.addFlashAttribute("success", "Producto guardado correctamente.");
+            return "redirect:/vendedor/productos";
+        } catch (Exception e) {
+            log.error("Error al guardar producto: {}", e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("error", "Error al guardar el producto: " + (e.getMessage() != null ? e.getMessage() : ""));
+            return "redirect:/vendedor/productos/nuevo";
+        }
+    }
+
+
 }
+
 
 

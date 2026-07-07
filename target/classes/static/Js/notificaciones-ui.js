@@ -92,25 +92,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000); // ✅ un poco más de margen
 
-        fetch(apiUrl, { method: 'GET', cache: 'no-store', signal: controller.signal })
-            .then(res => {
-                if (!res.ok) return [];  // ✅ No lanzar excepción, retornar vacío silenciosamente
-                return res.json();
-            })
-        .then(data => {
-            if (Array.isArray(data) && data.length > 0) {
-                data.forEach(notif => handleNewNotif(notif, true));
+        (async () => {
+            try {
+                const res = await fetch(apiUrl, { method: 'GET', cache: 'no-store', signal: controller.signal });
+                if (!res.ok) {
+                    // Importante: no lanzar errores ni afectar la UI/flujo del vendedor/recepcionista
+                    console.warn(`Notificaciones UI: endpoint ${apiUrl} respondió ${res.status}. Se ignora.`);
+                    return;
+                }
+
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(notif => handleNewNotif(notif, true));
+                }
+            } catch (err) {
+                if (err && err.name === 'AbortError') {
+                    console.warn("Timeout al cargar notificaciones; se ignora para no romper la UI.");
+                } else {
+                    console.warn("Notificaciones UI: fallo al cargar pendientes. Se ignora.");
+                }
+            } finally {
+                clearTimeout(timeoutId);
             }
-            // No llamamos a updateUI() aquí porque handleNewNotif ya lo hace
-        })
-        .catch(err => {
-            if (err && err.name === 'AbortError') {
-                console.warn("Timeout al cargar notificaciones; se ignora para no romper la UI.");
-            } else {
-                console.warn("No hay notificaciones nuevas pendientes en el servidor.");
-            }
-        })
-        .finally(() => clearTimeout(timeoutId));
+        })();
+
 
 
     connectWS();

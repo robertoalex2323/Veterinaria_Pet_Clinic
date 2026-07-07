@@ -17,6 +17,10 @@ public class Producto {
     @Column(nullable = false, length = 255)
     private String nombre;
 
+    @Column(length = 512)
+    private String foto;
+
+
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
@@ -53,8 +57,17 @@ public class Producto {
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
 
+    public String getFoto() {
+        return foto;
+    }
+
+    public void setFoto(String foto) {
+        this.foto = foto;
+    }
+
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+
 
     public BigDecimal getPrecio() { return precio; }
     public void setPrecio(BigDecimal precio) { this.precio = precio; }

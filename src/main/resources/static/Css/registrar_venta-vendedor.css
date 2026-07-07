@@ -1,0 +1,128 @@
+/* registrar_venta-vendedor.css
+   Estilos específicos para: src/main/resources/templates/Vendedor/registrar.html
+   Mantiene compatibilidad con Bootstrap 5.
+*/
+
+:root{
+  --vv-primary:#0d6efd;
+  --vv-text:#2b2f33;
+  --vv-muted:#6c757d;
+  --vv-card:#ffffff;
+  --vv-border:rgba(0,0,0,.08);
+  --vv-soft:rgba(13,110,253,.08);
+}
+
+#content{
+  padding: 18px 10px 40px;
+  color: var(--vv-text);
+}
+
+#content h2{
+  font-weight: 800;
+}
+
+.card{
+  border: 1px solid var(--vv-border);
+  border-radius: 14px;
+  background: var(--vv-card);
+  box-shadow: 0 8px 24px rgba(0,0,0,.04);
+}
+
+.card-header{
+  background: linear-gradient(135deg, rgba(13,110,253,.12), rgba(41,128,185,.10));
+  border-bottom: 1px solid var(--vv-border);
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  padding: .9rem 1.1rem;
+}
+
+.card-header strong{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+
+form#ventaForm{
+  padding: 8px 2px 2px;
+}
+
+.form-label{
+  font-weight: 600;
+  color: var(--vv-text);
+}
+
+.form-control{
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.12);
+  padding: .65rem .8rem;
+}
+
+.form-control:focus{
+  border-color: rgba(13,110,253,.55);
+  box-shadow: 0 0 0 .18rem rgba(13,110,253,.18);
+}
+
+.alert{
+  border-radius: 12px;
+}
+
+.btn{
+  border-radius: 10px;
+  padding: .6rem .9rem;
+}
+
+.btn-primary{
+  box-shadow: 0 10px 25px rgba(13,110,253,.18);
+}
+
+.d-none input{
+  /* ocultos del JS: no interferir */
+}
+
+.d-flex.justify-content-end.gap-2.mt-3{
+  margin-top: 1.1rem !important;
+}
+
+/* Ajustes generales para tabla/controles dentro de la vista (si existen en el contenido del fragment) */
+.table{
+  border-radius: 12px;
+  overflow:hidden;
+  border: 1px solid var(--vv-border);
+  background:#fff;
+}
+
+.table thead th{
+  background: rgba(13,110,253,.08);
+  color: var(--vv-text);
+  font-weight: 700;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  padding: .75rem .75rem;
+}
+
+.table tbody td{
+  padding: .7rem .75rem;
+  vertical-align: middle;
+}
+
+.badge{
+  border-radius: 999px;
+  padding: .4rem .65rem;
+  font-weight: 700;
+}
+
+/* Checkbox de selección de productos */
+input[type="checkbox"]{
+  transform: translateY(1px);
+}
+
+/* Responsive */
+@media (max-width: 576px){
+  #content{ padding: 14px 6px 30px; }
+  .card-header{ padding: .8rem .9rem; }
+  .form-label{ font-size: .95rem; }
+  .btn{ width: 100%; }
+  .d-flex.justify-content-end.gap-2.mt-3{
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+}
