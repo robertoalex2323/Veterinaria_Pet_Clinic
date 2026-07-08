@@ -70,7 +70,9 @@
                                          th:if="${p.foto != null and !#strings.isEmpty(p.foto)}"
                                          th:src="${p.foto}"
                                          th:alt="${p.nombre}"
+                                         loading="lazy"
                                          onerror="this.style.display='none';" />
+
                                     <div class="producto-thumb-placeholder"
                                          th:if="${p.foto == null or #strings.isEmpty(p.foto)}">
                                         <i class="fas fa-image"></i>

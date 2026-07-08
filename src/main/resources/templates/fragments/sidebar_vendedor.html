@@ -11,8 +11,9 @@
     <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     <link rel="stylesheet" th:if="${currentPage == 'dashboard'}" th:href="@{/css/dashboard-vendedor.css}">
-    <link rel="stylesheet" th:if="${currentPage == 'registrar_venta'}" th:href="@{/css/producto-vendedor.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'registrar_venta' or currentPage == 'productos' or currentPage == 'producto'}" th:href="@{/css/producto-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'registrar_venta'}" th:href="@{/css/registrar_venta-vendedor.css}">
+
     <link rel="stylesheet" th:if="${currentPage == 'caja'}" th:href="@{/css/caja-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'historial_venta'}" th:href="@{/css/historial_ventas-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'promociones'}" th:href="@{/css/promociones-vendedor.css}">

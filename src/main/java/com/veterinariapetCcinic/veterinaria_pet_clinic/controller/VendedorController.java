@@ -324,10 +324,44 @@ public class VendedorController {
             producto.setStock(stock != null ? stock : 0);
             producto.setDescripcion(descripcion != null ? descripcion : "");
 
-            // Foto: por ahora no se actualiza en editar/guardar, para no romper el flujo.
-            // Si luego quieres guardar la imagen, lo añadimos en ProductoService/Controller.
+            // Guardar foto si viene
+            if (foto != null && !foto.isEmpty()) {
+                String contentType = foto.getContentType();
+                if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
+                    throw new RuntimeException("El archivo debe ser una imagen.");
+                }
+
+                // Tamaño máximo (aprox) 2MB
+                if (foto.getSize() > 2 * 1024 * 1024) {
+                    throw new RuntimeException("La imagen es demasiado grande (máx 2MB).");
+                }
+
+                // Destino dentro de resources/static (carpeta que Spring sirve)
+                String uploadDir = "src/main/resources/static/Imagen/Productos/";
+                java.io.File dir = new java.io.File(uploadDir);
+                if (!dir.exists() && !dir.mkdirs()) {
+                    throw new RuntimeException("No se pudo crear la carpeta de subida de imágenes.");
+                }
+
+                // Nombre único
+                String original = foto.getOriginalFilename() != null ? foto.getOriginalFilename() : "foto";
+                String ext = original.contains(".") ? original.substring(original.lastIndexOf(".")) : "";
+                String safeExt = ext.toLowerCase();
+                if (!(safeExt.equals(".png") || safeExt.equals(".jpg") || safeExt.equals(".jpeg") || safeExt.equals(".webp") || safeExt.equals(".gif"))) {
+                    // fallback a png si extensión rara
+                    safeExt = ".png";
+                }
+
+                String fileName = "producto_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID() + safeExt;
+                java.nio.file.Path target = java.nio.file.Paths.get(uploadDir).resolve(fileName);
+                java.nio.file.Files.copy(foto.getInputStream(), target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                // Guardar ruta relativa para usarla con th:src="${p.foto}"
+                producto.setFoto("/Imagen/Productos/" + fileName);
+            }
 
             productoService.guardar(producto);
+
 
             redirectAttributes.addFlashAttribute("success", "Producto guardado correctamente.");
             return "redirect:/vendedor/productos";

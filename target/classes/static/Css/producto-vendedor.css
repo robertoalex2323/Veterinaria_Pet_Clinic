@@ -38,7 +38,7 @@
 .producto-card .form-select{
   border-radius: 12px;
   border: 1px solid rgba(226,232,240,0.95);
-  background: rgba(17, 0, 0, 0.88);
+  background: rgba(226,232,240,0.95);
   box-shadow: none;
   padding-top: 0.72rem;
   padding-bottom: 0.72rem;
@@ -256,4 +256,30 @@
 .producto-actions .btn{
   border-radius: 12px;
 }
+
+.producto-detail-image{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.producto-desc{
+  font-size: 1rem;
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(226,232,240,0.85);
+  padding: 14px 16px;
+  border-radius: 14px;
+}
+
+.producto-actions{
+  background: rgba(255,255,255,0.35);
+  border: 1px solid rgba(226,232,240,0.85);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.producto-actions .btn-outline-secondary{
+  background: rgba(255,255,255,0.45);
+}
+
 

@@ -1,8 +1,3 @@
-/* registrar_venta-vendedor.css
-   Estilos específicos para: src/main/resources/templates/Vendedor/registrar.html
-   Mantiene compatibilidad con Bootstrap 5.
-*/
-
 :root{
   --vv-primary:#0d6efd;
   --vv-text:#2b2f33;
@@ -25,7 +20,7 @@
   border: 1px solid var(--vv-border);
   border-radius: 14px;
   background: var(--vv-card);
-  box-shadow: 0 8px 24px rgba(0,0,0,.04);
+  box-shadow: 0 8px 24px #d1d3e2;
 }
 
 .card-header{
@@ -53,7 +48,7 @@ form#ventaForm{
 
 .form-control{
   border-radius: 10px;
-  border: 1px solid rgba(0,0,0,.12);
+  border: 1px solid #e3e6f0;
   padding: .65rem .8rem;
 }
 
