@@ -88,7 +88,8 @@
                         <td>
                             <span class="badge producto-badge" th:text="${p.categoria}"></span>
                         </td>
-                        <td th:text="${p.precio} ? p.precio : 0">0</td>
+                        <td th:text="${p.precio != null ? p.precio : 0}">0</td>
+
                         <td th:text="${p.stock}">0</td>
                         <td>
                             <div class="btn-group" role="group">

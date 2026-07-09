@@ -1,10 +1,4 @@
-/**
- * Registrar Venta - Vendedor
- * Reemplaza el script inline de registrar.html.
- *
- * Construye listas formales solo con productos marcados:
- * - Back usa parámetros: productoIds (comma) y cantidades (comma)
- */
+
 (() => {
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('ventaForm');
@@ -20,9 +14,8 @@
     function parseCantidades(ids) {
       const cantidades = [];
       ids.forEach(id => {
-        // input cantidadProducto[ID]
         const inp = form.querySelector(`input[name^="cantidadProducto[${id}]"]`);
-        // fallback (por si el nombre viniera exactamente)
+
         const inp2 = form.querySelector(`input[name="cantidadProducto[${id}]"]`);
         const el = inp2 || inp;
 
@@ -31,6 +24,64 @@
       });
       return cantidades;
     }
+
+    // (Opcional) Validar y/o calcular total en pantalla si existen elementos.
+    // Esto asegura que la lógica sea: subtotal = precio * cantidad.
+    function safeNumberFromText(text) {
+      const raw = (text || '').toString().trim();
+      const num = Number(raw.replace(',', '.'));
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function obtenerPrecioPorProductoId(productoId) {
+      // En registrar.html el precio está en el TD #5 (Cantidad es #4, Precio es #5)
+      const qtyInput = form.querySelector(`input[name="cantidadProducto[__${productoId}__]"]`);
+      const row = qtyInput ? qtyInput.closest('tr') : null;
+      if (!row) return 0;
+
+      const precioSpan = row.querySelector('td:nth-child(5) span');
+      if (!precioSpan) return 0;
+      return safeNumberFromText(precioSpan.textContent);
+    }
+
+    function updateTotalsIfPresent() {
+      const totalEl = document.getElementById('totalVenta');
+      const subtotalEl = document.getElementById('subtotalVenta');
+      if (!totalEl && !subtotalEl) return;
+
+      let subtotal = 0;
+      const qtyInputs = form.querySelectorAll('input[name^="cantidadProducto"]');
+      qtyInputs.forEach(inp => {
+        // cantidadProducto[__ID__]
+        const m = inp.name.match(/^cantidadProducto\[__([^\]]+)__\]$/);
+        if (!m) return;
+        const productoId = m[1];
+
+        // Solo si está marcado el checkbox del producto
+        const chk = form.querySelector(`input[name="agregarProducto[]"][value="${productoId}"]`);
+        if (!chk || !chk.checked) return;
+
+        const cantidad = parseInt(inp.value, 10);
+        if (!Number.isFinite(cantidad) || cantidad <= 0) return;
+
+        const precio = obtenerPrecioPorProductoId(productoId);
+        subtotal += precio * cantidad;
+      });
+
+      if (subtotalEl) subtotalEl.textContent = subtotal.toFixed(2);
+      if (totalEl) totalEl.textContent = subtotal.toFixed(2);
+    }
+
+    form.addEventListener('input', (e) => {
+      if (e.target && e.target.matches('input[name^="cantidadProducto"]')) {
+        updateTotalsIfPresent();
+      }
+    });
+    form.addEventListener('change', (e) => {
+      if (e.target && e.target.matches('input[name="agregarProducto[]"]')) {
+        updateTotalsIfPresent();
+      }
+    });
 
     form.addEventListener('submit', (e) => {
       const ids = parseIds();
@@ -55,5 +106,8 @@
       productoIdsInput.value = ids.join(',');
       cantidadesInput.value = cantidades.join(',');
     });
+
+    updateTotalsIfPresent();
   });
 })();
+
