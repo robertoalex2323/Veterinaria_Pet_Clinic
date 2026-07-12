@@ -13,15 +13,18 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0"><i class="fas fa-tags text-primary"></i> Promociones</h2>
+            <h2 class="mb-0">
+                <i class="fas fa-tags text-primary me-2"></i>Promociones
+            </h2>
             <p class="text-muted mb-0">Crea, modifica y elimina ofertas de productos</p>
         </div>
-        <div>
+        <div class="d-flex align-items-center gap-2">
             <a class="btn btn-primary shadow-sm" th:href="@{/vendedor/promociones/nuevo}">
-                <i class="fas fa-plus me-2"></i> Nueva Promoción
+                <i class="fas fa-plus me-2"></i>Nueva Promoción
             </a>
         </div>
     </div>
+
 
     <!-- Alertas -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
@@ -81,10 +84,6 @@
                                     <i class="fas fa-trash"></i>
                                 </a>
                             </div>
-
-                            <a class="btn btn-outline-primary btn-sm ms-2" th:href="@{/vendedor/ventas/registrar(redirectPromocionId=${p.id})}">
-                                <i class="fas fa-cart-plus"></i> Usar en Venta
-                            </a>
                         </td>
                     </tr>
                     </tbody>
@@ -92,7 +91,8 @@
             </div>
 
             <div class="text-muted small mt-3">
-                Nota: El módulo de promociones usa descuentos guardados en el backend. Al “Usar en Venta” te redirige a registrar la venta.
+                Nota: El módulo de promociones usa descuentos guardados en el backend.
+
             </div>
         </div>
     </div>

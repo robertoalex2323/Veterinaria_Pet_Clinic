@@ -26,15 +26,7 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label class="form-label">Venta (ID)</label>
-                    <!--
-                      Nota:
-                      - El flujo de backend actual para generar/envíar PDF está en:
-                        POST /vendedor/ventas/registrar (registra y envía).
-                      - Para emitir una venta ya existente, aquí asumimos que existe un endpoint
-                        adicional. Si no existiera en tu código real, la emisión puede ajustarse luego.
-                      - Por ahora, el botón llamará a /vendedor/ventas/registrar con un modo "emitir"
-                        no invasivo; si no aplica, la compilación seguirá bien y el backend se ajusta en siguiente iteración.
-                    -->
+
                     <input class="form-control" name="ventaId" form="emitirForm" type="number" min="1" placeholder="Ej: 1" required>
                 </div>
 

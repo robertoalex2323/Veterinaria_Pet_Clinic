@@ -126,6 +126,12 @@ public class VendedorVentaController {
         }
     }
 
+    @GetMapping("/emitir")
+    public String mostrarEmitirBoleta() {
+        // Sirve la pantalla para ingresar el ID de la venta.
+        return "Vendedor/emitir-boletas";
+    }
+
     @PostMapping("/emitir")
     public String emitirBoleta(
             @RequestParam Long ventaId,
