@@ -19,6 +19,7 @@ public class ProductoService {
         return productoRepository.findByActivoTrue();
     }
 
+
     public Producto buscarPorId(Long id) {
         return productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
@@ -32,5 +33,10 @@ public class ProductoService {
         }
         producto.descontarStock(cantidad);
         productoRepository.save(producto);
+    }
+
+    @Transactional
+    public Producto guardar(Producto producto) {
+        return productoRepository.save(producto);
     }
 }

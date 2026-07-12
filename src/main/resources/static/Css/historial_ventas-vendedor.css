@@ -1,0 +1,30 @@
+:root{
+  --vv-primary:#0d6efd;
+  --vv-border:rgba(0,0,0,.08);
+}
+
+#content{
+  padding:18px 10px 40px;
+  color:#2b2f33;
+}
+
+.card{
+  border:1px solid var(--vv-border);
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 8px 24px rgba(0,0,0,.04);
+}
+
+.card-header{
+  border-top-left-radius:14px;
+  border-top-right-radius:14px;
+}
+
+.table td, .table th{
+  vertical-align:middle;
+}
+
+.pagination .page-link{
+  border-radius:10px;
+}
+

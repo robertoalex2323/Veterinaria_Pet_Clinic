@@ -11,7 +11,9 @@
     <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     <link rel="stylesheet" th:if="${currentPage == 'dashboard'}" th:href="@{/css/dashboard-vendedor.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'registrar_venta' or currentPage == 'productos' or currentPage == 'producto'}" th:href="@{/css/producto-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'registrar_venta'}" th:href="@{/css/registrar_venta-vendedor.css}">
+
     <link rel="stylesheet" th:if="${currentPage == 'caja'}" th:href="@{/css/caja-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'historial_venta'}" th:href="@{/css/historial_ventas-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'promociones'}" th:href="@{/css/promociones-vendedor.css}">
@@ -45,6 +47,14 @@
                     </a>
                 </li>
 
+                <!-- Productos -->
+                <li class="nav-item">
+                    <a th:classappend="${currentPage == 'productos'} ? 'active' : ''" class="nav-link"
+                        href="/vendedor/productos">
+                        <i class="fas fa-box-open"></i>
+                        <span>Productos</span>
+                    </a>
+                </li>
                 <!-- Registrar Venta -->
                 <li class="nav-item">
                     <a th:classappend="${currentPage == 'registrar_venta'} ? 'active' : ''" class="nav-link"
@@ -92,8 +102,8 @@
 
                 <!-- Emitir boletas -->
                 <li class="nav-item">
-                    <a th:classappend="${currentPage == 'emitir_boleta'} ? 'active' : ''" class="nav-link"
-                        href="/vendedor/boletas/emitir-boletas">
+                <a th:classappend="${currentPage == 'emitir_boleta'} ? 'active' : ''" class="nav-link"
+                        href="/vendedor/ventas/emitir">
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span>Emitir Boleta</span>
                     </a>
@@ -198,7 +208,11 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
         
         <!-- Script de notificaciones UI -->
+        <script>
+            window.NOTIFICACION_API_URL = '/vendedor/api/ui-notifications';
+        </script>
         <script th:src="@{/js/notificaciones-ui.js}"></script>
+
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {

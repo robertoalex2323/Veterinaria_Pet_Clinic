@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'productos')}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Productos - Vendedor</title>
+    <link rel="stylesheet" th:href="@{/css/producto-vendedor.css}" />
+</head>
+
+<body>
+<div id="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-box-open text-primary"></i> Productos</h2>
+            <p class="text-muted mb-0">Crear, eliminar y visualizar productos</p>
+        </div>
+        <div>
+            <a class="btn btn-primary shadow-sm" th:href="@{/vendedor/productos/nuevo}">
+                <i class="fas fa-plus me-2"></i> Nuevo Producto
+            </a>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card producto-card shadow-sm">
+        <div class="card-header producto-card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="fas fa-list me-2"></i> Lista de Productos</span>
+                <form class="d-flex" th:action="@{/vendedor/productos}" method="get">
+                    <input class="form-control me-2" type="text" name="buscar" placeholder="Buscar por nombre o categoría" th:value="${buscar ?: ''}">
+                    <button class="btn btn-outline-light" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th style="width: 130px;">Producto</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th style="width: 220px;">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${productos == null or #lists.isEmpty(productos)}">
+                        <td colspan="5" class="text-center text-muted py-4">No hay productos para mostrar.</td>
+                    </tr>
+                    <tr th:each="p : ${productos}">
+                        <td>
+                            <div class="producto-list-item">
+                                <div class="producto-thumb-wrap">
+                                    <img class="producto-thumb"
+                                         th:if="${p.foto != null and !#strings.isEmpty(p.foto)}"
+                                         th:src="${p.foto}"
+                                         th:alt="${p.nombre}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none';" />
+
+                                    <div class="producto-thumb-placeholder"
+                                         th:if="${p.foto == null or #strings.isEmpty(p.foto)}">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+
+                                </div>
+                                <div class="producto-title">
+                                    <i class="fas fa-tag text-secondary me-2"></i>
+                                    <span th:text="${p.nombre}"></span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge producto-badge" th:text="${p.categoria}"></span>
+                        </td>
+                        <td th:text="${p.precio != null ? p.precio : 0}">0</td>
+
+                        <td th:text="${p.stock}">0</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a class="btn btn-outline-secondary btn-sm" th:href="@{/vendedor/productos/ver/{id}(id=${p.id})}">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a class="btn btn-outline-danger btn-sm" th:href="@{/vendedor/productos/eliminar/{id}(id=${p.id})}" onclick="return confirm('¿Eliminar el producto ' + this.dataset.nombre + '?');" th:attr="data-nombre=${p.nombre}">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script th:src="@{/js/productos-vendedor.js}"></script>
+</body>
+</html>
+
+
