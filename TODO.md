@@ -1,8 +1,15 @@
-# TODO
+# TODO - Recomendaciones exitosas
 
-- [x] Revisar dashboard del Vendedor (template + JS) para localizar el canvas `ventasPorCategoriaChart`.
-- [x] Ajustar notificaciones para que Vendedor use su endpoint (`/vendedor/api/ui-notifications`) en vez del de Recepcionista.
-- [ ] Corregir el gráfico de “Distribución por Categoría” para que salga según las categorías registradas en productos.
-- [ ] Arreglar/compilar `VendedorController.java` tras los cambios.
-- [ ] Verificar en navegador que el endpoint `/vendedor/api/dashboard-metrics` devuelve `categorias` con datos.
+- [x] Crear entidad `Recomendacion` (producto, categoria, razon, vendedor, cliente, fecha).
+- [x] Crear `RecomendacionRepository` con `countByFechaBetween`.
+
+- [x] Implementar endpoint `POST /vendedor/recomendaciones/registrar` en `VendedorRecomendacionesController`.
+  - [x] Asociar también con cliente (además de producto).
+
+- [x] Actualizar `recomendaciones-vendedor.js` para renderizar botón “Marcar como exitosa”.
+  - [x] Al hacer clic, llamar endpoint POST y guardar en BD.
+- [x] Actualizar `VendedorController#dashboardMetrics` para usar el conteo real de hoy.
+
+- [ ] (Opcional) Ajustar CSS/UX en tarjetas.
+- [ ] Ejecutar `mvnw test` y validar en runtime Dashboard/Caja.
 

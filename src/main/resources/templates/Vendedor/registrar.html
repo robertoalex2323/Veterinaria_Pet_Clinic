@@ -24,33 +24,43 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
+    <!-- Alertas generadas por JS (validación en cliente) -->
+    <div id="formAlert" class="alert alert-danger shadow-sm d-none" role="alert">
+        <i class="fas fa-exclamation-circle me-1"></i> <span id="formAlertText"></span>
+    </div>
+
     <div class="card shadow-sm">
         <div class="card-header">
             <strong><i class="fas fa-user me-2"></i> Datos del Cliente</strong>
         </div>
 
         <div class="card-body">
-            <form th:action="@{/vendedor/ventas/registrar}" method="post" id="ventaForm">
-
-                <input type="hidden" name="clienteNombre" th:value="${clienteNombre != null ? clienteNombre : ''}"/>
+            <form th:action="@{/vendedor/ventas/registrar}" method="post" id="ventaForm" novalidate>
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Nombre</label>
-                        <input class="form-control" name="clienteNombre" required placeholder="Ej: Juan Perez" autocomplete="name"/>
-                        <div class="form-text">Debe coincidir con el nombre registrado del cliente.</div>
+                        <label class="form-label" for="clienteNombre">Nombre</label>
+                        <div class="autocomplete-wrap">
+                            <input class="form-control" id="clienteNombre" name="clienteNombre" required
+                                   placeholder="Ej: Juan Perez" autocomplete="off" maxlength="100"/>
+                            <div id="clienteSugerencias" class="autocomplete-list d-none" role="listbox"></div>
+                        </div>
+                        <div class="form-text">Empieza a escribir para buscar un cliente ya registrado.</div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Teléfono</label>
-                        <input class="form-control" name="clienteTelefono" required placeholder="Ej: 999999999" autocomplete="tel" inputmode="numeric" pattern="\\d{7,15}"/>
+                        <label class="form-label" for="clienteTelefono">Teléfono</label>
+                        <input class="form-control" id="clienteTelefono" name="clienteTelefono" required
+                               placeholder="Ej: 999999999" autocomplete="tel" inputmode="numeric"
+                               pattern="\d{7,15}" maxlength="15"/>
                         <div class="form-text">Usa el teléfono registrado del cliente.</div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Email (opcional)</label>
-                        <input class="form-control" name="clienteEmail" type="email" placeholder="Ej: juan@email.com" autocomplete="email"/>
+                        <label class="form-label" for="clienteEmail">Email (opcional)</label>
+                        <input class="form-control" id="clienteEmail" name="clienteEmail" type="email"
+                               placeholder="Ej: juan@email.com" autocomplete="email" maxlength="100"/>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Método de pago</label>
+                        <label class="form-label" for="metodoPago">Método de pago</label>
                         <select class="form-select" name="metodoPago" id="metodoPago" required>
                             <option value="Efectivo">Efectivo</option>
                             <option value="Yape">Yape</option>
@@ -63,76 +73,105 @@
                                 <img id="qrImg" alt="QR" style="height:120px;width:120px;object-fit:contain; border-radius:14px; background:#fff; border:1px solid rgba(0,0,0,.08);"/>
                             </div>
                         </div>
-
                     </div>
 
-
                     <div class="col-12">
-                        <label class="form-label">Dirección (opcional)</label>
-                        <input class="form-control" name="clienteDireccion" placeholder="Ej: Av. Principal 123"/>
+                        <label class="form-label" for="clienteDireccion">Dirección (opcional)</label>
+                        <input class="form-control" id="clienteDireccion" name="clienteDireccion"
+                               placeholder="Ej: Av. Principal 123" maxlength="200"/>
                     </div>
                 </div>
 
                 <hr class="my-4"/>
 
-                <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                     <h5 class="mb-0"><i class="fas fa-box-open text-primary me-2"></i> Productos</h5>
-                    <small class="text-muted">Marca “Sí” para agregar el producto a la venta.</small>
+                    <div class="product-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="buscarProducto" class="form-control form-control-sm"
+                               placeholder="Buscar producto o categoría..." autocomplete="off"/>
+                    </div>
                 </div>
+                <p class="text-muted small mb-2">Marca la casilla para agregar el producto a la venta y ajusta la cantidad.</p>
 
                 <div class="table-responsive">
-                    <table class="table table-bordered align-middle">
+                    <table class="table table-bordered align-middle" id="tablaProductos">
                         <thead class="table-light">
                         <tr>
-                            <th style="width:70px;">Sí</th>
+                            <th style="width:60px;" class="text-center">Sí</th>
                             <th>Producto</th>
-                            <th style="width:140px;">Stock</th>
-                            <th style="width:160px;">Cantidad</th>
-                            <th style="width:140px;">Precio</th>
+                            <th style="width:110px;" class="text-center">Stock</th>
+                            <th style="width:170px;" class="text-center">Cantidad</th>
+                            <th style="width:120px;" class="text-end">Precio</th>
+                            <th style="width:130px;" class="text-end">Subtotal</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${productos == null || #lists.isEmpty(productos)}">
-                            <td colspan="5" class="text-center text-muted py-4">No hay productos disponibles.</td>
+                            <td colspan="6" class="text-center text-muted py-4">No hay productos disponibles.</td>
                         </tr>
-                        <tr th:each="p : ${productos}">
+                        <tr th:each="p : ${productos}"
+                            class="producto-row"
+                            th:attr="data-nombre=${#strings.toLowerCase(p.nombre)},data-categoria=${p.categoria != null ? #strings.toLowerCase(p.categoria) : ''}">
                             <td class="text-center">
-                                <input type="checkbox" class="form-check-input"
+                                <input type="checkbox" class="form-check-input producto-check"
+                                       th:id="${'chk_' + p.id}"
                                        th:name="agregarProducto[]"
-                                       th:value="${p.id}"/>
+                                       th:value="${p.id}"
+                                       th:disabled="${p.stock == null || p.stock &lt;= 0}"/>
                             </td>
                             <td>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div style="width:48px; height:48px; border-radius:12px; overflow:hidden; background:rgba(13,110,253,.06); border:1px solid rgba(0,0,0,.06); display:flex; align-items:center; justify-content:center;">
+                                <label class="d-flex align-items-center gap-3 mb-0" th:for="${'chk_' + p.id}" style="cursor:pointer;">
+                                    <div class="producto-thumb">
                                         <img th:if="${p.foto != null and !#strings.isEmpty(p.foto)}"
                                              th:src="${p.foto}"
                                              th:alt="${p.nombre}"
-                                             onerror="this.style.display='none';" 
+                                             onerror="this.style.display='none';"
                                              style="width:100%; height:100%; object-fit:cover;"/>
                                         <i th:if="${p.foto == null or #strings.isEmpty(p.foto)}" class="fas fa-image text-muted"></i>
                                     </div>
                                     <div>
                                         <div class="fw-semibold" th:text="${p.nombre}"></div>
                                         <div class="text-muted small" th:text="${p.categoria}"></div>
+                                        <div class="text-danger small fw-semibold" th:if="${p.stock == null || p.stock &lt;= 0}">
+                                            <i class="fas fa-ban me-1"></i>Sin stock
+                                        </div>
                                     </div>
-                                </div>
+                                </label>
                             </td>
 
-                            <td>
+                            <td class="text-center">
                                 <span class="badge bg-info" th:text="${p.stock}"></span>
                             </td>
                             <td>
-                                <input type="number" class="form-control"
-                                       min="1"
-                                       th:attr="max=${p.stock != null ? p.stock : 999}"
-                                       th:name="cantidadProducto[__${p.id}__]"
-                                       value="1"/>
+                                <div class="qty-stepper" th:classappend="${p.stock == null || p.stock &lt;= 0} ? 'disabled' : ''">
+                                    <button type="button" class="qty-btn qty-minus" aria-label="Disminuir cantidad">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <input type="number" class="form-control cantidad-input"
+                                           min="1"
+                                           th:attr="max=${p.stock != null ? p.stock : 999}"
+                                           th:name="cantidadProducto[__${p.id}__]"
+                                           th:disabled="${p.stock == null || p.stock &lt;= 0}"
+                                           value="1"/>
+                                    <button type="button" class="qty-btn qty-plus" aria-label="Aumentar cantidad">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
                             </td>
 
-                            <td>
-                                <span th:text="${p.precio}" class="fw-semibold"></span>
+                            <td class="text-end">
+                                <span th:text="${p.precio}" class="fw-semibold precio-valor"></span>
+                            </td>
+                            <td class="text-end">
+                                <span class="fw-semibold row-subtotal">S/ 0.00</span>
                             </td>
 
+                        </tr>
+                        <tr id="sinResultados" class="d-none">
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="fas fa-search me-1"></i> No se encontraron productos con ese criterio.
+                            </td>
                         </tr>
                         </tbody>
                     </table>
@@ -143,11 +182,24 @@
                     <input type="hidden" name="cantidades" id="cantidades"/>
                 </div>
 
-                <div class="d-flex justify-content-end gap-2 mt-3">
-                    <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='https://example.com'" style="display:none;">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i> Guardar Venta
-                    </button>
+                <!-- Resumen fijo de la venta -->
+                <div class="venta-resumen">
+                    <div class="venta-resumen-info">
+                        <div class="venta-resumen-item">
+                            <span class="label">Productos seleccionados</span>
+                            <span class="value" id="totalItems">0</span>
+                        </div>
+                        <div class="venta-resumen-item venta-resumen-total">
+                            <span class="label">Total a cobrar</span>
+                            <span class="value">S/ <span id="totalVenta">0.00</span></span>
+                        </div>
+                        <input type="hidden" id="subtotalVenta" value="0"/>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="btnGuardarVenta">
+                            <i class="fas fa-save me-2"></i> Guardar Venta
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -158,7 +210,5 @@
 <script th:src="@{/js/Registrar-vendedor.js}"></script>
 <script th:src="@{/js/registrar-venta-clientes-vendedor.js}"></script>
 
-
 </body>
 </html>
-

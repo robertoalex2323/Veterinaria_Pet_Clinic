@@ -9,6 +9,7 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionServi
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.VentaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,14 +19,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/vendedor/ventas")
@@ -35,15 +39,18 @@ public class VendedorVentaController {
     private final VentaService ventaService;
     private final NotificacionService notificacionService;
     private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
 
     public VendedorVentaController(ProductoService productoService,
                                    VentaService ventaService,
                                    NotificacionService notificacionService,
-                                   UsuarioRepository usuarioRepository) {
+                                   UsuarioRepository usuarioRepository,
+                                   ClienteRepository clienteRepository) {
         this.productoService = productoService;
         this.ventaService = ventaService;
         this.notificacionService = notificacionService;
         this.usuarioRepository = usuarioRepository;
+        this.clienteRepository = clienteRepository;
     }
 
     @GetMapping("/registrar")
@@ -126,6 +133,44 @@ public class VendedorVentaController {
         }
     }
 
+    /**
+     * Autocompletado de clientes ya registrados (por nombre o teléfono).
+     * Se usa desde el formulario de registrar venta para evitar duplicar
+     * clientes y agilizar el llenado de datos.
+     */
+    @GetMapping("/clientes/buscar")
+    @ResponseBody
+    public List<ClienteSugerencia> buscarClientes(@RequestParam(required = false) String query) {
+        String q = query == null ? "" : query.trim();
+        if (q.length() < 2) {
+            return List.of();
+        }
+
+        List<Cliente> encontrados = clienteRepository.findByNombreContainingIgnoreCase(q);
+
+        // Si la búsqueda parece un teléfono, también intentamos match exacto.
+        if (q.matches("[0-9+\\-\\s]+")) {
+            clienteRepository.findByTelefono(q).ifPresent(c -> {
+                if (encontrados.stream().noneMatch(existing -> existing.getId().equals(c.getId()))) {
+                    encontrados.add(0, c);
+                }
+            });
+        }
+
+        return encontrados.stream()
+                .limit(8)
+                .map(c -> new ClienteSugerencia(
+                        c.getId(),
+                        c.getNombre(),
+                        c.getTelefono(),
+                        c.getEmail(),
+                        c.getDireccion()))
+                .collect(Collectors.toList());
+    }
+
+    /** DTO liviano para no serializar la entidad Cliente (evita colecciones lazy). */
+    public record ClienteSugerencia(Long id, String nombre, String telefono, String email, String direccion) {}
+
     @GetMapping("/emitir")
     public String mostrarEmitirBoleta() {
         // Sirve la pantalla para ingresar el ID de la venta.
@@ -188,5 +233,35 @@ public class VendedorVentaController {
                 .map(Integer::valueOf)
                 .toList();
     }
+
+    @GetMapping("/historial")
+public String historialVentas(
+        @RequestParam(required = false) String fechaInicio,
+        @RequestParam(required = false) String fechaFin,
+        Model model) {
+
+    List<Venta> ventas;
+
+    if (fechaInicio != null && !fechaInicio.isBlank()
+            && fechaFin != null && !fechaFin.isBlank()) {
+
+        LocalDateTime inicio = LocalDate.parse(fechaInicio)
+                .atStartOfDay();
+
+        LocalDateTime fin = LocalDate.parse(fechaFin)
+                .atTime(23, 59, 59);
+
+        ventas = ventaService.buscarVentasPorFecha(inicio, fin);
+
+    } else {
+        ventas = ventaService.listarTodasLasVentas();
+    }
+
+    model.addAttribute("ventas", ventas);
+    model.addAttribute("fechaInicio", fechaInicio);
+    model.addAttribute("fechaFin", fechaFin);
+
+    return "Vendedor/historial";
+}
 }
 

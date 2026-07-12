@@ -22,7 +22,7 @@ public class VendedorHistorialVentaController {
         this.ventaRepository = ventaRepository;
     }
 
-    @GetMapping("/historial")
+    @GetMapping("/historial-paginado")
     public String historial(
             @RequestParam(required = false, defaultValue = "") String q,
             @RequestParam(required = false, defaultValue = "0") int page,

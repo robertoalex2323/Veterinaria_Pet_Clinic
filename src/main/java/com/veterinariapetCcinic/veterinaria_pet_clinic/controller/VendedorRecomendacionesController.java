@@ -2,11 +2,18 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Promocion;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Recomendacion;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.RecomendacionRepository;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PromocionService;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -14,6 +21,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,11 +35,20 @@ public class VendedorRecomendacionesController {
 
     private final ProductoService productoService;
     private final PromocionService promocionService;
+    private final RecomendacionRepository recomendacionRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
 
     public VendedorRecomendacionesController(ProductoService productoService,
-                                             PromocionService promocionService) {
+                                             PromocionService promocionService,
+                                             RecomendacionRepository recomendacionRepository,
+                                             UsuarioRepository usuarioRepository,
+                                             ClienteRepository clienteRepository) {
         this.productoService = productoService;
         this.promocionService = promocionService;
+        this.recomendacionRepository = recomendacionRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.clienteRepository = clienteRepository;
     }
 
     @GetMapping("/recomendaciones")
@@ -193,5 +211,68 @@ public class VendedorRecomendacionesController {
         
         return response;
     }
+
+    @PostMapping(value = "/recomendaciones/registrar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> registrarRecomendacion(
+            @RequestParam(value = "productoId") Long productoId,
+            @RequestParam(value = "categoria", required = false) String categoria,
+            @RequestParam(value = "razon", required = false) String razon,
+            @RequestParam(value = "clienteId", required = false) Long clienteId) {
+
+        Map<String, Object> resp = new HashMap<>();
+
+        try {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : null;
+            if (username == null || username.isBlank()) {
+                resp.put("success", false);
+                resp.put("message", "No autenticado");
+                return resp;
+            }
+
+            Usuario vendedor = usuarioRepository.findByUsername(username).orElse(null);
+            if (vendedor == null) {
+                resp.put("success", false);
+                resp.put("message", "Vendedor no encontrado");
+                return resp;
+            }
+
+            Producto producto = productoService.buscarPorId(productoId);
+
+            String categoriaFinal = (categoria == null || categoria.isBlank())
+                    ? (producto.getCategoria() != null ? producto.getCategoria() : "Sin categoría")
+                    : categoria;
+
+            String razonFinal = (razon == null || razon.isBlank())
+                    ? "Recomendación registrada"
+                    : razon;
+
+            Cliente cliente = null;
+            if (clienteId != null) {
+                cliente = clienteRepository.findById(clienteId).orElse(null);
+            }
+
+            Recomendacion rec = new Recomendacion();
+            rec.setProducto(producto);
+            rec.setCategoria(categoriaFinal);
+            rec.setRazon(razonFinal);
+            rec.setVendedor(vendedor);
+            rec.setCliente(cliente);
+            rec.setFecha(LocalDateTime.now());
+
+            recomendacionRepository.save(rec);
+
+            resp.put("success", true);
+            resp.put("message", "Recomendación registrada como exitosa");
+            return resp;
+
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", e.getMessage() != null ? e.getMessage() : "Error al registrar");
+            return resp;
+        }
+    }
 }
+
 

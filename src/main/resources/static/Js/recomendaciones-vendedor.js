@@ -109,11 +109,65 @@
               </div>
             </div>
             ${p.razon ? `<div class="mt-3 small px-3 py-2 rc-reason"><i class="fas fa-magic me-2"></i>${escapeHtml(p.razon)}</div>` : ''}
+
+            <div class="mt-3 d-grid">
+              <button type="button" class="btn btn-success btn-sm rc-mark-exitosa"
+                data-producto-id="${escapeHtml(p.id)}"
+                data-categoria="${escapeHtml(p.categoria || '')}"
+                data-razon="${escapeHtml(p.razon || '')}">
+                <i class="fas fa-check me-2"></i> Marcar como exitosa
+              </button>
+            </div>
           </div>
         </div>`;
       fragment.appendChild(card);
     }
     grid.appendChild(fragment);
+
+    // listeners de los botones renderizados
+    grid.querySelectorAll('.rc-mark-exitosa').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const productoId = btn.getAttribute('data-producto-id');
+        const categoria = btn.getAttribute('data-categoria');
+        const razon = btn.getAttribute('data-razon');
+
+        // Para relacionar con cliente: en este proyecto aún no se provee un selector en la pantalla,
+        // así que por ahora enviamos null.
+        // Si en `recomendaciones.html` agregas un select de cliente, aquí se toma su value.
+        const clienteId = null;
+
+        const baseUrlPost = '/vendedor/recomendaciones/registrar';
+        btn.disabled = true;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Registrando...';
+
+        try {
+          const params = new URLSearchParams();
+          params.append('productoId', productoId);
+          if (categoria !== null) params.append('categoria', categoria);
+          if (razon !== null) params.append('razon', razon);
+          if (clienteId !== null) params.append('clienteId', clienteId);
+
+          const resp = await fetch(baseUrlPost, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: params.toString()
+          });
+
+          const data = await resp.json();
+          if (!resp.ok || !data.success) {
+            throw new Error(data.message || `HTTP ${resp.status}`);
+          }
+
+          showAiMessage('¡Guardado! La recomendación fue marcada como exitosa.');
+          btn.innerHTML = '<i class="fas fa-check me-2"></i> Exitosa';
+        } catch (e) {
+          showError('No se pudo registrar: ' + e.message);
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
+      });
+    });
   }
 
   async function recommend() {

@@ -18,13 +18,60 @@
 .card-header{
   border-top-left-radius:14px;
   border-top-right-radius:14px;
+  background:#f8f9fa;
+  font-weight:600;
 }
 
-.table td, .table th{
+.form-control{
+  border-radius:10px;
+  min-height:42px;
+}
+
+.btn{
+  border-radius:10px;
+}
+
+.table td,
+.table th{
   vertical-align:middle;
+}
+
+.table tbody tr:hover{
+  background:#f8fbff;
+}
+
+.btn-group .btn{
+  min-width:40px;
 }
 
 .pagination .page-link{
   border-radius:10px;
+  margin:0 2px;
 }
 
+.pagination .active .page-link{
+  font-weight:600;
+}
+
+.alert{
+  border-radius:12px;
+}
+
+@media (max-width:768px){
+
+  #content{
+    padding:10px;
+  }
+
+  .btn{
+    width:100%;
+  }
+
+  .table{
+    font-size:.9rem;
+  }
+
+  .card-body .row > div{
+    margin-bottom:10px;
+  }
+}

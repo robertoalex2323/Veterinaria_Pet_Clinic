@@ -27,29 +27,87 @@
     </div>
 
     <!-- Search -->
+   <!-- Search + Filtros -->
     <div class="card shadow-sm">
         <div class="card-header">
-            <strong><i class="fas fa-search me-2"></i> Búsqueda</strong>
+            <strong>
+                <i class="fas fa-search me-2"></i>
+                Búsqueda y Filtros
+            </strong>
         </div>
-        <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-8">
-                    <label class="form-label">Escribe nombre/teléfono/mascota</label>
-                    <input id="busqueda" class="form-control" type="text" placeholder="Ej: Juan, 999..., gato, raza..." />
-                    <div class="form-text">Presiona <b>Buscar</b> para aplicar la búsqueda.</div>
-                </div>
-                <div class="col-md-4">
-                    <button id="btnBuscar" class="btn btn-primary w-100">
-                        <i class="fas fa-search me-2"></i> Buscar
-                    </button>
-                </div>
-            </div>
 
-            <!-- Suggestions (opcional, solo si el backend devuelve datos) -->
-            <div id="sugerencias" class="mt-3" style="display:none;">
-                <div class="text-muted small mb-2">Resultados sugeridos (clic para filtrar):</div>
-                <div id="listaSugerencias" class="list-group"></div>
-            </div>
+        <div class="card-body">
+
+            <form th:action="@{/vendedor/ventas/historial}" method="get">
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            Cliente / Teléfono
+                        </label>
+
+                        <input id="busqueda"
+                            name="q"
+                            class="form-control"
+                            type="text"
+                            placeholder="Ej: Juan, 999999999"
+                            th:value="${q}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            Fecha Inicio
+                        </label>
+
+                        <input type="date"
+                            class="form-control"
+                            name="fechaInicio"
+                            th:value="${fechaInicio}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            Fecha Fin
+                        </label>
+
+                        <input type="date"
+                            class="form-control"
+                            name="fechaFin"
+                            th:value="${fechaFin}">
+                    </div>
+
+                    <div class="col-md-2 d-grid">
+                        <label class="form-label invisible">.</label>
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>
+                            Buscar
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="row mt-3">
+
+                    <div class="col-md-3">
+                        <button type="submit"
+                                class="btn btn-success w-100">
+                            <i class="fas fa-filter me-1"></i>
+                            Filtrar
+                        </button>
+                    </div>
+
+                    <div class="col-md-3">
+                        <a th:href="@{/vendedor/ventas/historial}"
+                        class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-eraser me-1"></i>
+                            Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 

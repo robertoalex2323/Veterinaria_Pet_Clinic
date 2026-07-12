@@ -1,4 +1,3 @@
-/* Producto - Vendedor (CSS unificada para productos.html, producto-ver.html y producto-form.html) */
 
 :root{
   --pc-border: rgba(226,232,240,0.85);
@@ -29,7 +28,6 @@
   gap:10px;
 }
 
-/* ========== Formularios (producto-form.html) ========== */
 .producto-card form label{
   letter-spacing: 0.2px;
 }
@@ -136,11 +134,39 @@
   .producto-card form .input-group{ border-radius: 14px; }
 }
 
-/* Validación */
-.producto-card .form-control:invalid,
-.producto-card .form-select:invalid{
-  border-color: rgba(239,68,68,0.45);
+/* Icono dentro input */
+.producto-card .input-group-text{
+  border-radius: 12px;
+  border: 1px solid rgba(59,130,246,0.25);
+  background: linear-gradient(135deg, rgba(59,130,246,0.14), rgba(29,78,216,0.10));
+  color: var(--pc-primary);
+  font-size: 0.95rem;
 }
+
+/* Quitar redondeo duplicado en grupos de Bootstrap */
+.producto-card .input-group .form-control{
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.producto-card .input-group .input-group-text{
+  border-right: none;
+}
+
+.producto-card input[type="file"].form-control{
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+.producto-card .form-control.is-invalid,
+.producto-card .form-select.is-invalid{
+  border-color: rgba(239,68,68,0.55) !important;
+  background-color: rgba(254,242,242,0.6);
+}
+
+.producto-card .form-control.is-invalid:focus{
+  box-shadow: 0 0 0 0.25rem rgba(239,68,68,0.15);
+}
+
 
 /* ========== Badge categoría (productos.html y producto-ver.html) ========== */
 .producto-badge{
@@ -218,6 +244,53 @@
   justify-content:center;
   color: rgba(71,85,105,0.85);
   background: rgba(255,255,255,0.25);
+}
+
+/* ========== Preview de foto (producto-form.html) ========== */
+.pf-foto-row{
+  display:flex;
+  align-items:flex-start;
+  gap:16px;
+}
+
+.pf-foto-preview{
+  width: 96px;
+  height: 96px;
+  flex: 0 0 96px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px dashed rgba(148,163,184,0.55);
+  background: rgba(255,255,255,0.5);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.pf-foto-img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+}
+
+.pf-foto-placeholder{
+  color: rgba(100,116,139,0.7);
+  font-size: 1.4rem;
+}
+
+.producto-card .invalid-feedback{
+  color: #dc2626;
+  font-size: 0.82rem;
+  margin-top: 0.35rem;
+}
+
+.producto-card .form-control.is-invalid{
+  border-color: rgba(220,38,38,0.55) !important;
+}
+
+@media (max-width: 480px){
+  .pf-foto-row{ flex-direction: column; align-items: stretch; }
+  .pf-foto-preview{ width: 100%; height: 140px; flex-basis: auto; }
 }
 
 /* ========== Detalle (producto-ver.html) ========== */
