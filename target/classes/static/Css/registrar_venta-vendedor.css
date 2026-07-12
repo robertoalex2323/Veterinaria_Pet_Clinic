@@ -1,0 +1,345 @@
+:root{
+  --vv-primary:#0d6efd;
+  --vv-text:#2b2f33;
+  --vv-muted:#6c757d;
+  --vv-card:#ffffff;
+  --vv-border:rgba(0,0,0,.08);
+  --vv-soft:rgba(13,110,253,.08);
+  --vv-success:#198754;
+  --vv-success-soft:rgba(25,135,84,.08);
+  --vv-danger:#dc3545;
+}
+
+#content{
+  padding: 18px 10px 40px;
+  color: var(--vv-text);
+}
+
+#content h2{
+  font-weight: 800;
+}
+
+.card{
+  border: 1px solid var(--vv-border);
+  border-radius: 14px;
+  background: var(--vv-card);
+  box-shadow: 0 8px 24px #d1d3e2;
+}
+
+.card-header{
+  background: linear-gradient(135deg, rgba(13,110,253,.12), rgba(41,128,185,.10));
+  border-bottom: 1px solid var(--vv-border);
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  padding: .9rem 1.1rem;
+}
+
+.card-header strong{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+
+form#ventaForm{
+  padding: 8px 2px 2px;
+}
+
+.form-label{
+  font-weight: 600;
+  color: var(--vv-text);
+}
+
+.form-control{
+  border-radius: 10px;
+  border: 1px solid #e3e6f0;
+  padding: .65rem .8rem;
+}
+
+.form-control:focus{
+  border-color: rgba(13,110,253,.55);
+  box-shadow: 0 0 0 .18rem rgba(13,110,253,.18);
+}
+
+.alert{
+  border-radius: 12px;
+}
+
+.btn{
+  border-radius: 10px;
+  padding: .6rem .9rem;
+}
+
+.btn-primary{
+  box-shadow: 0 10px 25px rgba(13,110,253,.18);
+}
+
+.d-none input{
+  /* ocultos del JS: no interferir */
+}
+
+/* Ajustes generales para tabla/controles dentro de la vista (si existen en el contenido del fragment) */
+.table{
+  border-radius: 12px;
+  overflow:hidden;
+  border: 1px solid var(--vv-border);
+  background:#fff;
+}
+
+.table thead th{
+  background: rgba(13,110,253,.08);
+  color: var(--vv-text);
+  font-weight: 700;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  padding: .75rem .75rem;
+}
+
+.table tbody td{
+  padding: .7rem .75rem;
+  vertical-align: middle;
+}
+
+.badge{
+  border-radius: 999px;
+  padding: .4rem .65rem;
+  font-weight: 700;
+}
+
+/* Checkbox de selección de productos */
+input[type="checkbox"]{
+  transform: translateY(1px);
+}
+
+/* ============ Autocompletado de cliente ============ */
+.autocomplete-wrap{
+  position: relative;
+}
+
+.autocomplete-list{
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--vv-card);
+  border: 1px solid var(--vv-border);
+  border-radius: 12px;
+  box-shadow: 0 14px 30px rgba(15,23,42,.14);
+  padding: 6px;
+}
+
+.autocomplete-item{
+  display:flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: .55rem .7rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active{
+  background: var(--vv-soft);
+}
+
+.autocomplete-item .ac-nombre{
+  font-weight: 600;
+  color: var(--vv-text);
+}
+
+.autocomplete-item .ac-meta{
+  font-size: .78rem;
+  color: var(--vv-muted);
+}
+
+.autocomplete-empty{
+  padding: .6rem .7rem;
+  font-size: .85rem;
+  color: var(--vv-muted);
+  text-align: center;
+}
+
+/* ============ Buscador de productos ============ */
+.product-search{
+  position: relative;
+  min-width: 240px;
+}
+
+.product-search i{
+  position: absolute;
+  left: .75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--vv-muted);
+  font-size: .85rem;
+  pointer-events: none;
+}
+
+.product-search .form-control{
+  padding-left: 2.1rem;
+  border-radius: 999px;
+}
+
+/* ============ Fila de producto ============ */
+.producto-thumb{
+  width:48px; height:48px; border-radius:12px; overflow:hidden;
+  background:rgba(13,110,253,.06); border:1px solid rgba(0,0,0,.06);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+
+.producto-row{
+  transition: background-color .15s ease;
+}
+
+.producto-row.is-selected{
+  background: var(--vv-success-soft);
+}
+
+.producto-row.is-selected td{
+  border-color: rgba(25,135,84,.18);
+}
+
+.row-subtotal{
+  color: var(--vv-muted);
+}
+
+.producto-row.is-selected .row-subtotal{
+  color: var(--vv-success);
+}
+
+/* ============ Stepper de cantidad ============ */
+.qty-stepper{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  justify-content:center;
+}
+
+.qty-stepper .cantidad-input{
+  width: 60px;
+  text-align:center;
+  padding: .45rem .3rem;
+  -moz-appearance: textfield;
+}
+
+.qty-stepper .cantidad-input::-webkit-outer-spin-button,
+.qty-stepper .cantidad-input::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-btn{
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid #e3e6f0;
+  background: #f7f8fc;
+  color: var(--vv-text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: .75rem;
+  cursor: pointer;
+  transition: background .12s ease, transform .05s ease;
+}
+
+.qty-btn:hover{
+  background: var(--vv-soft);
+}
+
+.qty-btn:active{
+  transform: scale(.94);
+}
+
+.qty-btn:disabled,
+.qty-stepper.disabled .qty-btn,
+.qty-stepper.disabled .cantidad-input{
+  opacity: .45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============ Resumen fijo de la venta ============ */
+.venta-resumen{
+  position: sticky;
+  bottom: -1px;
+  margin-top: 1.25rem;
+  background: var(--vv-card);
+  border: 1px solid var(--vv-border);
+  border-radius: 14px;
+  padding: .9rem 1.1rem;
+  display:flex;
+  flex-wrap: wrap;
+  align-items:center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 -6px 20px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.05);
+}
+
+.venta-resumen-info{
+  display:flex;
+  align-items:center;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.venta-resumen-item{
+  display:flex;
+  flex-direction:column;
+  gap: 2px;
+}
+
+.venta-resumen-item .label{
+  font-size: .74rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--vv-muted);
+  font-weight: 700;
+}
+
+.venta-resumen-item .value{
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--vv-text);
+}
+
+.venta-resumen-total .value{
+  font-size: 1.4rem;
+  color: var(--vv-primary);
+}
+
+#btnGuardarVenta:disabled{
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+/* Fila resaltada temporalmente cuando no hay coincidencias */
+#sinResultados td{
+  border-top: none;
+}
+
+/* Responsive */
+@media (max-width: 768px){
+  .product-search{ min-width: 100%; width: 100%; }
+}
+
+@media (max-width: 576px){
+  #content{ padding: 14px 6px 30px; }
+  .card-header{ padding: .8rem .9rem; }
+  .form-label{ font-size: .95rem; }
+  .btn{ width: 100%; }
+  .venta-resumen{
+    flex-direction: column;
+    align-items: stretch;
+    position: static;
+  }
+  .venta-resumen-info{
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .venta-resumen #btnGuardarVenta{
+    width: 100%;
+  }
+}

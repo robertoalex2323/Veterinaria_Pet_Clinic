@@ -235,33 +235,39 @@ public class VendedorVentaController {
     }
 
     @GetMapping("/historial")
-public String historialVentas(
-        @RequestParam(required = false) String fechaInicio,
-        @RequestParam(required = false) String fechaFin,
-        Model model) {
+    public String historialVentas(
+            @RequestParam(required = false) String fechaInicio,
+            @RequestParam(required = false) String fechaFin,
+            Model model) {
 
-    List<Venta> ventas;
+        List<Venta> ventas;
 
-    if (fechaInicio != null && !fechaInicio.isBlank()
-            && fechaFin != null && !fechaFin.isBlank()) {
+        if (fechaInicio != null && !fechaInicio.isBlank()
+                && fechaFin != null && !fechaFin.isBlank()) {
 
-        LocalDateTime inicio = LocalDate.parse(fechaInicio)
-                .atStartOfDay();
+            LocalDateTime inicio = LocalDate.parse(fechaInicio)
+                    .atStartOfDay();
 
-        LocalDateTime fin = LocalDate.parse(fechaFin)
-                .atTime(23, 59, 59);
+            LocalDateTime fin = LocalDate.parse(fechaFin)
+                    .atTime(23, 59, 59);
+            ventas = ventaService.listarVentas().stream()
+                    .filter(v -> v.getFecha() != null
+                            && !v.getFecha().isBefore(inicio)
+                            && v.getFecha().isBefore(fin))
+                    .collect(java.util.stream.Collectors.toList());
 
-        ventas = ventaService.buscarVentasPorFecha(inicio, fin);
+        } else {
+            ventas = ventaService.listarVentas();
+        }
 
-    } else {
-        ventas = ventaService.listarTodasLasVentas();
+
+
+        model.addAttribute("ventas", ventas);
+        model.addAttribute("fechaInicio", fechaInicio);
+        model.addAttribute("fechaFin", fechaFin);
+
+        return "Vendedor/historial";
     }
-
-    model.addAttribute("ventas", ventas);
-    model.addAttribute("fechaInicio", fechaInicio);
-    model.addAttribute("fechaFin", fechaFin);
-
-    return "Vendedor/historial";
 }
-}
+
 

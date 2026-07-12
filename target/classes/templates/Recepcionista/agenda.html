@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::div#content}, 'agenda')}">
+<head>
+    <title>Agenda Interactiva - Recepcionista</title>
+    <link rel="stylesheet" th:href="@{/css/agenda.css}">
+</head>
+
+<body>
+    <div id="content">
+        <!-- Encabezado con título y botón -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0"><i class="fas fa-calendar-day text-primary"></i> Agenda Veterinaria</h2>
+                <p class="text-muted mb-0">Vista de calendario mensual y programación diaria</p>
+            </div>
+            <div>
+                <a href="/recepcionista/citas/nueva" class="btn btn-primary shadow-sm">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> Nueva Cita
+                </a>
+            </div>
+        </div>
+
+        <!-- Fecha seleccionada (para JS) -->
+        <input type="hidden" id="selectedDate" th:value="${fecha}">
+
+        <div class="agenda-container">
+            <!-- CALENDARIO -->
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <button id="prevMonth" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h4 id="monthYearDisplay" class="mb-0">Mes Año</h4>
+                    <button id="nextMonth" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="calendar-days-row">
+                    <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div>
+                    <div>Jue</div><div>Vie</div><div>Sáb</div>
+                </div>
+
+                <div id="calendarGrid" class="calendar-grid">
+                    <!-- Se llena con JS -->
+                </div>
+            </div>
+
+            <!-- LISTA DE CITAS DEL DÍA -->
+            <div class="schedule-section">
+                <div class="schedule-header d-flex justify-content-between align-items-center">
+                    <h5>Citas del Día</h5>
+                    <span class="badge bg-primary rounded-pill" th:text="|${#lists.size(citas)} citas|">0</span>
+                </div>
+                <p class="text-muted small fw-bold mb-3">
+                    <i class="far fa-calendar-check text-primary"></i>
+                    <span th:text="${#temporals.format(fecha, 'EEEE, d MMMM yyyy', new java.util.Locale('es', 'ES'))}">Fecha</span>
+                </p>
+
+                <div class="schedule-list">
+                    <!-- ====== CITAS ====== -->
+                    <div th:each="cita : ${citas}"
+                         class="agenda-cita-card"
+                         th:classappend="${cita.estado != null and cita.estado == 'CANCELADA'} ? 'cita-cancelada' : (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')} ? 'cita-vacunacion' : (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')} ? 'cita-emergencia' : 'cita-consulta-general'))">
+
+                        <div class="cita-time">
+                            <i class="far fa-clock"></i>
+                            <strong th:text="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'HH:mm') : '--:--'}">10:00</strong>
+                            <span class="badge ms-2"
+                                  th:classappend="${cita.estado != null and cita.estado == 'CANCELADA'} ? 'cita-cancelada-badge' : (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'vacun')} ? 'cita-vacunacion-badge' : (${cita.motivo != null and #strings.containsIgnoreCase(cita.motivo, 'emerg')} ? 'cita-emergencia-badge' : 'cita-consulta-general-badge'))"
+                                  th:text="${cita.estado != null ? cita.estado : 'DESCONOCIDO'}"
+                                  style="font-size: 0.6rem;">ESTADO</span>
+                        </div>
+
+                        <!-- Botón Registrar Pago (solo si está AGENDADA) -->
+                        <div class="mt-2 text-end" th:if="${cita.estado != null and cita.estado == 'AGENDADA'}">
+                            <a th:if="${cita.pago == null}" th:href="@{/recepcionista/pagos/nuevo(citaId=${cita.id})}"
+                               class="btn btn-sm btn-success"
+                               style="font-size: 0.7rem;">
+                                <i class="fas fa-money-bill-wave me-1"></i>
+                                Pagar esta cita
+                            </a>
+
+                            <button th:if="${cita.pago != null}" type="button" class="btn btn-sm btn-secondary" disabled
+                                    style="font-size: 0.7rem;">
+                                <i class="fas fa-lock me-1"></i>
+                                Usted ya pagó
+                            </button>
+                        </div>
+
+
+                        <div class="cita-details">
+                            <p class="mb-1"><strong>Paciente:</strong>
+                                <span th:text="${cita.mascota != null ? cita.mascota.nombre : 'Sin mascota'}"></span>
+                                <span th:text="${cita.mascota != null and cita.mascota.especie != null ? ' (' + cita.mascota.especie + ')' : ''}"></span>
+                            </p>
+                            <p class="mb-1"><strong>Dueño:</strong>
+                                <span th:text="${(cita.mascota != null and cita.mascota.cliente != null) ? cita.mascota.cliente.nombre : 'Sin dueño'}"></span>
+                            </p>
+                            <p th:if="${cita.motivo != null and !#strings.isEmpty(cita.motivo)}" class="mb-0 small text-muted">
+                                <i class="fas fa-stethoscope text-primary opacity-50"></i>
+                                <span th:text="${cita.motivo}">Revisión</span>
+                            </p>
+                        </div>
+
+                        <!-- Botón Cancelar (solo si está AGENDADA) -->
+                        <div class="mt-2 text-end" th:if="${cita.estado != null and cita.estado == 'AGENDADA'}">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    style="font-size: 0.7rem;"
+                                    th:onclick="'abrirModalCancelarCita(' + ${cita.id} + ')'">
+                                Cancelar Cita
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ====== SIN CITAS ====== -->
+                    <div th:if="${#lists.isEmpty(citas)}" class="empty-schedule text-center py-5">
+                        <i class="fas fa-mug-hot fa-2x text-muted mb-2"></i>
+                        <h6 class="text-muted">Día libre</h6>
+                        <p class="small text-muted">No hay citas programadas para esta fecha.</p>
+                        <a href="/recepcionista/citas/nueva" class="btn btn-sm btn-primary mt-2">Agendar Cita</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div th:replace="~{Recepcionista/fragments/modal-cancelar-cita :: modalCancelarCita}"></div>
+
+        <script th:src="@{/js/agenda.js}"></script>
+        <script th:src="@{/js/citas.js}"></script>
+
+    </div>
+</body>
+
+</html>
+

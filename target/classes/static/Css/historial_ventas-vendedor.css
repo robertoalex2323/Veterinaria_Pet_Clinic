@@ -1,0 +1,77 @@
+:root{
+  --vv-primary:#0d6efd;
+  --vv-border:rgba(0,0,0,.08);
+}
+
+#content{
+  padding:18px 10px 40px;
+  color:#2b2f33;
+}
+
+.card{
+  border:1px solid var(--vv-border);
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 8px 24px rgba(0,0,0,.04);
+}
+
+.card-header{
+  border-top-left-radius:14px;
+  border-top-right-radius:14px;
+  background:#f8f9fa;
+  font-weight:600;
+}
+
+.form-control{
+  border-radius:10px;
+  min-height:42px;
+}
+
+.btn{
+  border-radius:10px;
+}
+
+.table td,
+.table th{
+  vertical-align:middle;
+}
+
+.table tbody tr:hover{
+  background:#f8fbff;
+}
+
+.btn-group .btn{
+  min-width:40px;
+}
+
+.pagination .page-link{
+  border-radius:10px;
+  margin:0 2px;
+}
+
+.pagination .active .page-link{
+  font-weight:600;
+}
+
+.alert{
+  border-radius:12px;
+}
+
+@media (max-width:768px){
+
+  #content{
+    padding:10px;
+  }
+
+  .btn{
+    width:100%;
+  }
+
+  .table{
+    font-size:.9rem;
+  }
+
+  .card-body .row > div{
+    margin-bottom:10px;
+  }
+}

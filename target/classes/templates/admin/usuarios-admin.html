@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sildebar_admin::layout(~{::content}, 'usuarios')}">
+<head>
+    <title>Usuarios - Administrador</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-user-shield text-primary"></i> Usuarios</h2>
+            <p class="text-muted mb-0">Listado de usuarios registrados en el sistema</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Usuarios</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Fecha Creacion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="usuario : ${usuarios}">
+                            <td th:text="${usuario.id}">1</td>
+                            <td class="fw-bold" th:text="${usuario.username}">admin</td>
+                            <td th:text="${usuario.nombre}">Administrador</td>
+                            <td th:text="${usuario.email != null ? usuario.email : '-'}">admin@veterinaria.com</td>
+                            <td><span class="badge bg-info" th:text="${usuario.rol}">ADMIN</span></td>
+                            <td>
+                                <span class="badge" th:classappend="${usuario.activo == true} ? 'bg-success' : 'bg-danger'"
+                                      th:text="${usuario.activo == true} ? 'Activo' : 'Inactivo'">Activo</span>
+                            </td>
+                            <td th:text="${usuario.fechaCreacion != null ? #temporals.format(usuario.fechaCreacion, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(usuarios)}">
+                            <td colspan="7" class="text-center text-muted py-4">No hay usuarios registrados.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

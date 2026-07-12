@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'producto')}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ver Producto - Vendedor</title>
+    <link rel="stylesheet" th:href="@{/css/producto-vendedor.css}" />
+</head>
+
+<body>
+<div id="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-eye text-primary"></i> Detalle del Producto</h2>
+            <p class="text-muted mb-0">Información del producto</p>
+        </div>
+        <div>
+            <a class="btn btn-outline-secondary shadow-sm" th:href="@{/vendedor/productos}">
+                <i class="fas fa-arrow-left me-2"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${producto == null}" class="alert alert-warning">
+        Producto no encontrado.
+    </div>
+
+    <div th:if="${producto != null}" class="card shadow-sm producto-card">
+        <div class="card-body p-4">
+            <div class="row g-4">
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="text-muted small">Nombre</div>
+                        <div class="producto-title fw-bold fs-5" th:text="${producto.nombre}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">Categoría</div>
+                        <span class="badge producto-badge" th:text="${producto.categoria}"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="text-muted small">Precio</div>
+                        <div class="fw-bold fs-4 pc-money" th:text="${producto.precio != null ? producto.precio : '0'}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">Stock</div>
+                        <div class="fw-bold fs-4" th:text="${producto.stock} != null ? ${producto.stock} : '0'"></div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="producto-detail-image mb-3">
+                        <div class="text-muted small mb-2 d-flex align-items-center gap-2">
+                            <i class="fas fa-image"></i> Foto
+                        </div>
+
+                        <img class="producto-detail-img"
+                             th:if="${producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                             th:src="${producto.foto}"
+                             alt="Foto del producto" />
+
+                    </div>
+
+                    <div class="text-muted small mb-2">Descripción</div>
+                    <div class="producto-desc" th:text="${producto.descripcion != null ? producto.descripcion : ''}"></div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4 producto-actions">
+                        <a class="btn btn-outline-secondary shadow-sm" th:href="@{/vendedor/productos/editar/{id}(id=${producto.id})}">
+                            <i class="fas fa-pencil-alt me-2"></i> Editar
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
+

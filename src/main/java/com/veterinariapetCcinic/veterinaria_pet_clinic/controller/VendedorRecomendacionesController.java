@@ -80,16 +80,21 @@ public class VendedorRecomendacionesController {
         String prefQ = pref == null ? "" : pref.trim().toLowerCase(Locale.ROOT);
 
         // Promos activas del sistema (fuente 1 de recomendaciones)
-        List<Promocion> activas = promocionService.listarActivas();
+        List<Promocion> activas = promocionService.getPromocionesActivas();
+
 
         // Filtrado opcional por texto: si no hay coincidencia, hacemos fallback con productos activos.
         List<Map<String, Object>> items = new ArrayList<>();
 
         for (Promocion promo : (activas != null ? activas : new ArrayList<Promocion>())) {
-            if (promo == null || promo.getProducto() == null) continue;
+            if (promo == null) continue;
 
-            Producto p = promo.getProducto();
-            if (p.getId() == null) continue;
+            Long productoId = promo.getProductoId();
+            if (productoId == null) continue;
+
+            Producto p = productoService.buscarPorId(productoId);
+            if (p == null || p.getId() == null) continue;
+
 
             String nombre = p.getNombre() == null ? "" : p.getNombre().toLowerCase(Locale.ROOT);
             String categoria = p.getCategoria() == null ? "" : p.getCategoria().toLowerCase(Locale.ROOT);
@@ -123,6 +128,7 @@ public class VendedorRecomendacionesController {
             BigDecimal descuento = promo.getDescuento();
             if (descuento == null) descuento = BigDecimal.ZERO;
 
+
             item.put("razon", "Producto con promoción activa (descuento: " + descuento.toPlainString() + ").");
 
             items.add(item);
@@ -132,10 +138,15 @@ public class VendedorRecomendacionesController {
         if (items.isEmpty() && activas != null && !activas.isEmpty()) {
             items = new ArrayList<>();
             for (Promocion promo : activas) {
-                if (promo == null || promo.getProducto() == null || promo.getProducto().getId() == null) continue;
-                Producto p = promo.getProducto();
+                if (promo == null) continue;
+                Long productoId = promo.getProductoId();
+                if (productoId == null) continue;
+
+                Producto p = productoService.buscarPorId(productoId);
+                if (p == null || p.getId() == null) continue;
 
                 BigDecimal precio = p.getPrecio();
+
                 String precioFormateado = precio == null ? "-" : precio.toPlainString();
                 BigDecimal descuento = promo.getDescuento() == null ? BigDecimal.ZERO : promo.getDescuento();
 

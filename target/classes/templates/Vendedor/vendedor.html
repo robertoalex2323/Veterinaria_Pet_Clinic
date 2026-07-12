@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Ventas - Pet Clinic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/vendedor.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}" />
+</head>
+<body>
+
+    <audio id="audioConfirmacion" preload="auto">
+        <source th:src="@{/audio/notification-sound.mp3}" type="audio/mpeg">
+    </audio>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img th:src="@{/Imagen/Iconos/logo.png}" alt="Logo Pet Clinic">
+            </div>
+            <div class="sidebar-title">
+                <h3>Pet Clinic</h3>
+                <p>Portal de Ventas</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <div class="nav-item active" data-tab="dashboard">
+                <i class="fas fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item" data-tab="new-sale">
+                <i class="fas fa-cart-plus"></i>
+                <span>Registrar Venta</span>
+            </div>
+            <div class="nav-item" data-tab="history">
+                <i class="fas fa-clock-rotate-left"></i>
+                <span>Historial de Ventas</span>
+            </div>
+            <div class="nav-item" data-tab="promotions">
+                <i class="fas fa-tags"></i>
+                <span>Promociones</span>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="user-info">
+                    <div class="name">Vendedor</div>
+                    <div class="role">Atención al Cliente</div>
+                </div>
+            </div>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-arrow-right-from-bracket"></i>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">Panel de Ventas</h1>
+            <div class="date-display" id="currentDate">--</div>
+        </div>
+
+        <!-- DASHBOARD PANEL -->
+<div id="dashboardPanel" class="panel-container active">
+    
+    <!-- TARJETAS CON TENDENCIAS -->
+    <div class="stats-grid-modern" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
+        
+        <!-- Tarjeta 1: Ventas de Hoy -->
+        <div class="stat-card-trend" style="background: white; padding: 1.25rem; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #eef2f6; transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden;"
+             onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'; this.style.transform='translateY(-2px)';" 
+             onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.06)'; this.style.transform='translateY(0)';"
+             onclick="showPanel('new-sale')">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.7rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fas fa-sack-dollar" style="color: #059669; margin-right: 0.3rem;"></i> Ventas de Hoy
+                        </span>
+                        <span style="background: #dcfce7; color: #059669; font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 12px;">
+                            <i class="fas fa-arrow-up"></i> +14%
+                        </span>
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #0f172a; margin-top: 0.3rem;" id="todaySales">S/ 0.00</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
+                       
+                        <span style="font-size: 0.6rem; color: #94a3b8; background: #f1f5f9; padding: 0.1rem 0.5rem; border-radius: 10px;">
+                            <i class="fas fa-clock"></i> Hoy
+                        </span>
+                    </div>
+                </div>
+                <div style="background: #ecfdf5; border-radius: 10px; padding: 0.5rem 0.6rem; display: flex; flex-direction: column; align-items: center;">
+                    <i class="fas fa-sack-dollar" style="color: #059669; font-size: 1.1rem;"></i>
+                    <span style="font-size: 0.5rem; color: #059669; font-weight: 600; margin-top: 0.1rem;">Meta</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.6rem; color: #94a3b8;">
+                    <i class="fas fa-arrow-trend-up" style="color: #059669;"></i> +12% vs ayer
+                </span>
+                <span style="font-size: 0.6rem; color: #94a3b8;">
+                    <i class="fas fa-rotate-right"></i> Actualizado
+                </span>
+            </div>
+        </div>
+
+        <!-- Tarjeta 2: Operaciones -->
+        <div class="stat-card-trend" style="background: white; padding: 1.25rem; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #eef2f6; transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden;"
+             onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'; this.style.transform='translateY(-2px)';" 
+             onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.06)'; this.style.transform='translateY(0)';"
+             onclick="showPanel('history')">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.7rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fas fa-receipt" style="color: #3b82f6; margin-right: 0.3rem;"></i> Operaciones
+                        </span>
+                        <span style="background: #dbeafe; color: #3b82f6; font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 12px;">
+                            <i class="fas fa-arrow-up"></i> +8%
+                        </span>
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #0f172a; margin-top: 0.3rem;" id="todayOperations">0</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
+                        <span style="font-size: 0.65rem; color: #94a3b8;">
+                            <i class="fas fa-arrow-trend-up"></i> Tendencia al alza
+                        </span>
+                    </div>
+                </div>
+                <div style="background: #eff6ff; border-radius: 10px; padding: 0.5rem 0.6rem; display: flex; flex-direction: column; align-items: center;">
+                    <i class="fas fa-receipt" style="color: #3b82f6; font-size: 1.1rem;"></i>
+                    <span style="font-size: 0.5rem; color: #3b82f6; font-weight: 600; margin-top: 0.1rem;">Flujo</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.6rem; color: #94a3b8;">
+                    <i class="fas fa-arrow-trend-up" style="color: #3b82f6;"></i> +5 nuevas hoy
+                </span>
+                <span style="font-size: 0.6rem; color: #94a3b8;">
+                    <i class="fas fa-rotate-right"></i> En vivo
+                </span>
+            </div>
+        </div>
+
+        <!-- Tarjeta 3: Clientes Atendidos -->
+        <div class="stat-card-trend" style="background: white; padding: 1.25rem; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #eef2f6; transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden;"
+             onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'; this.style.transform='translateY(-2px)';" 
+             onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.06)'; this.style.transform='translateY(0)';"
+             onclick="showPanel('history')">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.7rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fas fa-users" style="color: #f59e0b; margin-right: 0.3rem;"></i> Clientes
+                        </span>
+                        <span style="background: #fef3c7; color: #d97706; font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 12px;">
+                            <i class="fas fa-arrow-up"></i> +22%
+                        </span>
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #0f172a; margin-top: 0.3rem;" id="todayClients">0</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
+                        <span style="font-size: 0.65rem; color: #94a3b8;">
+                            <i class="fas fa-user-plus"></i> Nuevos clientes
+                        </span>
+                    </div>
+                </div>
+                <div style="background: #fffbeb; border-radius: 10px; padding: 0.5rem 0.6rem; display: flex; flex-direction: column; align-items: center;">
+                    <i class="fas fa-users" style="color: #f59e0b; font-size: 1.1rem;"></i>
+                    <span style="font-size: 0.5rem; color: #d97706; font-weight: 600; margin-top: 0.1rem;">Fidelidad</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.6rem; color: #94a3b8;">
+                    <i class="fas fa-arrow-trend-up" style="color: #f59e0b;"></i> +3 vs ayer
+                </span>
+                <span style="font-size: 0.6rem; color: #94a3b8;">
+                    <i class="fas fa-clock"></i> Hoy
+                </span>
+            </div>
+        </div>
+
+        <!-- Tarjeta 4: Promociones Activas -->
+        <div class="stat-card-trend" style="background: white; padding: 1.25rem; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #eef2f6; transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden;"
+             onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'; this.style.transform='translateY(-2px)';" 
+             onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.06)'; this.style.transform='translateY(0)';"
+             onclick="showPanel('promotions')">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.7rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fas fa-tags" style="color: #8b5cf6; margin-right: 0.3rem;"></i> Promociones
+                        </span>
+                        <span style="background: #ede9fe; color: #7c3aed; font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 12px;">
+                            <i class="fas fa-clock"></i> 2 por vencer
+                        </span>
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #0f172a; margin-top: 0.3rem;" id="activePromos">3</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
+                        <span style="font-size: 0.65rem; color: #94a3b8;">
+                            <i class="fas fa-tag"></i> Activas hoy
+                        </span>
+                    </div>
+                </div>
+                <div style="background: #f5f3ff; border-radius: 10px; padding: 0.5rem 0.6rem; display: flex; flex-direction: column; align-items: center;">
+                    <i class="fas fa-tags" style="color: #8b5cf6; font-size: 1.1rem;"></i>
+                    <span style="font-size: 0.5rem; color: #7c3aed; font-weight: 600; margin-top: 0.1rem;">Ofertas</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.6rem; color: #94a3b8;">
+                    <i class="fas fa-arrow-trend-down" style="color: #8b5cf6;"></i> 2 por vencer
+                </span>
+                <span style="font-size: 0.6rem; color: #94a3b8;">
+                    <i class="fas fa-rotate-right"></i> Actualizado
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE BIENVENIDA CON ACCIONES RÁPIDAS -->
+    <div class="glass-panel panel-body" style="padding: 1.25rem 1.5rem; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 14px; border: 1px solid #eef2f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+        <div>
+            <h3 style="font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; color: #0f172a;">
+                <i class="fas fa-paw" style="color: #059669;"></i> 
+                <span id="greetingMessage">¡Bienvenido, Vendedor!</span>
+            </h3>
+            <p style="color: #64748b; margin-top: 0.2rem; font-size: 0.85rem;">
+                <i class="fas fa-chart-simple" style="color: #059669; margin-right: 0.3rem;"></i>
+                Gestiona tus ventas, consulta productos y revisa promociones activas.
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="showPanel('new-sale')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.85rem; background: linear-gradient(135deg, #059669, #047857); color: white; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 10px rgba(5,150,105,0.2);"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 20px rgba(5,150,105,0.3)';" 
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(5,150,105,0.2)';">
+                <i class="fas fa-plus"></i> Nueva Venta
+            </button>
+            <button class="btn btn-outline" onclick="showPanel('history')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.85rem; background: white; color: #1e293b; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.3s ease;"
+                    onmouseover="this.style.borderColor='#059669'; this.style.color='#059669';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#1e293b';">
+                <i class="fas fa-clock-rotate-left"></i> Historial
+            </button>
+            <button class="btn btn-outline" onclick="showPanel('promotions')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.85rem; background: white; color: #1e293b; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.3s ease;"
+                    onmouseover="this.style.borderColor='#8b5cf6'; this.style.color='#8b5cf6';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#1e293b';">
+                <i class="fas fa-tags"></i> Promociones
+            </button>
+        </div>
+    </div>
+
+    <!-- GRÁFICA DE VENTAS -->
+    <div class="glass-panel chart-container" style="margin-top: 1.5rem; border-radius: 14px; border: 1px solid #eef2f6; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+        <div class="panel-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #eef2f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <h2 style="font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; color: #0f172a;">
+                <i class="fas fa-chart-line" style="color: #059669;"></i> Ventas - Últimos 7 Días
+            </h2>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span style="font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 0.3rem;">
+                    <i class="fas fa-calendar-week"></i> Tendencia de ingresos
+                </span>
+                <span style="font-size: 0.65rem; color: #94a3b8; background: #f1f5f9; padding: 0.15rem 0.6rem; border-radius: 12px;">
+                    <i class="fas fa-rotate-right"></i> Actualizado
+                </span>
+            </div>
+        </div>
+        <div class="panel-body" style="padding: 1.5rem;">
+            <div style="position: relative; height: 280px;">
+                <canvas id="salesChart"></canvas>
+            </div>
+            <div id="chartStats" style="margin-top: 1.25rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;"></div>
+        </div>
+    </div>
+</div>
+
+<<!-- NEW SALE PANEL -->
+<div id="new-salePanel" class="panel-container">
+    <div class="glass-panel" style="padding: 2rem; max-width: 950px; margin: 0 auto;">
+        <div class="panel-header" style="padding: 0.5rem 0 1rem 0; border-bottom: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.3rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-cart-plus" style="color: var(--primary-color);"></i> Registrar Nueva Venta
+            </h2>
+        </div>
+        <div class="panel-body" style="padding: 0;">
+
+            <!-- FILA 1: Producto + Cantidad -->
+            <div style="display: flex; gap: 1.5rem; align-items: end; margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                    <label for="saleProduct" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 0.25rem;">
+                        <i class="fas fa-box"></i> Producto o Servicio
+                    </label>
+                    <select id="saleProduct" onchange="updatePrice()" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; height: 42px; background: white;">
+                        <option value="" data-price="0" data-stock="0" data-id="">Seleccione un producto...</option>
+                        <optgroup label="--Alimentos--">
+                            <option value="ricocan_40kg" data-price="150.00" data-stock="25" data-id="1">Alimento Ricocan para Perro 40kg</option>
+                            <option value="purina_gato_40kg" data-price="120.00" data-stock="20" data-id="2">Alimento Purina para Gato 40kg</option>
+                            <option value="ricocan_10kg" data-price="40.00" data-stock="15" data-id="3">Alimento Ricocan para Perro 10kg</option>
+                            <option value="purina_gato_10kg" data-price="30.00" data-stock="12" data-id="4">Alimento Purina para Gato 10kg</option>
+                        </optgroup>
+                        <optgroup label="--Antipulgas--">
+                            <option value="bravecto" data-price="20.00" data-stock="15" data-id="5">Antipulgas Bravecto</option>
+                            <option value="simparica" data-price="25.00" data-stock="20" data-id="6">Antipulgas Simparica</option>
+                            <option value="shampoo_antipulgas" data-price="32.00" data-stock="35" data-id="7">Shampoo Antipulgas</option>
+                        </optgroup>
+                        <optgroup label="--Accesorios--">
+                            <option value="correa_perro" data-price="25.00" data-stock="30" data-id="8">Correa para Perros</option>
+                            <option value="correa_gato" data-price="20.00" data-stock="20" data-id="9">Correa para Gatos</option>
+                            <option value="juguete" data-price="15.00" data-stock="40" data-id="10">Juguete Mordedor</option>
+                            <option value="arena" data-price="30.00" data-stock="50" data-id="11">Arena Sanitaria</option>
+                            <option value="cama_perro" data-price="120.00" data-stock="10" data-id="12">Cama para Perros</option>
+                            <option value="cama_gato" data-price="80.00" data-stock="15" data-id="13">Cama para Gatos</option>
+                            <option value="comedero" data-price="65.00" data-stock="12" data-id="14">Comedero Automático</option>
+                            <option value="bebedero" data-price="35.00" data-stock="15" data-id="15">Bebedero Automático</option>
+                        </optgroup>
+                        <optgroup label="--Servicios--">
+                            <option value="bano_pequeno" data-price="45.00" data-stock="999" data-id="16">Baño y Corte (Raza Pequeña)</option>
+                            <option value="bano_mediano" data-price="55.00" data-stock="999" data-id="17">Baño y Corte (Raza Mediana)</option>
+                            <option value="bano_grande" data-price="70.00" data-stock="999" data-id="18">Baño y Corte (Raza Grande)</option>
+                            <option value="esterilizacion_perro" data-price="210.00" data-stock="999" data-id="19">Esterilización para Perros</option>
+                            <option value="esterilizacion_gato" data-price="160.00" data-stock="999" data-id="20">Esterilización para Gatos</option>
+                            <option value="desparasitacion" data-price="30.00" data-stock="999" data-id="21">Desparasitación</option>
+                        </optgroup>
+                    </select>
+                    <div class="stock-indicator" id="stockIndicator" style="margin-top: 0.25rem; font-size: 0.75rem; padding: 0.15rem 0.4rem; color: #64748b;">Seleccione un producto</div>
+                    <input type="hidden" id="salePrice" value="0.00">
+                </div>
+                <div class="form-group" style="margin-bottom: 0; max-width: 140px;">
+                    <label for="saleQuantity" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 0.25rem;">
+                        <i class="fas fa-hashtag"></i> Cantidad
+                    </label>
+                    <input type="number" id="saleQuantity" value="1" min="1" oninput="calculateTotal(); validateQuantity()" style="width: 100%; padding: 0.5rem 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; height: 42px;">
+                    <small id="quantityError" class="error-text" style="display: none; font-size: 0.7rem;"></small>
+                </div>
+            </div>
+
+            <!-- FILA 2: Cliente + Teléfono -->
+            <div style="display: flex; gap: 1.5rem; align-items: end; margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0; flex: 2;">
+                    <label for="clientName" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 0.25rem;">
+                        <i class="fas fa-user"></i> Nombre del Cliente
+                    </label>
+                    <input type="text" id="clientName" placeholder="Nombre del Cliente" oninput="validateClientName()" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; height: 42px;">
+                    <small id="clientError" class="error-text" style="display: none; font-size: 0.7rem;"></small>
+                </div>
+                <div class="form-group" style="margin-bottom: 0; max-width: 180px;">
+                    <label for="clientPhone" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 0.25rem;">
+                        <i class="fas fa-phone"></i> Teléfono
+                    </label>
+                    <input type="text" id="clientPhone" placeholder="Teléfono" oninput="validateClientPhone()" style="width: 100%; padding: 0.5rem 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; height: 42px;">
+                    <small id="phoneError" class="error-text" style="display: none; font-size: 0.7rem;"></small>
+                </div>
+            </div>
+
+            <!-- FILA 3: Método de Pago -->
+            <div style="margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0; max-width: 250px;">
+                    <label for="paymentMethod" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 0.25rem;">
+                        <i class="fas fa-credit-card"></i> Método de Pago
+                    </label>
+                    <select id="paymentMethod" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; height: 42px; background: white;">
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta de Crédito/Débito">Tarjeta</option>
+                        <option value="Yape">Yape</option>
+                        <option value="Plin">Plin</option>
+                        <option value="Transferencia Bancaria">Transferencia</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Promociones aplicables -->
+            <div id="promocionesAplicables" style="margin-top: 0.25rem; margin-bottom: 0.75rem; display: none;">
+                <div style="background: #ecfdf5; border: 1px solid #86efac; border-radius: 6px; padding: 0.3rem 0.8rem;">
+                    <span style="font-size: 0.75rem; font-weight: 600; color: #059669;">
+                        <i class="fas fa-tag"></i> Promociones:
+                    </span>
+                    <div id="listaPromocionesAplicables" style="font-size: 0.75rem; color: #065f46; display: inline;"></div>
+                </div>
+            </div>
+
+            <!-- FILA 4: Totales + Botones -->
+            <div style="margin-top: 0.75rem; background: #f8fafc; padding: 0.75rem 1.25rem; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    <div>
+                        <span style="color: #64748b; font-size: 0.65rem; text-transform: uppercase;">Subtotal</span>
+                        <div style="font-size: 1rem; font-weight: 600;" id="saleSubtotal">S/ 0.00</div>
+                    </div>
+                    <div>
+                        <span style="color: #64748b; font-size: 0.65rem; text-transform: uppercase;">IGV</span>
+                        <div style="font-size: 1rem; font-weight: 600;" id="saleIgv">S/ 0.00</div>
+                    </div>
+                    <div>
+                        <span style="color: #dc2626; font-size: 0.65rem; text-transform: uppercase;">Desc.</span>
+                        <div style="font-size: 1rem; font-weight: 700; color: #dc2626;" id="saleDescuento">-S/ 0.00</div>
+                    </div>
+                    <div>
+                        <span style="color: #64748b; font-size: 0.65rem; text-transform: uppercase;">Total</span>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: #059669;" id="saleTotalWithIgv">S/ 0.00</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-sm" style="background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; padding: 0.3rem 1rem; font-size: 0.75rem; border-radius: 6px; cursor: pointer; height: 32px; display: inline-flex; align-items: center; gap: 0.3rem;" onclick="resetSaleForm()">
+                        <i class="fas fa-eraser"></i> Limpiar
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="processSale()" style="padding: 0.3rem 1rem; font-size: 0.75rem; border-radius: 6px; cursor: pointer; background: #059669; color: white; border: none; height: 32px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                        <i class="fas fa-check-double"></i> Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="historyPanel" class="panel-container">
+    <div class="glass-panel">
+        <div class="panel-header">
+            <h2><i class="fas fa-clock-rotate-left"></i> Historial de Ventas</h2>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-primary" onclick="loadHistoryFromAPI()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    <i class="fas fa-rotate-right"></i> Actualizar
+                </button>
+                <button class="btn btn-primary" onclick="exportarPDF()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    <i class="fas fa-file-pdf"></i> Exportar PDF
+                </button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="search-filters" style="margin-bottom: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+                    <div class="search-group">
+                        <label style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary);"><i class="fas fa-search"></i> Buscar por Cliente</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="searchClient" placeholder="Nombre del cliente..." class="search-input" style="flex: 1;">
+                            <button class="btn btn-primary" onclick="buscarVentas()" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                                <i class="fas fa-search"></i> Buscar
+                            </button>
+                            <button class="btn" onclick="limpiarFiltros()" style="padding: 0.5rem 1rem; background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0;">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="search-group">
+                        <label style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary);"><i class="fas fa-calendar"></i> Filtrar por Fecha</label>
+                        <input type="date" id="filterDate" class="search-input">
+                    </div>
+                    <div class="search-group" style="display: flex; align-items: end; gap: 0.5rem;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary);"><i class="fas fa-list"></i> Registros por página</label>
+                            <select id="pageSize" onchange="cambiarPageSize()" style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrapper" style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>N° Boleta</th>
+                            <th>Fecha y Hora</th>
+                            <th>Cliente</th>
+                            <th>Producto/Servicio</th>
+                            <th>Subtotal</th>
+                            <th>IGV</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTableBody">
+                        <tr><td colspan="9" style="text-align: center; color: var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> Cargando historial...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="paginationContainer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div style="color: #64748b; font-size: 0.9rem;">
+                    Mostrando <span id="paginaDesde">0</span> - <span id="paginaHasta">0</span> de <span id="totalRegistros">0</span> registros
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn btn-sm" onclick="irPagina(1)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0;" id="btnPrimera">
+                        <i class="fas fa-angles-left"></i>
+                    </button>
+                    <button class="btn btn-sm" onclick="irPagina(paginaActual - 1)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0;" id="btnAnterior">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span id="paginasNumeros" style="display: flex; gap: 0.25rem; align-items: center;"></span>
+                    <button class="btn btn-sm" onclick="irPagina(paginaActual + 1)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0;" id="btnSiguiente">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="btn btn-sm" onclick="irPagina(totalPaginas)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0;" id="btnUltima">
+                        <i class="fas fa-angles-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        <div id="promotionsPanel" class="panel-container">
+            <div class="glass-panel">
+                <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+                    <h2><i class="fas fa-tags"></i> Promociones Activas Ahora</h2>
+                    <button class="btn btn-primary" id="btnNewPromotion" onclick="openPromotionEditor()" style="padding:0.5rem 1rem; font-size:0.85rem;">
+                        <i class="fas fa-plus"></i> Nueva Promoción
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div id="promotionFormContainer" class="glass-panel" style="padding:1rem; margin-bottom:1rem; display:none;">
+                        <h3 id="promotionFormTitle" style="margin-bottom:0.75rem;">Nueva promoción</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                            <div>
+                                <label>Nombre</label>
+                                <input type="text" id="promoNombre" class="input-field" placeholder="Ej. 10% Alimentos" />
+                            </div>
+                            <div>
+                                <label>Tipo</label>
+                                <select id="promoTipo" class="input-field">
+                                    <option value="PORCENTAJE">PORCENTAJE</option>
+                                    <option value="FIJO">FIJO</option>
+                                    <option value="2X1">2X1</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Descuento</label>
+                                <input type="number" id="promoDescuento" class="input-field" min="0" step="0.01" placeholder="10" />
+                            </div>
+                            <div>
+                                <label>Categoría aplicable</label>
+                                <input type="text" id="promoCategoria" class="input-field" placeholder="Ej. Alimentos" />
+                            </div>
+                            <div>
+                                <label>ID de producto</label>
+                                <input type="number" id="promoProductoId" class="input-field" placeholder="Opcional" min="1" />
+                            </div>
+                            <div>
+                                <label>Monto mínimo</label>
+                                <input type="number" id="promoMontoMinimo" class="input-field" min="0" step="0.01" placeholder="Ej. 120" />
+                            </div>
+                            <div>
+                                <label>Días de semana</label>
+                                <input type="text" id="promoDiasSemana" class="input-field" placeholder="1,2,3 (Lun,Mar,Mié)" />
+                            </div>
+                            <div>
+                                <label>Activo</label>
+                                <select id="promoActivo" class="input-field">
+                                    <option value="true">Sí</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Fecha inicio</label>
+                                <input type="date" id="promoFechaInicio" class="input-field" />
+                            </div>
+                            <div>
+                                <label>Fecha fin</label>
+                                <input type="date" id="promoFechaFin" class="input-field" />
+                            </div>
+                            <div style="grid-column:1 / -1;">
+                                <label>Descripción</label>
+                                <textarea id="promoDescripcion" class="input-field" rows="2" placeholder="Detalle de la promoción"></textarea>
+                            </div>
+                        </div>
+                        <div style="margin-top:1rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
+                            <button class="btn btn-primary" onclick="savePromotion()" style="padding:0.55rem 1rem;">Guardar</button>
+                            <button class="btn btn-outline" onclick="cancelPromotionEdit()" style="padding:0.55rem 1rem;">Cancelar</button>
+                        </div>
+                        <input type="hidden" id="promoId" />
+                    </div>
+                    <div class="promos-list" id="promosList">
+                        <p style="color: var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> Cargando promociones...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="toast" class="alert-toast">
+        <i class="fas fa-circle-check"></i>
+        <span id="toastMessage">Operación exitosa</span>
+    </div>
+
+    <script th:src="@{/js/vendedor.js}"></script>
+</body>
+</html>
