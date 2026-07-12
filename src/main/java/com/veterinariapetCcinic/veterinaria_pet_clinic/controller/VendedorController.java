@@ -3,10 +3,11 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
+
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.VentaRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PromocionService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,16 +47,18 @@ public class VendedorController {
     private final VentaRepository ventaRepository;
     private final UsuarioRepository usuarioRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-
+    private final PromocionService promocionService;
 
     public VendedorController(ProductoService productoService,
                                VentaRepository ventaRepository,
                                UsuarioRepository usuarioRepository,
-                               BCryptPasswordEncoder passwordEncoder) {
+                               BCryptPasswordEncoder passwordEncoder,
+                               PromocionService promocionService) {
         this.productoService = productoService;
         this.ventaRepository = ventaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.promocionService = promocionService;
     }
 
 
@@ -98,8 +101,9 @@ public class VendedorController {
                 .count();
         resp.put("boletasEmitidas", boletasEmitidas);
 
-        // Promociones/Recomendaciones: aún no hay modelo/endpoints en el código actual.
-        resp.put("promosActivas", 0);
+        // Promociones/Recomendaciones
+        long promosActivas = promocionService.listarActivas().size();
+        resp.put("promosActivas", promosActivas);
         resp.put("recomendacionesGeneradas", 0);
 
         // Ventas últimos 7 días por día
@@ -123,8 +127,34 @@ public class VendedorController {
         resp.put("ventas7dias", ventas7dias);
 
 
-        // Ventas por categoría (no hay información de categoría en el modelo Venta/DetalleVenta actual para este endpoint)
-        resp.put("categorias", Collections.emptyList());
+        // Distribución por categorías segun los productos registrados
+        // (producto -> categoria). Esto asegura que SIEMPRE salgan categorías,
+        // aunque no haya ventas con detalles aún.
+        List<Producto> productosActivos = productoService.listarTodos();
+        Map<String, Long> categoriasCount_productos = new HashMap<>();
+
+        for (Producto p : productosActivos) {
+            if (p == null) continue;
+            String categoria = p.getCategoria();
+            if (categoria == null || categoria.isBlank()) continue;
+
+            String cat = categoria.trim();
+            // value: cantidad de productos en esa categoría
+            categoriasCount_productos.put(cat, categoriasCount_productos.getOrDefault(cat, 0L) + 1L);
+        }
+
+        List<Map<String, Object>> categoriasList_productos = categoriasCount_productos.entrySet().stream()
+                .map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("label", e.getKey());
+                    m.put("value", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+
+        resp.put("categorias", categoriasList_productos);
+
+
 
         return resp;
     }

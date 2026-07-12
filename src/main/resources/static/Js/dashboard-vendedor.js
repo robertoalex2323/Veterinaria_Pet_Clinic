@@ -109,44 +109,51 @@
     const canvas = document.getElementById('ventasPorCategoriaChart');
     if (!canvas) return;
 
-    // Si no hay datos, no dibujamos con valores inventados.
+    // Si no hay datos, no dibujamos.
     if (!categorias || !Array.isArray(categorias) || categorias.length === 0) return;
 
+    const labels = categorias.map(c => c.label);
+    const values = categorias.map(c => c.value);
 
-    const labels = categorias && categorias.length ? categorias.map(c => c.label) : [];
-    const values = categorias && categorias.length ? categorias.map(c => c.value) : [];
+    const baseColors = [
+      'rgba(59, 130, 246, 0.85)',
+      'rgba(16, 185, 129, 0.85)',
+      'rgba(245, 158, 11, 0.85)',
+      'rgba(139, 92, 246, 0.85)',
+      'rgba(236, 72, 153, 0.85)',
+      'rgba(14, 165, 233, 0.85)'
+    ];
 
+    const backgroundColor = values.map((_, i) => baseColors[i % baseColors.length]);
 
     const ctx = canvas.getContext('2d');
 
     new Chart(ctx, {
-      type: 'bar',
+      type: 'doughnut',
       data: {
         labels: labels,
         datasets: [{
           data: values,
-          backgroundColor: [
-            'rgba(59, 130, 246, 0.82)', 
-            'rgba(16, 185, 129, 0.82)', 
-            'rgba(245, 158, 11, 0.82)', 
-            'rgba(139, 92, 246, 0.82)'  
-          ],
-          hoverBackgroundColor: [
-            '#3B82F6',
-            '#10B981',
-            '#F59E0B',
-            '#8B5CF6'
-          ],
-          borderRadius: 8,
-          borderSkipped: false,
-          maxBarThickness: 28
+          backgroundColor,
+          borderWidth: 2,
+          borderColor: 'rgba(255,255,255,0.9)',
+          hoverOffset: 6,
+          spacing: 2
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        cutout: '60%',
         plugins: {
-          legend: { display: false },
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              color: '#64748B',
+              font: { size: 11, family: "'Inter', sans-serif" }
+            }
+          },
           tooltip: {
             backgroundColor: '#1E293B',
             titleColor: '#FFFFFF',
@@ -158,24 +165,16 @@
             displayColors: false,
             callbacks: {
               label: function(context) {
-                return ` Ventas: ${context.raw}`;
+                const label = context.label ?? '';
+                return ` ${label}: ${context.raw}`;
               }
             }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: '#64748B', font: { size: 11, family: "'Inter', sans-serif" } }
-          },
-          y: {
-            grid: { color: 'rgba(226, 232, 240, 0.6)', borderDash: [5, 5] },
-            ticks: { color: '#64748B', font: { size: 11, family: "'Inter', sans-serif" }, precision: 0 }
           }
         }
       }
     });
   }
+
 
   async function boot() {
     const data = await fetchMetrics();

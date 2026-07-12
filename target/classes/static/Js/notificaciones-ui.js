@@ -86,37 +86,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-         // 2. Recuperar pendientes del servidor 
-        const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/api/ui-notifications';
+    // 2. Recuperar pendientes del servidor
+    // Permite que vendedor y recepcionista usen su propio endpoint.
+    // Si no existe variable global, por defecto usa recepcionista.
+    const apiUrl = window.NOTIFICACION_API_URL || '/recepcionista/api/ui-notifications';
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // ✅ un poco más de margen
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // un poco más de margen
 
-        (async () => {
-            try {
-                const res = await fetch(apiUrl, { method: 'GET', cache: 'no-store', signal: controller.signal });
-                if (!res.ok) {
-                    // Importante: no lanzar errores ni afectar la UI/flujo del vendedor/recepcionista
-                    console.warn(`Notificaciones UI: endpoint ${apiUrl} respondió ${res.status}. Se ignora.`);
-                    return;
-                }
-
-                const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    data.forEach(notif => handleNewNotif(notif, true));
-                }
-            } catch (err) {
-                if (err && err.name === 'AbortError') {
-                    console.warn("Timeout al cargar notificaciones; se ignora para no romper la UI.");
-                } else {
-                    console.warn("Notificaciones UI: fallo al cargar pendientes. Se ignora.");
-                }
-            } finally {
-                clearTimeout(timeoutId);
+    (async () => {
+        try {
+            const res = await fetch(apiUrl, { method: 'GET', cache: 'no-store', signal: controller.signal });
+            if (!res.ok) {
+                console.warn(`Notificaciones UI: endpoint ${apiUrl} respondió ${res.status}. Se ignora.`);
+                return;
             }
-        })();
 
-
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(notif => handleNewNotif(notif, true));
+            }
+        } catch (err) {
+            if (err && err.name === 'AbortError') {
+                console.warn("Timeout al cargar notificaciones; se ignora para no romper la UI.");
+            } else {
+                console.warn("Notificaciones UI: fallo al cargar pendientes. Se ignora.");
+            }
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    })();
 
     connectWS();
 });
+

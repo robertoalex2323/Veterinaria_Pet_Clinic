@@ -2,6 +2,7 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Promocion;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PromocionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
 import org.springframework.stereotype.Controller;
@@ -18,10 +19,14 @@ public class VendedorPromocionController {
 
     private final PromocionService promocionService;
     private final ProductoService productoService;
+    private final NotificacionService notificacionService;
 
-    public VendedorPromocionController(PromocionService promocionService, ProductoService productoService) {
+    public VendedorPromocionController(PromocionService promocionService,
+                                       ProductoService productoService,
+                                       NotificacionService notificacionService) {
         this.promocionService = promocionService;
         this.productoService = productoService;
+        this.notificacionService = notificacionService;
     }
 
     @GetMapping
@@ -60,6 +65,10 @@ public class VendedorPromocionController {
         try {
             promocionService.guardar(id, productoId, descuento, activa);
             redirectAttributes.addFlashAttribute("success", "Promoción guardada correctamente.");
+            notificacionService.enviarNotificacionUI(
+                    "success",
+                    "Promoción guardada" + (activa != null && activa ? " (activa)" : " (inactiva)") + "."
+            );
             return "redirect:/vendedor/promociones";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al guardar la promoción: " + (e.getMessage() != null ? e.getMessage() : ""));
@@ -72,6 +81,7 @@ public class VendedorPromocionController {
         try {
             promocionService.eliminar(id);
             redirectAttributes.addFlashAttribute("success", "Promoción eliminada.");
+            notificacionService.enviarNotificacionUI("warning", "Promoción eliminada.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al eliminar la promoción.");
         }

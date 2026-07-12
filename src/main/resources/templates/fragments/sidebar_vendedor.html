@@ -208,7 +208,11 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
         
         <!-- Script de notificaciones UI -->
+        <script>
+            window.NOTIFICACION_API_URL = '/vendedor/api/ui-notifications';
+        </script>
         <script th:src="@{/js/notificaciones-ui.js}"></script>
+
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {

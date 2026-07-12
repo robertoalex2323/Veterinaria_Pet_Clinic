@@ -37,6 +37,14 @@ public class VendedorRecomendacionesController {
     public String recomendaciones(Model model) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         model.addAttribute("nombreUsuario", auth != null ? auth.getName() : null);
+        
+        List<String> categorias = productoService.listarTodos().stream()
+            .map(Producto::getCategoria)
+            .filter(c -> c != null && !c.trim().isEmpty())
+            .distinct()
+            .collect(java.util.stream.Collectors.toList());
+        model.addAttribute("categorias", categorias);
+
         return "Vendedor/recomendaciones";
     }
 
@@ -53,13 +61,13 @@ public class VendedorRecomendacionesController {
         String petQ = pet == null ? "" : pet.trim().toLowerCase(Locale.ROOT);
         String prefQ = pref == null ? "" : pref.trim().toLowerCase(Locale.ROOT);
 
-        // Promos activas del sistema
+        // Promos activas del sistema (fuente 1 de recomendaciones)
         List<Promocion> activas = promocionService.listarActivas();
 
-        // Filtrado opcional por texto: si no hay coincidencia, igualmente mostramos promos.
+        // Filtrado opcional por texto: si no hay coincidencia, hacemos fallback con productos activos.
         List<Map<String, Object>> items = new ArrayList<>();
 
-        for (Promocion promo : activas) {
+        for (Promocion promo : (activas != null ? activas : new ArrayList<Promocion>())) {
             if (promo == null || promo.getProducto() == null) continue;
 
             Producto p = promo.getProducto();
@@ -102,7 +110,7 @@ public class VendedorRecomendacionesController {
             items.add(item);
         }
 
-        // fallback: si no había matches por pet/pref, devolvemos todas las promos activas (sin filtrar)
+        // fallback 1: si no había matches por pet/pref, devolvemos todas las promos activas (sin filtrar)
         if (items.isEmpty() && activas != null && !activas.isEmpty()) {
             items = new ArrayList<>();
             for (Promocion promo : activas) {
@@ -123,7 +131,67 @@ public class VendedorRecomendacionesController {
             }
         }
 
-        return Map.of("items", items);
+        // fallback 2: si sigue vacío (ej: no hay promos activas), usamos productos activos y aplicamos filtros mínimos
+        if (items.isEmpty()) {
+            List<Producto> catalogo = productoService.listarTodos();
+            if (catalogo != null) {
+                for (Producto p : catalogo) {
+                    if (p == null || p.getId() == null) continue;
+
+                    String nombre = p.getNombre() == null ? "" : p.getNombre().toLowerCase(Locale.ROOT);
+                    String categoria = p.getCategoria() == null ? "" : p.getCategoria().toLowerCase(Locale.ROOT);
+
+                    boolean match = true;
+                    if (!petQ.isBlank()) {
+                        match = nombre.contains(petQ) || categoria.contains(petQ);
+                    }
+                    if (match && !prefQ.isBlank()) {
+                        match = switch (prefQ) {
+                            case "descuento" -> nombre.contains("promo") || nombre.contains("oferta") || categoria.contains("promo") || categoria.contains("oferta");
+                            case "gastro" -> categoria.contains("gastro") || nombre.contains("gastro");
+                            case "piel" -> categoria.contains("piel") || nombre.contains("piel") || categoria.contains("pelaje") || nombre.contains("pelaje");
+                            case "vacunas" -> categoria.contains("vacun") || nombre.contains("vacun");
+                            default -> true;
+                        };
+                    }
+                    if (!match) continue;
+
+                    BigDecimal precio = p.getPrecio();
+                    String precioFormateado = precio == null ? "-" : precio.toPlainString();
+
+                    int stock = p.getStock() != null ? p.getStock() : 0;
+                    String razon;
+                    if (stock <= 5) {
+                        razon = "📦 Bajo stock (" + stock + "). Recomendado para rotación.";
+                    } else {
+                        razon = "🎯 Recomendación por catálogo y preferencia.";
+                    }
+
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", p.getId());
+                    item.put("nombre", p.getNombre());
+                    item.put("categoria", p.getCategoria());
+                    item.put("precioFormateado", precioFormateado);
+                    item.put("razon", razon);
+                    items.add(item);
+
+                    if (items.size() >= 12) break;
+                }
+            }
+        }
+
+        String aiMessage = "¡Hola! He analizado el catálogo y las preferencias solicitadas. ";
+        if (items.isEmpty()) {
+            aiMessage += "No encontré promociones específicas para esta categoría o preferencia, así que te muestro nuestras mejores opciones con descuento.";
+        } else {
+            aiMessage += "Aquí tienes las recomendaciones ideales que he seleccionado especialmente para el cliente.";
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("items", items);
+        response.put("message", aiMessage);
+        
+        return response;
     }
 }
 
