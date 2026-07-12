@@ -8,6 +8,11 @@ let ventasFiltradas = [];
 let paginaActual = 1;
 let pageSize = 10;
 let busquedaActiva = false;
+let editingPromotionId = null;
+
+function formatMoney(value) {
+    return Number(value || 0).toLocaleString('es-PE', { style: 'currency', currency: 'PEN', minimumFractionDigits: 2 });
+}
 
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Panel de Ventas iniciado");
@@ -535,17 +540,152 @@ function exportarPDF() {
 
 async function loadPromotions() {
     try {
-        const r = await fetch('/api/v1/vendedor/promociones/activas');
-        if (!r.ok) throw new Error();
-        const promos = await r.json();
+        const response = await fetch('/api/v1/vendedor/promociones/activas');
+        if (!response.ok) throw new Error();
+        const promos = await response.json();
         const list = document.getElementById("promosList");
         list.innerHTML = "";
         document.getElementById("activePromos").textContent = promos.length;
+
+        if (promos.length === 0) {
+            list.innerHTML = '<p style="color:#64748b;">No hay promociones activas ahora.</p>';
+            return;
+        }
+
         promos.forEach(p => {
-            list.innerHTML += `<div class="glass-panel" style="padding:1rem;margin-bottom:0.5rem;"><i class="fas fa-bolt" style="color:#3b82f6;"></i> ${p}</div>`;
+            list.innerHTML += `
+                <div class="glass-panel" style="padding:1rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700; margin-bottom:0.35rem;">${escapeHtml(p)}</div>
+                    </div>
+                </div>
+            `;
         });
     } catch (e) {
-        document.getElementById("promosList").innerHTML = '<p style="color:#64748b;">Sin promociones</p>';
+        document.getElementById("promosList").innerHTML = '<p style="color:#64748b;">No se pudieron cargar las promociones activas.</p>';
+    }
+}
+
+function escapeHtml(text) {
+    return String(text || '').replace(/[&<>",']/g, function(match) {
+        return ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[match];
+    });
+}
+
+function openPromotionEditor() {
+    editingPromotionId = null;
+    document.getElementById('promotionFormTitle').textContent = 'Nueva promoción';
+    document.getElementById('promoId').value = '';
+    document.getElementById('promoNombre').value = '';
+    document.getElementById('promoDescripcion').value = '';
+    document.getElementById('promoTipo').value = 'PORCENTAJE';
+    document.getElementById('promoDescuento').value = '';
+    document.getElementById('promoCategoria').value = '';
+    document.getElementById('promoProductoId').value = '';
+    document.getElementById('promoMontoMinimo').value = '';
+    document.getElementById('promoDiasSemana').value = '';
+    document.getElementById('promoFechaInicio').value = '';
+    document.getElementById('promoFechaFin').value = '';
+    document.getElementById('promoActivo').value = 'true';
+    document.getElementById('promotionFormContainer').style.display = 'block';
+    document.getElementById('btnNewPromotion').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function savePromotion() {
+    const id = document.getElementById('promoId').value;
+    const body = {
+        nombre: document.getElementById('promoNombre').value.trim(),
+        descripcion: document.getElementById('promoDescripcion').value.trim(),
+        tipo: document.getElementById('promoTipo').value,
+        descuento: Number(document.getElementById('promoDescuento').value) || 0,
+        categoriaAplicable: document.getElementById('promoCategoria').value.trim() || null,
+        productoId: document.getElementById('promoProductoId').value ? Number(document.getElementById('promoProductoId').value) : null,
+        montoMinimo: document.getElementById('promoMontoMinimo').value ? Number(document.getElementById('promoMontoMinimo').value) : null,
+        diasSemana: document.getElementById('promoDiasSemana').value.trim() || null,
+        fechaInicio: document.getElementById('promoFechaInicio').value || null,
+        fechaFin: document.getElementById('promoFechaFin').value || null,
+        activo: document.getElementById('promoActivo').value === 'true'
+    };
+
+    if (!body.nombre) {
+        showToast('El nombre es obligatorio', 'error');
+        return;
+    }
+    if (body.descuento <= 0) {
+        showToast('Ingrese un descuento válido', 'error');
+        return;
+    }
+
+    try {
+        const url = id ? `/api/v1/vendedor/promociones/${id}` : '/api/v1/vendedor/promociones';
+        const method = id ? 'PUT' : 'POST';
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Error al guardar promoción');
+        }
+
+        await loadPromotions();
+        cancelPromotionEdit();
+        showToast(id ? 'Promoción actualizada' : 'Promoción creada', 'success');
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+function cancelPromotionEdit() {
+    document.getElementById('promotionFormContainer').style.display = 'none';
+}
+
+async function editPromotion(id) {
+    try {
+        const response = await fetch(`/api/v1/vendedor/promociones/${id}`);
+        if (!response.ok) throw new Error('No se encontró la promoción');
+        const promo = await response.json();
+        editingPromotionId = id;
+        document.getElementById('promotionFormTitle').textContent = 'Editar promoción';
+        document.getElementById('promoId').value = promo.id;
+        document.getElementById('promoNombre').value = promo.nombre || '';
+        document.getElementById('promoDescripcion').value = promo.descripcion || '';
+        document.getElementById('promoTipo').value = promo.tipo || 'PORCENTAJE';
+        document.getElementById('promoDescuento').value = promo.descuento || '';
+        document.getElementById('promoCategoria').value = promo.categoriaAplicable || '';
+        document.getElementById('promoProductoId').value = promo.productoId || '';
+        document.getElementById('promoMontoMinimo').value = promo.montoMinimo || '';
+        document.getElementById('promoDiasSemana').value = promo.diasSemana || '';
+        document.getElementById('promoFechaInicio').value = promo.fechaInicio || '';
+        document.getElementById('promoFechaFin').value = promo.fechaFin || '';
+        document.getElementById('promoActivo').value = promo.activo ? 'true' : 'false';
+        document.getElementById('promotionFormContainer').style.display = 'block';
+        document.getElementById('promotionFormContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+async function deletePromotion(id) {
+    if (!confirm('¿Deseas eliminar esta promoción?')) return;
+    try {
+        const response = await fetch(`/api/v1/vendedor/promociones/${id}`, { method: 'DELETE' });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.mensaje || 'Error al eliminar promoción');
+        }
+        await loadPromotions();
+        showToast('Promoción eliminada', 'success');
+    } catch (error) {
+        showToast(error.message, 'error');
     }
 }
 

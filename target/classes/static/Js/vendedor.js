@@ -8,6 +8,11 @@ let ventasFiltradas = [];
 let paginaActual = 1;
 let pageSize = 10;
 let busquedaActiva = false;
+let editingPromotionId = null;
+
+function formatMoney(value) {
+    return Number(value || 0).toLocaleString('es-PE', { style: 'currency', currency: 'PEN', minimumFractionDigits: 2 });
+}
 
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Panel de Ventas iniciado");
@@ -60,6 +65,7 @@ function showPanel(tabId) {
     }
 }
 
+// ===== FECHA =====
 function initDate() {
     const dateEl = document.getElementById("currentDate");
     dateEl.textContent = new Date().toLocaleDateString('es-PE', { 
@@ -72,6 +78,7 @@ function setMaxDateFilter() {
     if (filterDate) filterDate.setAttribute("max", new Date().toISOString().split('T')[0]);
 }
 
+// ===== PRODUCTOS =====
 async function loadProducts() {
     try {
         const response = await fetch('/api/v1/vendedor/productos');
@@ -106,6 +113,7 @@ function populateProductSelect(productos) {
     updateStockIndicator();
 }
 
+// ===== AUDIO =====
 function reproducirSonidoConfirmacion() {
     const audio = document.getElementById("audioConfirmacion");
     if (!audio) return;
@@ -115,12 +123,13 @@ function reproducirSonidoConfirmacion() {
     audio.play().catch(() => {});
 }
 
-function calcularDescuentoEnTiempoReal() {
+// ===== DESCUENTO EN TIEMPO REAL =====
+async function calcularDescuentoEnTiempoReal() {
     const select = document.getElementById("saleProduct");
-    const selectedOption = select.options[select.selectedIndex];
-    const productoId = parseInt(selectedOption.getAttribute("data-id")) || 0;
+    const opt = select.options[select.selectedIndex];
+    const productoId = parseInt(opt.getAttribute("data-id")) || 0;
     const quantity = parseInt(document.getElementById("saleQuantity").value) || 0;
-    const price = parseFloat(selectedOption.getAttribute("data-price")) || 0;
+    const price = parseFloat(opt.getAttribute("data-price")) || 0;
     const clientName = document.getElementById("clientName").value.trim();
 
     if (!productoId || quantity <= 0 || !clientName || clientName.length < 3) {
@@ -131,112 +140,50 @@ function calcularDescuentoEnTiempoReal() {
         return;
     }
 
-    const subtotal = price * quantity;
-    let descuento = 0;
-    let promociones = [];
+    try {
+        const response = await fetch('/api/v1/vendedor/calcular-descuento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                productoId, cantidad: quantity, precioUnitario: price, clienteNombre: clientName
+            })
+        });
 
-    const categoria = selectedOption.parentElement?.label || '';
-    const nombre = selectedOption.text.toLowerCase();
+        if (response.ok) {
+            const result = await response.json();
+            descuentoCalculado = result.descuento || 0;
+            promocionesAplicadas = result.promociones || [];
 
-    // DESCUENTOS POR CATEGORIA
-    if (categoria.includes('Alimentos') && subtotal >= 120) {
-        descuento += subtotal * 0.10;
-        promociones.push('10% en Alimentos (min S/120)');
-    }
-
-    if (categoria.includes('Antipulgas')) {
-        descuento += subtotal * 0.20;
-        promociones.push('20% en Antipulgas');
-    }
-
-    if (categoria.includes('Accesorios')) {
-        descuento += subtotal * 0.15;
-        promociones.push('15% en Accesorios');
-    }
-
-    if (categoria.includes('Servicios')) {
-        if (nombre.includes('baño') || nombre.includes('corte')) {
-            descuento += subtotal * 0.15;
-            promociones.push('15% en Baño y Corte');
+            document.getElementById("saleDescuento").textContent = `-S/ ${descuentoCalculado.toFixed(2)}`;
+            
+            const promoContainer = document.getElementById("promocionesAplicables");
+            const promoList = document.getElementById("listaPromocionesAplicables");
+            
+            if (promocionesAplicadas.length > 0) {
+                promoContainer.style.display = "block";
+                promoList.innerHTML = promocionesAplicadas.map(p => 
+                    `<span style="background:#d1fae5;padding:0.15rem 0.75rem;border-radius:12px;margin:0.15rem;font-size:0.75rem;">
+                        <i class="fas fa-tag" style="color:#059669;"></i> ${p}
+                    </span>`
+                ).join(' ');
+                document.getElementById("saleDescuento").style.color = "#dc2626";
+                document.getElementById("saleDescuento").style.fontWeight = "700";
+            } else {
+                promoContainer.style.display = "none";
+                document.getElementById("saleDescuento").style.color = "#64748b";
+                document.getElementById("saleDescuento").style.fontWeight = "600";
+            }
+            
+            const subtotal = price * quantity;
+            const totalConDescuento = subtotal + (subtotal * 0.18) - descuentoCalculado;
+            document.getElementById("saleTotalWithIgv").textContent = `S/ ${totalConDescuento.toFixed(2)}`;
         }
-        if (nombre.includes('esterilización')) {
-            descuento += 30;
-            promociones.push('S/30 en Esterilización');
-        }
+    } catch (error) {
+        console.error('Error:', error);
     }
-
-    // DESCUENTOS POR MONTO
-    if (subtotal > 500) {
-        descuento += subtotal * 0.20;
-        promociones.push('20% en compras > S/500');
-    } else if (subtotal > 350) {
-        descuento += subtotal * 0.15;
-        promociones.push('15% en compras > S/350');
-    } else if (subtotal > 200) {
-        descuento += subtotal * 0.10;
-        promociones.push('10% en compras > S/200');
-    }
-
-    // DESCUENTOS POR PRODUCTO ESPECIFICO
-    if (productoId === 1) {
-        descuento += 20;
-        promociones.push('S/20 en Alimento Ricocan');
-    } else if (productoId === 2) {
-        descuento += 15;
-        promociones.push('S/15 en Alimento Purina');
-    } else if (productoId === 5) {
-        descuento += 10;
-        promociones.push('S/10 en Bravecto');
-    } else if (productoId === 12 || productoId === 13) {
-        descuento += subtotal * 0.25;
-        promociones.push('25% en Camas');
-    }
-
-    // DESCUENTOS POR DIA DE SEMANA
-    const dia = new Date().getDay();
-    if (dia === 1 && categoria.includes('Alimentos')) {
-        descuento += subtotal * 0.10;
-        promociones.push('10% en Alimentos (Lunes)');
-    }
-    if (dia === 2 && categoria.includes('Accesorios')) {
-        const gratis = Math.floor(quantity / 2);
-        descuento += gratis * price;
-        promociones.push('2x1 en Accesorios (Martes)');
-    }
-
-    // ELIMINAR DUPLICADOS
-    promociones = [...new Set(promociones)];
-
-    // MOSTRAR DESCUENTO
-    document.getElementById("saleDescuento").textContent = `-S/ ${descuento.toFixed(2)}`;
-    
-    const promoContainer = document.getElementById("promocionesAplicables");
-    const promoList = document.getElementById("listaPromocionesAplicables");
-    
-    if (promociones.length > 0) {
-        promoContainer.style.display = "block";
-        promoList.innerHTML = promociones.map(p => 
-            `<span style="display: inline-block; background: #d1fae5; padding: 0.15rem 0.75rem; border-radius: 12px; margin: 0.15rem; font-size: 0.75rem;">
-                <i class="fas fa-tag" style="color: #059669;"></i> ${p}
-            </span>`
-        ).join(' ');
-        document.getElementById("saleDescuento").style.color = "#dc2626";
-        document.getElementById("saleDescuento").style.fontWeight = "700";
-    } else {
-        promoContainer.style.display = "none";
-        document.getElementById("saleDescuento").style.color = "#64748b";
-        document.getElementById("saleDescuento").style.fontWeight = "600";
-    }
-
-    // ACTUALIZAR TOTAL
-    const igv = subtotal * 0.18;
-    const totalConDescuento = subtotal + igv - descuento;
-    document.getElementById("saleTotalWithIgv").textContent = `S/ ${totalConDescuento.toFixed(2)}`;
-    
-    descuentoCalculado = descuento;
-    promocionesAplicadas = promociones;
 }
 
+// ===== VENTAS =====
 function updatePrice() {
     const opt = document.getElementById("saleProduct").options[document.getElementById("saleProduct").selectedIndex];
     document.getElementById("salePrice").value = parseFloat(opt.getAttribute("data-price") || "0").toFixed(2);
@@ -345,16 +292,14 @@ function loadHistoryFromAPI() {
 
 function renderizarTabla() {
     const datos = busquedaActiva ? ventasFiltradas : ventasCompletas;
-    const datosOrdenados = [...datos].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-    
-    const total = datosOrdenados.length;
+    const total = datos.length;
     const totalPaginas = Math.ceil(total / pageSize) || 1;
     
     if (paginaActual > totalPaginas) paginaActual = totalPaginas;
     
     const inicio = (paginaActual - 1) * pageSize;
     const fin = Math.min(inicio + pageSize, total);
-    const paginaDatos = datosOrdenados.slice(inicio, fin);
+    const paginaDatos = datos.slice(inicio, fin);
     
     const tbody = document.getElementById("salesTableBody");
     tbody.innerHTML = "";
@@ -367,7 +312,7 @@ function renderizarTabla() {
         return;
     }
     
-    paginaDatos.forEach((venta, index) => {
+    paginaDatos.forEach(venta => {
         const tr = document.createElement("tr");
         const fecha = new Date(venta.fecha);
         let productoNombre = 'Producto';
@@ -376,10 +321,8 @@ function renderizarTabla() {
                             venta.detalles[0].medicamento?.nombre || 'Producto';
         }
         
-        const numero = total - (inicio + index);
-        
         tr.innerHTML = `
-            <td><strong>#${numero}</strong></td>
+            <td><strong>#${venta.id}</strong></td>
             <td>${fecha.toLocaleString('es-PE')}</td>
             <td>${venta.cliente?.nombre || 'Cliente'}</td>
             <td>${productoNombre}</td>
@@ -388,19 +331,18 @@ function renderizarTabla() {
             <td style="font-weight:600;color:#059669;">S/ ${(venta.total || 0).toFixed(2)}</td>
             <td><span class="badge badge-success">Pagado</span></td>
             <td>
-                <div class="acciones-container">
-                    <button class="btn-accion btn-accion-pdf" onclick="descargarBoletaPDF(${venta.id})" title="Descargar PDF">
-                        <i class="fas fa-file-pdf"></i>
-                    </button>
-                    <button class="btn-accion btn-accion-eliminar" onclick="eliminarVenta(${venta.id})" title="Eliminar venta">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+                <button class="btn btn-sm btn-primary" onclick="descargarBoletaPDF(${venta.id})" title="PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="eliminarVenta(${venta.id})" title="Eliminar" style="background:#dc2626;color:white;border:none;border-radius:4px;padding:0.25rem 0.5rem;cursor:pointer;">
+                    <i class="fas fa-trash"></i>
+                </button>
             </td>
         `;
         tbody.appendChild(tr);
     });
     
+    // Actualizar paginacion
     document.getElementById("paginaDesde").textContent = total > 0 ? inicio + 1 : 0;
     document.getElementById("paginaHasta").textContent = fin;
     document.getElementById("totalRegistros").textContent = total;
@@ -506,103 +448,17 @@ function limpiarFiltros() {
     showToast("Filtros limpiados", "info");
 }
 
-// ===== ELIMINAR VENTA CON SWEETALERT2 =====
+// ===== ELIMINAR VENTA =====
 function eliminarVenta(id) {
-    Swal.fire({
-        title: '¿Eliminar venta?',
-        html: `
-            <div style="text-align: left; padding: 0.5rem 0;">
-                <p style="margin: 0 0 0.5rem 0; color: #1e293b; font-size: 1.1rem;">
-                    Estás a punto de eliminar la venta <strong style="color: #059669;">#${id}</strong>
-                </p>
-                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #fef2f2; border-radius: 10px; border-left: 4px solid #dc2626; margin-top: 0.5rem;">
-                    <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 1.2rem;"></i>
-                    <div>
-                        <p style="margin: 0; color: #64748b; font-size: 0.9rem;">
-                            <strong style="color: #dc2626;">Esta acción no se puede deshacer.</strong>
-                        </p>
-                        <p style="margin: 0.25rem 0 0 0; color: #94a3b8; font-size: 0.85rem;">
-                            <i class="fas fa-undo-alt" style="margin-right: 0.3rem;"></i>
-                            Se restaurará el stock de los productos
-                        </p>
-                    </div>
-                </div>
-                <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <span style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; color: #64748b;">
-                        <i class="fas fa-receipt"></i> Venta #${id}
-                    </span>
-                    <span style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; color: #64748b;">
-                        <i class="fas fa-calendar"></i> ${new Date().toLocaleDateString('es-PE')}
-                    </span>
-                </div>
-            </div>
-        `,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#94a3b8',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
-        background: '#ffffff',
-        backdrop: 'rgba(0,0,0,0.5)',
-        borderRadius: '16px',
-        padding: '2rem'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Swal.fire({
-                title: 'Eliminando venta...',
-                text: 'Por favor espera un momento',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading(),
-                background: '#ffffff',
-                borderRadius: '16px',
-                padding: '2rem'
-            });
-            
-            fetch(`/api/v1/vendedor/ventas/${id}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.mensaje || 'Error al eliminar');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Venta eliminada!',
-                    text: `La venta #${id} se eliminó correctamente`,
-                    confirmButtonColor: '#059669',
-                    confirmButtonText: 'Aceptar',
-                    timer: 3000,
-                    timerProgressBar: true,
-                    background: '#ffffff',
-                    borderRadius: '16px',
-                    padding: '2rem'
-                });
-                
-                loadHistoryFromAPI();
-                loadDashboardStats();
-                setTimeout(reproducirSonidoConfirmacion, 300);
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error al eliminar',
-                    text: error.message || 'No se pudo eliminar la venta',
-                    confirmButtonColor: '#dc2626',
-                    confirmButtonText: 'Aceptar',
-                    background: '#ffffff',
-                    borderRadius: '16px',
-                    padding: '2rem'
-                });
-            });
-        }
-    });
+    if (!confirm(`¿Eliminar venta #${id}?`)) return;
+    
+    fetch(`/api/v1/vendedor/ventas/${id}`, { method: 'DELETE' })
+        .then(response => {
+            if (!response.ok) throw new Error('Error al eliminar');
+            showToast(`Venta #${id} eliminada`, "success");
+            loadHistoryFromAPI();
+        })
+        .catch(error => showToast("Error al eliminar: " + error.message, "error"));
 }
 
 // ===== DASHBOARD =====
@@ -682,24 +538,157 @@ function exportarPDF() {
     showToast("PDF exportado correctamente", "success");
 }
 
-// ===== PROMOCIONES =====
 async function loadPromotions() {
     try {
-        const r = await fetch('/api/v1/vendedor/promociones/activas');
-        if (!r.ok) throw new Error();
-        const promos = await r.json();
+        const response = await fetch('/api/v1/vendedor/promociones/activas');
+        if (!response.ok) throw new Error();
+        const promos = await response.json();
         const list = document.getElementById("promosList");
         list.innerHTML = "";
         document.getElementById("activePromos").textContent = promos.length;
+
+        if (promos.length === 0) {
+            list.innerHTML = '<p style="color:#64748b;">No hay promociones activas ahora.</p>';
+            return;
+        }
+
         promos.forEach(p => {
-            list.innerHTML += `<div class="glass-panel" style="padding:1rem;margin-bottom:0.5rem;"><i class="fas fa-bolt" style="color:#3b82f6;"></i> ${p}</div>`;
+            list.innerHTML += `
+                <div class="glass-panel" style="padding:1rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700; margin-bottom:0.35rem;">${escapeHtml(p)}</div>
+                    </div>
+                </div>
+            `;
         });
     } catch (e) {
-        document.getElementById("promosList").innerHTML = '<p style="color:#64748b;">Sin promociones</p>';
+        document.getElementById("promosList").innerHTML = '<p style="color:#64748b;">No se pudieron cargar las promociones activas.</p>';
     }
 }
 
-// ===== VALIDACIONES =====
+function escapeHtml(text) {
+    return String(text || '').replace(/[&<>",']/g, function(match) {
+        return ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[match];
+    });
+}
+
+function openPromotionEditor() {
+    editingPromotionId = null;
+    document.getElementById('promotionFormTitle').textContent = 'Nueva promoción';
+    document.getElementById('promoId').value = '';
+    document.getElementById('promoNombre').value = '';
+    document.getElementById('promoDescripcion').value = '';
+    document.getElementById('promoTipo').value = 'PORCENTAJE';
+    document.getElementById('promoDescuento').value = '';
+    document.getElementById('promoCategoria').value = '';
+    document.getElementById('promoProductoId').value = '';
+    document.getElementById('promoMontoMinimo').value = '';
+    document.getElementById('promoDiasSemana').value = '';
+    document.getElementById('promoFechaInicio').value = '';
+    document.getElementById('promoFechaFin').value = '';
+    document.getElementById('promoActivo').value = 'true';
+    document.getElementById('promotionFormContainer').style.display = 'block';
+    document.getElementById('btnNewPromotion').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function savePromotion() {
+    const id = document.getElementById('promoId').value;
+    const body = {
+        nombre: document.getElementById('promoNombre').value.trim(),
+        descripcion: document.getElementById('promoDescripcion').value.trim(),
+        tipo: document.getElementById('promoTipo').value,
+        descuento: Number(document.getElementById('promoDescuento').value) || 0,
+        categoriaAplicable: document.getElementById('promoCategoria').value.trim() || null,
+        productoId: document.getElementById('promoProductoId').value ? Number(document.getElementById('promoProductoId').value) : null,
+        montoMinimo: document.getElementById('promoMontoMinimo').value ? Number(document.getElementById('promoMontoMinimo').value) : null,
+        diasSemana: document.getElementById('promoDiasSemana').value.trim() || null,
+        fechaInicio: document.getElementById('promoFechaInicio').value || null,
+        fechaFin: document.getElementById('promoFechaFin').value || null,
+        activo: document.getElementById('promoActivo').value === 'true'
+    };
+
+    if (!body.nombre) {
+        showToast('El nombre es obligatorio', 'error');
+        return;
+    }
+    if (body.descuento <= 0) {
+        showToast('Ingrese un descuento válido', 'error');
+        return;
+    }
+
+    try {
+        const url = id ? `/api/v1/vendedor/promociones/${id}` : '/api/v1/vendedor/promociones';
+        const method = id ? 'PUT' : 'POST';
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Error al guardar promoción');
+        }
+
+        await loadPromotions();
+        cancelPromotionEdit();
+        showToast(id ? 'Promoción actualizada' : 'Promoción creada', 'success');
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+function cancelPromotionEdit() {
+    document.getElementById('promotionFormContainer').style.display = 'none';
+}
+
+async function editPromotion(id) {
+    try {
+        const response = await fetch(`/api/v1/vendedor/promociones/${id}`);
+        if (!response.ok) throw new Error('No se encontró la promoción');
+        const promo = await response.json();
+        editingPromotionId = id;
+        document.getElementById('promotionFormTitle').textContent = 'Editar promoción';
+        document.getElementById('promoId').value = promo.id;
+        document.getElementById('promoNombre').value = promo.nombre || '';
+        document.getElementById('promoDescripcion').value = promo.descripcion || '';
+        document.getElementById('promoTipo').value = promo.tipo || 'PORCENTAJE';
+        document.getElementById('promoDescuento').value = promo.descuento || '';
+        document.getElementById('promoCategoria').value = promo.categoriaAplicable || '';
+        document.getElementById('promoProductoId').value = promo.productoId || '';
+        document.getElementById('promoMontoMinimo').value = promo.montoMinimo || '';
+        document.getElementById('promoDiasSemana').value = promo.diasSemana || '';
+        document.getElementById('promoFechaInicio').value = promo.fechaInicio || '';
+        document.getElementById('promoFechaFin').value = promo.fechaFin || '';
+        document.getElementById('promoActivo').value = promo.activo ? 'true' : 'false';
+        document.getElementById('promotionFormContainer').style.display = 'block';
+        document.getElementById('promotionFormContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+async function deletePromotion(id) {
+    if (!confirm('¿Deseas eliminar esta promoción?')) return;
+    try {
+        const response = await fetch(`/api/v1/vendedor/promociones/${id}`, { method: 'DELETE' });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.mensaje || 'Error al eliminar promoción');
+        }
+        await loadPromotions();
+        showToast('Promoción eliminada', 'success');
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
 function validateQuantity() {
     const opt = document.getElementById("saleProduct").options[document.getElementById("saleProduct").selectedIndex];
     const stock = parseInt(opt.getAttribute("data-stock")) || 0;

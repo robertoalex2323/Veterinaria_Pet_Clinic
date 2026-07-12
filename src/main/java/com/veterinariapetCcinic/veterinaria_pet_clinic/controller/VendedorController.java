@@ -3,8 +3,10 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.DetalleVenta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Promocion;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PromocionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.VentaService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,10 +28,12 @@ public class VendedorController {
 
     private final VentaService ventaService;
     private final ProductoService productoService;
+    private final PromocionService promocionService;
 
-    public VendedorController(VentaService ventaService, ProductoService productoService) {
+    public VendedorController(VentaService ventaService, ProductoService productoService, PromocionService promocionService) {
         this.ventaService = ventaService;
         this.productoService = productoService;
+        this.promocionService = promocionService;
     }
 
     @PostMapping("/ventas")
@@ -110,15 +114,56 @@ public class VendedorController {
 
 
     @GetMapping("/promociones/activas")
-    public ResponseEntity<List<String>> listarPromociones() {
-        List<String> promociones = List.of(
-            "10% de descuento en Alimentos Premium por compras mayores a S/120",
-            "2x1 en Juguetes y Accesorios los días Martes y Viernes",
-            "Descuento especial en Camas para mascotas por fin de temporada 2026"
-        );
-        return ResponseEntity.ok(promociones);
+    public ResponseEntity<List<String>> listarPromocionesActivas() {
+        List<Promocion> promociones = promocionService.getPromocionesActivas();
+        List<String> lista = promociones.stream()
+                .map(p -> {
+                    String texto = p.getNombre();
+                    if (p.getDescripcion() != null && !p.getDescripcion().isEmpty()) {
+                        texto += " - " + p.getDescripcion();
+                    }
+                    return texto;
+                })
+                .toList();
+        return ResponseEntity.ok(lista);
     }
 
+    @GetMapping("/promociones")
+    public ResponseEntity<List<Promocion>> listarTodasPromociones() {
+        return ResponseEntity.ok(promocionService.getTodasPromociones());
+    }
+
+    @GetMapping("/promociones/{id}")
+    public ResponseEntity<Promocion> obtenerPromocion(@PathVariable Long id) {
+        return ResponseEntity.ok(promocionService.getPromocionPorId(id));
+    }
+
+    @PostMapping("/promociones")
+    public ResponseEntity<Promocion> crearPromocion(@RequestBody Promocion promocion) {
+        promocion.setActivo(true);
+        Promocion creada = promocionService.guardarPromocion(promocion);
+        return new ResponseEntity<>(creada, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/promociones/{id}")
+    public ResponseEntity<Promocion> actualizarPromocion(@PathVariable Long id, @RequestBody Promocion promocion) {
+        return ResponseEntity.ok(promocionService.actualizarPromocion(id, promocion));
+    }
+
+    @DeleteMapping("/promociones/{id}")
+    public ResponseEntity<Map<String, Object>> eliminarPromocion(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            promocionService.eliminarPromocion(id);
+            response.put("success", true);
+            response.put("mensaje", "Promoción eliminada correctamente");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 
     @PostMapping("/calcular-descuento")
     public ResponseEntity<Map<String, Object>> calcularDescuento(@RequestBody Map<String, Object> request) {

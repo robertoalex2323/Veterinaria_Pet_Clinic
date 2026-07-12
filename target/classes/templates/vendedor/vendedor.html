@@ -357,14 +357,14 @@
                     <label for="clientName" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 0.25rem;">
                         <i class="fas fa-user"></i> Nombre del Cliente
                     </label>
-                    <input type="text" id="clientName" placeholder="Ej. Karin Chapa" oninput="validateClientName()" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; height: 42px;">
+                    <input type="text" id="clientName" placeholder="Nombre del Cliente" oninput="validateClientName()" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; height: 42px;">
                     <small id="clientError" class="error-text" style="display: none; font-size: 0.7rem;"></small>
                 </div>
                 <div class="form-group" style="margin-bottom: 0; max-width: 180px;">
                     <label for="clientPhone" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 0.25rem;">
                         <i class="fas fa-phone"></i> Teléfono
                     </label>
-                    <input type="text" id="clientPhone" placeholder="Ej. 987654321" oninput="validateClientPhone()" style="width: 100%; padding: 0.5rem 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; height: 42px;">
+                    <input type="text" id="clientPhone" placeholder="Teléfono" oninput="validateClientPhone()" style="width: 100%; padding: 0.5rem 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; height: 42px;">
                     <small id="phoneError" class="error-text" style="display: none; font-size: 0.7rem;"></small>
                 </div>
             </div>
@@ -520,10 +520,74 @@
 </div>
         <div id="promotionsPanel" class="panel-container">
             <div class="glass-panel">
-                <div class="panel-header">
-                    <h2><i class="fas fa-tags"></i> Promociones Activas</h2>
+                <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+                    <h2><i class="fas fa-tags"></i> Promociones Activas Ahora</h2>
+                    <button class="btn btn-primary" id="btnNewPromotion" onclick="openPromotionEditor()" style="padding:0.5rem 1rem; font-size:0.85rem;">
+                        <i class="fas fa-plus"></i> Nueva Promoción
+                    </button>
                 </div>
                 <div class="panel-body">
+                    <div id="promotionFormContainer" class="glass-panel" style="padding:1rem; margin-bottom:1rem; display:none;">
+                        <h3 id="promotionFormTitle" style="margin-bottom:0.75rem;">Nueva promoción</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                            <div>
+                                <label>Nombre</label>
+                                <input type="text" id="promoNombre" class="input-field" placeholder="Ej. 10% Alimentos" />
+                            </div>
+                            <div>
+                                <label>Tipo</label>
+                                <select id="promoTipo" class="input-field">
+                                    <option value="PORCENTAJE">PORCENTAJE</option>
+                                    <option value="FIJO">FIJO</option>
+                                    <option value="2X1">2X1</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Descuento</label>
+                                <input type="number" id="promoDescuento" class="input-field" min="0" step="0.01" placeholder="10" />
+                            </div>
+                            <div>
+                                <label>Categoría aplicable</label>
+                                <input type="text" id="promoCategoria" class="input-field" placeholder="Ej. Alimentos" />
+                            </div>
+                            <div>
+                                <label>ID de producto</label>
+                                <input type="number" id="promoProductoId" class="input-field" placeholder="Opcional" min="1" />
+                            </div>
+                            <div>
+                                <label>Monto mínimo</label>
+                                <input type="number" id="promoMontoMinimo" class="input-field" min="0" step="0.01" placeholder="Ej. 120" />
+                            </div>
+                            <div>
+                                <label>Días de semana</label>
+                                <input type="text" id="promoDiasSemana" class="input-field" placeholder="1,2,3 (Lun,Mar,Mié)" />
+                            </div>
+                            <div>
+                                <label>Activo</label>
+                                <select id="promoActivo" class="input-field">
+                                    <option value="true">Sí</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Fecha inicio</label>
+                                <input type="date" id="promoFechaInicio" class="input-field" />
+                            </div>
+                            <div>
+                                <label>Fecha fin</label>
+                                <input type="date" id="promoFechaFin" class="input-field" />
+                            </div>
+                            <div style="grid-column:1 / -1;">
+                                <label>Descripción</label>
+                                <textarea id="promoDescripcion" class="input-field" rows="2" placeholder="Detalle de la promoción"></textarea>
+                            </div>
+                        </div>
+                        <div style="margin-top:1rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
+                            <button class="btn btn-primary" onclick="savePromotion()" style="padding:0.55rem 1rem;">Guardar</button>
+                            <button class="btn btn-outline" onclick="cancelPromotionEdit()" style="padding:0.55rem 1rem;">Cancelar</button>
+                        </div>
+                        <input type="hidden" id="promoId" />
+                    </div>
                     <div class="promos-list" id="promosList">
                         <p style="color: var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> Cargando promociones...</p>
                     </div>

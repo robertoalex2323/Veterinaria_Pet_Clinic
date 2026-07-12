@@ -21,10 +21,31 @@ public class PromocionService {
     }
 
     public List<Promocion> getPromocionesActivas() {
-        return promocionRepository.findPromocionesActivas(LocalDate.now());
+        LocalDate hoy = LocalDate.now();
+        List<Promocion> promociones = promocionRepository.findPromocionesActivas(hoy);
+        return promociones.stream()
+                .filter(this::aplicaDiaSemana)
+                .toList();
     }
 
-    
+    private boolean aplicaDiaSemana(Promocion promo) {
+        if (promo.getDiasSemana() == null || promo.getDiasSemana().isEmpty()) {
+            return true;
+        }
+
+        int diaActual = LocalDate.now().getDayOfWeek().getValue();
+        for (String dia : promo.getDiasSemana().split(",")) {
+            try {
+                if (Integer.parseInt(dia.trim()) == diaActual) {
+                    return true;
+                }
+            } catch (NumberFormatException e) {
+                // ignorar formato inválido
+            }
+        }
+        return false;
+    }
+
     public BigDecimal aplicarPromociones(Venta venta) {
         LocalDate hoy = LocalDate.now();
         DayOfWeek diaSemana = hoy.getDayOfWeek();
@@ -109,25 +130,43 @@ public class PromocionService {
     }
 
     public Map<String, Object> getPromocionesAplicadas(Long clienteId) {
-        
         return new HashMap<>();
     }
 
-    
-    public boolean productoConDescuento(Long productoId) {
-        List<Promocion> promociones = promocionRepository.findPromocionesActivas(LocalDate.now());
-        
-        for (Promocion promo : promociones) {
-            if (promo.getProductoId() != null && promo.getProductoId().equals(productoId)) {
-                return true;
-            }
-            if (promo.getCategoriaAplicable() != null) {
-                return true;
-            }
-            if (promo.getTipo().equals("PORCENTAJE") && promo.getDescuento().compareTo(BigDecimal.ZERO) > 0) {
-                return true;
-            }
+    public List<Promocion> getTodasPromociones() {
+        return promocionRepository.findAll();
+    }
+
+    public Promocion getPromocionPorId(Long id) {
+        return promocionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Promoción no encontrada"));
+    }
+
+    public Promocion guardarPromocion(Promocion promocion) {
+        if (promocion.getActivo() == null) {
+            promocion.setActivo(true);
         }
-        return false;
+        return promocionRepository.save(promocion);
+    }
+
+    public Promocion actualizarPromocion(Long id, Promocion datos) {
+        Promocion existente = getPromocionPorId(id);
+        existente.setNombre(datos.getNombre());
+        existente.setDescripcion(datos.getDescripcion());
+        existente.setTipo(datos.getTipo());
+        existente.setDescuento(datos.getDescuento());
+        existente.setCategoriaAplicable(datos.getCategoriaAplicable());
+        existente.setProductoId(datos.getProductoId());
+        existente.setMontoMinimo(datos.getMontoMinimo());
+        existente.setDiasSemana(datos.getDiasSemana());
+        existente.setFechaInicio(datos.getFechaInicio());
+        existente.setFechaFin(datos.getFechaFin());
+        existente.setActivo(datos.getActivo() != null ? datos.getActivo() : existente.getActivo());
+        return promocionRepository.save(existente);
+    }
+
+    public void eliminarPromocion(Long id) {
+        Promocion promocion = getPromocionPorId(id);
+        promocionRepository.delete(promocion);
     }
 }
