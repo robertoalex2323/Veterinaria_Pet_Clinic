@@ -3,10 +3,12 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.DetalleVenta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Promocion;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PromocionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.VentaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository;
@@ -40,22 +42,43 @@ public class VendedorVentaController {
     private final NotificacionService notificacionService;
     private final UsuarioRepository usuarioRepository;
     private final ClienteRepository clienteRepository;
+    private final PromocionService promocionService;
 
     public VendedorVentaController(ProductoService productoService,
                                    VentaService ventaService,
                                    NotificacionService notificacionService,
                                    UsuarioRepository usuarioRepository,
-                                   ClienteRepository clienteRepository) {
+                                   ClienteRepository clienteRepository,
+                                   PromocionService promocionService) {
         this.productoService = productoService;
         this.ventaService = ventaService;
         this.notificacionService = notificacionService;
         this.usuarioRepository = usuarioRepository;
         this.clienteRepository = clienteRepository;
+        this.promocionService = promocionService;
     }
 
     @GetMapping("/registrar")
     public String registrar(Model model) {
-        model.addAttribute("productos", productoService.listarTodos());
+        List<Producto> productos = productoService.listarTodos();
+        List<Promocion> promocionesActivas = promocionService.getPromocionesActivas();
+
+        // IDs de producto y categorías con promoción vigente, para resaltarlos en la tabla.
+        List<Long> productosConOferta = promocionesActivas.stream()
+                .map(Promocion::getProductoId)
+                .filter(Objects::nonNull)
+                .toList();
+        List<String> categoriasConOferta = promocionesActivas.stream()
+                .map(Promocion::getCategoriaAplicable)
+                .filter(c -> c != null && !c.isBlank())
+                .map(String::toLowerCase)
+                .toList();
+
+        model.addAttribute("productos", productos);
+        model.addAttribute("promocionesActivas", promocionesActivas);
+        model.addAttribute("productosConOferta", productosConOferta);
+        model.addAttribute("categoriasConOferta", categoriasConOferta);
+        model.addAttribute("igvTasa", Venta.IGV_TASA);
         return "Vendedor/registrar";
     }
 
@@ -66,6 +89,7 @@ public class VendedorVentaController {
             @RequestParam(required = false) String clienteEmail,
             @RequestParam(required = false) String clienteDireccion,
             @RequestParam String metodoPago,
+            @RequestParam(required = false) String codigoOperacion,
             @RequestParam String productoIds,
             @RequestParam String cantidades,
             RedirectAttributes redirectAttributes) {
@@ -83,9 +107,17 @@ public class VendedorVentaController {
                 return "redirect:/vendedor/ventas/registrar";
             }
 
+            boolean requiereCodigoOperacion = "Yape".equalsIgnoreCase(metodoPago) || "Plin".equalsIgnoreCase(metodoPago);
+            if (requiereCodigoOperacion && (codigoOperacion == null || codigoOperacion.isBlank())) {
+                redirectAttributes.addFlashAttribute("error",
+                        "Ingresa el código de operación de " + metodoPago + " para continuar.");
+                return "redirect:/vendedor/ventas/registrar";
+            }
+
             Venta venta = new Venta();
             venta.setFecha(LocalDateTime.now());
             venta.setMetodoPago(metodoPago);
+            venta.setCodigoOperacion(requiereCodigoOperacion ? codigoOperacion.trim() : null);
 
             // Cliente (VentaService puede reutilizar existente por nombre/teléfono)
             Cliente cliente = new Cliente();
@@ -111,7 +143,6 @@ public class VendedorVentaController {
                 DetalleVenta detalle = new DetalleVenta();
                 detalle.setProducto(producto);
                 detalle.setCantidad(cantidad);
-                // VentaService recalcula precio unitario si viene null, pero lo seteo por claridad
                 BigDecimal precioUnitario = producto.getPrecio() != null ? producto.getPrecio() : BigDecimal.ZERO;
                 detalle.setPrecioUnitario(precioUnitario);
                 detalles.add(detalle);
@@ -121,7 +152,6 @@ public class VendedorVentaController {
 
             Venta ventaGuardada = ventaService.procesarVenta(venta);
 
-            // Comprobante PDF + correo al cliente
             byte[] pdf = ventaService.generarBoletaPDFReal(ventaGuardada.getId());
             notificacionService.enviarVentaConComprobante(ventaGuardada, pdf);
 
@@ -133,11 +163,6 @@ public class VendedorVentaController {
         }
     }
 
-    /**
-     * Autocompletado de clientes ya registrados (por nombre o teléfono).
-     * Se usa desde el formulario de registrar venta para evitar duplicar
-     * clientes y agilizar el llenado de datos.
-     */
     @GetMapping("/clientes/buscar")
     @ResponseBody
     public List<ClienteSugerencia> buscarClientes(@RequestParam(required = false) String query) {
@@ -148,7 +173,6 @@ public class VendedorVentaController {
 
         List<Cliente> encontrados = clienteRepository.findByNombreContainingIgnoreCase(q);
 
-        // Si la búsqueda parece un teléfono, también intentamos match exacto.
         if (q.matches("[0-9+\\-\\s]+")) {
             clienteRepository.findByTelefono(q).ifPresent(c -> {
                 if (encontrados.stream().noneMatch(existing -> existing.getId().equals(c.getId()))) {
@@ -168,12 +192,10 @@ public class VendedorVentaController {
                 .collect(Collectors.toList());
     }
 
-    /** DTO liviano para no serializar la entidad Cliente (evita colecciones lazy). */
     public record ClienteSugerencia(Long id, String nombre, String telefono, String email, String direccion) {}
 
     @GetMapping("/emitir")
     public String mostrarEmitirBoleta() {
-        // Sirve la pantalla para ingresar el ID de la venta.
         return "Vendedor/emitir-boletas";
     }
 
@@ -188,9 +210,6 @@ public class VendedorVentaController {
                 return "redirect:/vendedor/ventas/emitir";
             }
 
-            // Nota:
-            // - La generación y el envío del comprobante ya están implementados en VentaService y NotificacionService.
-            // - Usamos el método existente: generarBoletaPDFReal(ventaId) y enviarVentaConComprobante(venta, pdf).
             Venta venta = ventaService.buscarPorId(ventaId);
             if (venta == null) {
                 redirectAttributes.addFlashAttribute("error", "No se encontró la venta con ID: " + ventaId);
@@ -245,22 +264,14 @@ public class VendedorVentaController {
         if (fechaInicio != null && !fechaInicio.isBlank()
                 && fechaFin != null && !fechaFin.isBlank()) {
 
-            LocalDateTime inicio = LocalDate.parse(fechaInicio)
-                    .atStartOfDay();
+            LocalDateTime inicio = LocalDate.parse(fechaInicio).atStartOfDay();
+            LocalDateTime fin = LocalDate.parse(fechaFin).atTime(23, 59, 59);
 
-            LocalDateTime fin = LocalDate.parse(fechaFin)
-                    .atTime(23, 59, 59);
-            ventas = ventaService.listarVentas().stream()
-                    .filter(v -> v.getFecha() != null
-                            && !v.getFecha().isBefore(inicio)
-                            && v.getFecha().isBefore(fin))
-                    .collect(java.util.stream.Collectors.toList());
+            ventas = ventaService.buscarVentasPorFecha(inicio, fin);
 
         } else {
-            ventas = ventaService.listarVentas();
+            ventas = ventaService.listarTodasLasVentas();
         }
-
-
 
         model.addAttribute("ventas", ventas);
         model.addAttribute("fechaInicio", fechaInicio);
@@ -269,5 +280,3 @@ public class VendedorVentaController {
         return "Vendedor/historial";
     }
 }
-
-

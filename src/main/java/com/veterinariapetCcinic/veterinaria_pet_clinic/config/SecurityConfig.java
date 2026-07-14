@@ -99,7 +99,7 @@ public class SecurityConfig {
                             } else if (esFarmaceutico) {
                                 response.sendRedirect("/farmaceutico/dashboard");
                             } else if (esVendedor) {
-                                response.sendRedirect("/vendedor");
+                                response.sendRedirect("/vendedor/dashboard");
                             } else {
                                 response.sendRedirect("/recepcionista/dashboard");
                             }

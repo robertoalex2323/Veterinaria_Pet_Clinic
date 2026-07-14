@@ -10,7 +10,14 @@
     const formAlertText = document.getElementById('formAlertText');
     const btnGuardar = document.getElementById('btnGuardarVenta');
 
+    const subtotalTextoEl = document.getElementById('subtotalTexto');
+    const igvTextoEl = document.getElementById('igvTexto');
+    const totalEl = document.getElementById('totalVenta');
+    const subtotalHiddenEl = document.getElementById('subtotalVenta');
+    const itemsEl = document.getElementById('totalItems');
+
     const CURRENCY = 'S/';
+    const IGV_TASA = 0.18;
 
     // ---------- Utilidades ----------
     function safeNumberFromText(text) {
@@ -20,7 +27,7 @@
     }
 
     function formatMoney(n) {
-      return n.toFixed(2);
+      return (Number.isFinite(n) ? n : 0).toFixed(2);
     }
 
     function mostrarAlerta(mensaje) {
@@ -40,6 +47,10 @@
     // ---------- Selección de fila / checkbox ----------
     function getFila(el) {
       return el ? el.closest('tr.producto-row') : null;
+    }
+
+    function todasLasFilas() {
+      return tabla ? Array.from(tabla.querySelectorAll('tbody tr.producto-row')) : [];
     }
 
     function toggleFilaSeleccionada(fila) {
@@ -72,9 +83,53 @@
       qtyInput.value = val;
     }
 
+    // ---------- Resumen general: SIEMPRE recorre el DOM en tiempo real ----------
+    function actualizarResumen() {
+      let subtotal = 0;
+      let items = 0;
+
+      todasLasFilas().forEach((fila) => {
+        const chk = fila.querySelector('.producto-check');
+        const qtyInput = fila.querySelector('.cantidad-input');
+        const precioEl = fila.querySelector('.precio-valor');
+        if (!chk || !chk.checked || !qtyInput || !precioEl) return;
+
+        const cantidad = parseInt(qtyInput.value, 10);
+        if (!Number.isFinite(cantidad) || cantidad <= 0) return;
+
+        const precio = safeNumberFromText(precioEl.textContent);
+        subtotal += precio * cantidad;
+        items += 1;
+      });
+
+      const igv = subtotal * IGV_TASA;
+      const total = subtotal + igv;
+
+      if (subtotalTextoEl) subtotalTextoEl.textContent = formatMoney(subtotal);
+      if (igvTextoEl) igvTextoEl.textContent = formatMoney(igv);
+      if (totalEl) totalEl.textContent = formatMoney(total);
+      if (subtotalHiddenEl) subtotalHiddenEl.value = formatMoney(subtotal);
+      if (itemsEl) itemsEl.textContent = String(items);
+
+      if (btnGuardar) {
+        btnGuardar.disabled = items === 0;
+      }
+    }
+
+    function recalcularTodo() {
+      todasLasFilas().forEach((fila) => {
+        toggleFilaSeleccionada(fila);
+        actualizarSubtotalFila(fila);
+      });
+      actualizarResumen();
+    }
+
+    // ---------- Delegación de eventos: botones +/- ----------
     tabla?.addEventListener('click', (e) => {
       const btn = e.target.closest('.qty-btn');
       if (!btn) return;
+      e.preventDefault();
+
       const fila = getFila(btn);
       const qtyInput = fila?.querySelector('.cantidad-input');
       if (!qtyInput || qtyInput.disabled) return;
@@ -84,14 +139,13 @@
       qtyInput.value = current + step;
       clampCantidad(qtyInput);
 
-      // Si el usuario ajusta cantidad, marcar automáticamente el producto.
       const chk = fila.querySelector('.producto-check');
-      if (chk && !chk.disabled && !chk.checked) {
+      if (chk && !chk.disabled) {
         chk.checked = true;
       }
-      toggleFilaSeleccionada(fila);
-      actualizarSubtotalFila(fila);
-      actualizarResumen();
+
+      recalcularTodo();
+      ocultarAlerta();
     });
 
     // ---------- Click en la fila selecciona/deselecciona (excepto en controles) ----------
@@ -104,67 +158,46 @@
       const chk = fila.querySelector('.producto-check');
       if (!chk || chk.disabled) return;
       chk.checked = !chk.checked;
-      chk.dispatchEvent(new Event('change', { bubbles: true }));
+      recalcularTodo();
+      ocultarAlerta();
     });
 
-    // ---------- Cambios en checkbox / cantidad ----------
-    form.addEventListener('change', (e) => {
+    // ---------- Cambios directos en checkbox ----------
+    tabla?.addEventListener('change', (e) => {
       if (e.target.matches('.producto-check')) {
-        const fila = getFila(e.target);
-        toggleFilaSeleccionada(fila);
-        actualizarSubtotalFila(fila);
-        actualizarResumen();
+        recalcularTodo();
         ocultarAlerta();
       }
     });
 
-    form.addEventListener('input', (e) => {
+    // ---------- Cantidad escrita/modificada directamente ----------
+    tabla?.addEventListener('input', (e) => {
       if (e.target.matches('.cantidad-input')) {
         clampCantidad(e.target);
         const fila = getFila(e.target);
-        actualizarSubtotalFila(fila);
-        actualizarResumen();
+
+        const chk = fila?.querySelector('.producto-check');
+        if (chk && !chk.disabled && !chk.checked) {
+          chk.checked = true;
+        }
+
+        recalcularTodo();
         ocultarAlerta();
       }
     });
 
-    // ---------- Resumen general (total / cantidad de items) ----------
-    function actualizarResumen() {
-      const totalEl = document.getElementById('totalVenta');
-      const subtotalEl = document.getElementById('subtotalVenta');
-      const itemsEl = document.getElementById('totalItems');
-
-      let total = 0;
-      let items = 0;
-
-      form.querySelectorAll('.producto-check:checked').forEach((chk) => {
-        const fila = getFila(chk);
-        const qtyInput = fila?.querySelector('.cantidad-input');
-        const precioEl = fila?.querySelector('.precio-valor');
-        if (!qtyInput || !precioEl) return;
-
-        const cantidad = parseInt(qtyInput.value, 10);
-        if (!Number.isFinite(cantidad) || cantidad <= 0) return;
-
-        const precio = safeNumberFromText(precioEl.textContent);
-        total += precio * cantidad;
-        items += 1;
-      });
-
-      if (totalEl) totalEl.textContent = formatMoney(total);
-      if (subtotalEl) subtotalEl.value = formatMoney(total);
-      if (itemsEl) itemsEl.textContent = String(items);
-
-      if (btnGuardar) {
-        btnGuardar.disabled = items === 0;
+    tabla?.addEventListener('change', (e) => {
+      if (e.target.matches('.cantidad-input')) {
+        clampCantidad(e.target);
+        recalcularTodo();
       }
-    }
+    });
 
     // ---------- Búsqueda / filtro de productos ----------
     function filtrarProductos() {
       if (!tabla || !buscarInput) return;
       const q = buscarInput.value.trim().toLowerCase();
-      const filas = tabla.querySelectorAll('tbody tr.producto-row');
+      const filas = todasLasFilas();
       let visibles = 0;
 
       filas.forEach((fila) => {
@@ -191,10 +224,12 @@
       const ids = [];
       const cantidades = [];
 
-      form.querySelectorAll('.producto-check:checked').forEach((chk) => {
-        const fila = getFila(chk);
-        const qtyInput = fila?.querySelector('.cantidad-input');
-        const cantidad = qtyInput ? parseInt(qtyInput.value, 10) : 0;
+      todasLasFilas().forEach((fila) => {
+        const chk = fila.querySelector('.producto-check');
+        const qtyInput = fila.querySelector('.cantidad-input');
+        if (!chk || !chk.checked || !qtyInput) return;
+
+        const cantidad = parseInt(qtyInput.value, 10);
         if (Number.isFinite(cantidad) && cantidad > 0) {
           ids.push(chk.value);
           cantidades.push(cantidad);
@@ -230,6 +265,17 @@
         return;
       }
 
+      const metodoPago = document.getElementById('metodoPago');
+      const codigoOperacion = document.getElementById('codigoOperacion');
+      if (metodoPago && (metodoPago.value === 'Yape' || metodoPago.value === 'Plin')) {
+        if (!codigoOperacion || !codigoOperacion.value.trim()) {
+          e.preventDefault();
+          mostrarAlerta(`Ingresa el código de operación de ${metodoPago.value} para continuar.`);
+          codigoOperacion?.focus();
+          return;
+        }
+      }
+
       const productoIdsInput = document.getElementById('productoIds');
       const cantidadesInput = document.getElementById('cantidades');
       if (productoIdsInput) productoIdsInput.value = ids.join(',');
@@ -241,11 +287,7 @@
       }
     });
 
-    // ---------- Inicialización ----------
-    tabla?.querySelectorAll('tbody tr.producto-row').forEach((fila) => {
-      toggleFilaSeleccionada(fila);
-      actualizarSubtotalFila(fila);
-    });
-    actualizarResumen();
+    // Inicialización
+    recalcularTodo();
   });
 })();

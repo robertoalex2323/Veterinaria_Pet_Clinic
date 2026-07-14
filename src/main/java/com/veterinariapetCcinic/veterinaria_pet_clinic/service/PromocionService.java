@@ -28,6 +28,12 @@ public class PromocionService {
                 .toList();
     }
 
+    // Compatibilidad para controladores existentes
+    public List<Promocion> listarActivas() {
+        return getPromocionesActivas();
+    }
+
+
     private boolean aplicaDiaSemana(Promocion promo) {
         if (promo.getDiasSemana() == null || promo.getDiasSemana().isEmpty()) {
             return true;

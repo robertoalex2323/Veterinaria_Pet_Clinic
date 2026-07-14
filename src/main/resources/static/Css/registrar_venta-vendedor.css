@@ -73,11 +73,7 @@ form#ventaForm{
   box-shadow: 0 10px 25px rgba(13,110,253,.18);
 }
 
-.d-none input{
-  /* ocultos del JS: no interferir */
-}
-
-/* Ajustes generales para tabla/controles dentro de la vista (si existen en el contenido del fragment) */
+/* Ajustes generales para tabla/controles */
 .table{
   border-radius: 12px;
   overflow:hidden;
@@ -104,9 +100,11 @@ form#ventaForm{
   font-weight: 700;
 }
 
-/* Checkbox de selección de productos */
 input[type="checkbox"]{
   transform: translateY(1px);
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
 }
 
 /* ============ Autocompletado de cliente ============ */
@@ -191,6 +189,7 @@ input[type="checkbox"]{
 
 .producto-row{
   transition: background-color .15s ease;
+  cursor: pointer;
 }
 
 .producto-row.is-selected{
@@ -207,6 +206,7 @@ input[type="checkbox"]{
 
 .producto-row.is-selected .row-subtotal{
   color: var(--vv-success);
+  font-weight: 800;
 }
 
 /* ============ Stepper de cantidad ============ */
@@ -243,6 +243,7 @@ input[type="checkbox"]{
   font-size: .75rem;
   cursor: pointer;
   transition: background .12s ease, transform .05s ease;
+  flex-shrink: 0;
 }
 
 .qty-btn:hover{
@@ -261,52 +262,75 @@ input[type="checkbox"]{
   pointer-events: none;
 }
 
-/* ============ Resumen fijo de la venta ============ */
+/* ============ Resumen de venta reestructurado ============ */
 .venta-resumen{
   position: sticky;
   bottom: -1px;
   margin-top: 1.25rem;
   background: var(--vv-card);
   border: 1px solid var(--vv-border);
-  border-radius: 14px;
-  padding: .9rem 1.1rem;
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
   display:flex;
   flex-wrap: wrap;
   align-items:center;
   justify-content: space-between;
-  gap: 1rem;
-  box-shadow: 0 -6px 20px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.05);
+  gap: 1.25rem;
+  box-shadow: 0 -6px 20px rgba(15,23,42,.06), 0 10px 28px rgba(15,23,42,.06);
 }
 
-.venta-resumen-info{
+.resumen-stats{
   display:flex;
   align-items:center;
-  gap: 1.75rem;
+  gap: 1.5rem;
   flex-wrap: wrap;
 }
 
-.venta-resumen-item{
+.resumen-stat{
   display:flex;
-  flex-direction:column;
-  gap: 2px;
+  align-items:center;
+  gap: .65rem;
 }
 
-.venta-resumen-item .label{
-  font-size: .74rem;
+.resumen-stat-icon{
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--vv-soft);
+  color: var(--vv-primary);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: .95rem;
+  flex-shrink: 0;
+}
+
+.resumen-stat div{
+  display:flex;
+  flex-direction:column;
+  gap: 1px;
+}
+
+.resumen-stat-label{
+  font-size: .72rem;
   text-transform: uppercase;
   letter-spacing: .04em;
   color: var(--vv-muted);
   font-weight: 700;
 }
 
-.venta-resumen-item .value{
+.resumen-stat-value{
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--vv-text);
 }
 
-.venta-resumen-total .value{
-  font-size: 1.4rem;
+.resumen-stat-total .resumen-stat-icon{
+  background: rgba(13,110,253,.16);
+}
+
+.resumen-stat-total .resumen-stat-value{
+  font-size: 1.5rem;
   color: var(--vv-primary);
 }
 
@@ -315,9 +339,247 @@ input[type="checkbox"]{
   cursor: not-allowed;
 }
 
-/* Fila resaltada temporalmente cuando no hay coincidencias */
 #sinResultados td{
   border-top: none;
+}
+
+/* ============ Banner de promociones vigentes ============ */
+.promo-banner{
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(135deg, rgba(255,193,7,.14), rgba(220,53,69,.08));
+  border: 1px solid rgba(255,193,7,.35);
+  box-shadow: 0 8px 20px rgba(255,193,7,.12);
+}
+
+.promo-banner-header{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  font-weight: 800;
+  color:#8a5a00;
+  margin-bottom: .75rem;
+}
+
+.promo-banner-header i{
+  color:#f59f00;
+}
+
+.promo-count{
+  margin-left: auto;
+  background: #f59f00;
+  color:#fff;
+  font-size: .75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: .1rem .55rem;
+}
+
+.promo-banner-list{
+  display:flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+
+.promo-chip{
+  background:#fff;
+  border: 1px solid rgba(245,159,0,.35);
+  border-radius: 12px;
+  padding: .6rem .8rem;
+  min-width: 200px;
+  flex: 1 1 220px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.04);
+}
+
+.promo-chip-top{
+  display:flex;
+  align-items:center;
+  gap:.4rem;
+  flex-wrap: wrap;
+}
+
+.promo-chip-tipo{
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing:.04em;
+  color:#fff;
+  background: #f59f00;
+  border-radius: 999px;
+  padding: .1rem .5rem;
+}
+
+.promo-chip-nombre{
+  font-weight: 700;
+  color: var(--vv-text);
+}
+
+.promo-chip-desc{
+  font-size: .8rem;
+  color: var(--vv-muted);
+  margin-top: .2rem;
+}
+
+.promo-chip-meta{
+  margin-top: .4rem;
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+  font-weight: 700;
+  color: #d9480f;
+  font-size: .85rem;
+}
+
+.promo-chip-cat{
+  font-weight: 600;
+  color: var(--vv-muted);
+  font-size: .78rem;
+}
+
+.promo-banner-note{
+  margin-top: .7rem;
+  font-size: .78rem;
+  color: #8a5a00;
+}
+
+/* ============ Badge "Oferta" en fila de producto ============ */
+.badge-oferta{
+  display:inline-flex;
+  align-items:center;
+  gap:.25rem;
+  font-size: .65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing:.03em;
+  color:#fff;
+  background: linear-gradient(135deg, #f59f00, #e8590c);
+  border-radius: 999px;
+  padding: .15rem .5rem;
+}
+
+.producto-row.tiene-oferta{
+  background: rgba(255,193,7,.06);
+}
+
+/* ============ Bloque de QR de pago ============ */
+.qr-pago-box{
+  display:flex;
+  gap: 1rem;
+  align-items:flex-start;
+  background: rgba(13,110,253,.05);
+  border: 1px solid rgba(13,110,253,.15);
+  border-radius: 14px;
+  padding: .9rem 1rem;
+  flex-wrap: wrap;
+}
+
+.qr-pago-img-wrap{
+  position: relative;
+  flex-shrink: 0;
+}
+
+.qr-pago-img{
+  height: 140px;
+  width: 140px;
+  object-fit: contain;
+  background:#fff;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.08);
+  cursor: zoom-in;
+}
+
+.qr-zoom-btn{
+  position:absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: var(--vv-primary);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.75rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(13,110,253,.35);
+}
+
+.qr-pago-info{
+  flex: 1 1 240px;
+  min-width: 220px;
+}
+
+.qr-pago-titulo{
+  font-weight: 700;
+  color: var(--vv-text);
+}
+
+.qr-pago-sub{
+  font-size: .8rem;
+  color: var(--vv-muted);
+  margin-top: .15rem;
+}
+
+/* ============ Modal de zoom del QR ============ */
+.qr-modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.65);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index: 1080;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease;
+}
+
+.qr-modal-overlay.is-open{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.qr-modal-box{
+  background:#fff;
+  border-radius: 18px;
+  padding: 1.5rem;
+  text-align:center;
+  position: relative;
+  box-shadow: 0 20px 50px rgba(0,0,0,.3);
+  max-width: 90vw;
+}
+
+.qr-modal-box img{
+  width: min(320px, 70vw);
+  height: min(320px, 70vw);
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+.qr-modal-text{
+  margin-top: .75rem;
+  font-weight: 600;
+  color: var(--vv-text);
+}
+
+.qr-modal-close{
+  position:absolute;
+  top: .5rem;
+  right: .5rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f3f9;
+  color: var(--vv-text);
+  cursor: pointer;
+}
+
+@media (max-width: 576px){
+  .qr-pago-box{ flex-direction: column; align-items:center; text-align:center; }
+  .qr-pago-info{ text-align:left; width:100%; }
 }
 
 /* Responsive */
@@ -335,7 +597,7 @@ input[type="checkbox"]{
     align-items: stretch;
     position: static;
   }
-  .venta-resumen-info{
+  .resumen-stats{
     justify-content: space-between;
     gap: 1rem;
   }

@@ -5,13 +5,19 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PromocionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ProductoService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/vendedor/promociones")
@@ -29,57 +35,159 @@ public class VendedorPromocionController {
         this.notificacionService = notificacionService;
     }
 
+    // Muestra TODAS las promociones (activas e inactivas) para poder administrarlas.
     @GetMapping
     public String listar(Model model) {
-        model.addAttribute("promociones", promocionService.listarActivas());
+        List<Promocion> promociones = promocionService.getTodasPromociones();
+
+        List<Map<String, Object>> vista = promociones.stream()
+                .map(this::construirVistaPromocion)
+                .collect(Collectors.toList());
+
+        model.addAttribute("promociones", vista);
         return "Vendedor/promociones";
+    }
+
+    private Map<String, Object> construirVistaPromocion(Promocion p) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", p.getId());
+        m.put("nombre", p.getNombre());
+        m.put("descripcion", p.getDescripcion());
+        m.put("tipo", p.getTipo());
+        m.put("descuento", p.getDescuento());
+        m.put("categoriaAplicable", p.getCategoriaAplicable());
+        m.put("montoMinimo", p.getMontoMinimo());
+        m.put("fechaInicio", p.getFechaInicio());
+        m.put("fechaFin", p.getFechaFin());
+        m.put("activo", p.getActivo());
+
+        String productoNombre = null;
+        String productoCategoria = p.getCategoriaAplicable();
+        BigDecimal precioOferta = null;
+
+        if (p.getProductoId() != null) {
+            try {
+                Producto producto = productoService.buscarPorId(p.getProductoId());
+                productoNombre = producto.getNombre();
+                productoCategoria = producto.getCategoria();
+
+                if (producto.getPrecio() != null && p.getDescuento() != null
+                        && "PORCENTAJE".equalsIgnoreCase(p.getTipo())) {
+                    BigDecimal factor = BigDecimal.ONE.subtract(
+                            p.getDescuento().divide(new BigDecimal("100"))
+                    );
+                    precioOferta = producto.getPrecio().multiply(factor).setScale(2, RoundingMode.HALF_UP);
+                }
+            } catch (Exception ex) {
+                productoNombre = "Producto no encontrado";
+            }
+        }
+
+        m.put("productoNombre", productoNombre != null ? productoNombre : "Todos los productos");
+        m.put("productoCategoria", productoCategoria);
+        m.put("precioOferta", precioOferta);
+        return m;
     }
 
     @GetMapping("/nuevo")
     public String nuevo(Model model) {
         List<Producto> productos = productoService.listarTodos();
         model.addAttribute("productos", productos);
-        model.addAttribute("promocion", new Promocion());
+        if (!model.containsAttribute("promocion")) {
+            model.addAttribute("promocion", new Promocion());
+        }
         model.addAttribute("modo", "nuevo");
+        model.addAttribute("diasSeleccionados", List.of());
         return "Vendedor/promocion-form";
     }
 
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
         List<Producto> productos = productoService.listarTodos();
-        Promocion promocion = promocionService.buscarPorId(id);
         model.addAttribute("productos", productos);
-        model.addAttribute("promocion", promocion);
+        if (!model.containsAttribute("promocion")) {
+            Promocion promocion = promocionService.getPromocionPorId(id);
+            model.addAttribute("promocion", promocion);
+            model.addAttribute("diasSeleccionados", parseDias(promocion.getDiasSemana()));
+        } else {
+            model.addAttribute("diasSeleccionados", List.of());
+        }
         model.addAttribute("modo", "editar");
         return "Vendedor/promocion-form";
+    }
+
+    private List<String> parseDias(String diasSemana) {
+        if (diasSemana == null || diasSemana.isBlank()) {
+            return List.of();
+        }
+        return java.util.Arrays.stream(diasSemana.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
     }
 
     @PostMapping("/guardar")
     public String guardar(
             @RequestParam(required = false) Long id,
-            @RequestParam Long productoId,
-            @RequestParam(required = false) BigDecimal descuento,
-            @RequestParam(required = false, defaultValue = "true") Boolean activa,
+            @RequestParam String nombre,
+            @RequestParam(required = false) String descripcion,
+            @RequestParam String tipo,
+            @RequestParam BigDecimal descuento,
+            @RequestParam(required = false) String categoriaAplicable,
+            @RequestParam(required = false) Long productoId,
+            @RequestParam(required = false) BigDecimal montoMinimo,
+            @RequestParam(required = false) List<String> diasSemana,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false, defaultValue = "true") Boolean activo,
             RedirectAttributes redirectAttributes) {
 
+        String nombreLimpio = nombre == null ? "" : nombre.trim();
+        String tipoLimpio = tipo == null ? "" : tipo.trim();
+
+        if (nombreLimpio.isEmpty() || tipoLimpio.isEmpty() || descuento == null) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Completa el nombre, el tipo y el descuento de la promoción.");
+            return "redirect:" + (id == null ? "/vendedor/promociones/nuevo" : "/vendedor/promociones/editar/" + id);
+        }
+
         try {
-            promocionService.guardar(id, productoId, descuento, activa);
-            redirectAttributes.addFlashAttribute("success", "Promoción guardada correctamente.");
+            Promocion promocion = new Promocion();
+            promocion.setNombre(nombreLimpio);
+            promocion.setDescripcion(descripcion);
+            promocion.setTipo(tipoLimpio);
+            promocion.setDescuento(descuento);
+            promocion.setCategoriaAplicable(categoriaAplicable != null && !categoriaAplicable.isBlank() ? categoriaAplicable.trim() : null);
+            promocion.setProductoId(productoId);
+            promocion.setMontoMinimo(montoMinimo);
+            promocion.setDiasSemana(diasSemana != null && !diasSemana.isEmpty() ? String.join(",", diasSemana) : null);
+            promocion.setFechaInicio(fechaInicio);
+            promocion.setFechaFin(fechaFin);
+            promocion.setActivo(activo != null ? activo : true);
+
+            if (id == null) {
+                promocionService.guardarPromocion(promocion);
+                redirectAttributes.addFlashAttribute("success", "Promoción guardada correctamente.");
+            } else {
+                promocionService.actualizarPromocion(id, promocion);
+                redirectAttributes.addFlashAttribute("success", "Promoción actualizada correctamente.");
+            }
+
             notificacionService.enviarNotificacionUI(
                     "success",
-                    "Promoción guardada" + (activa != null && activa ? " (activa)" : " (inactiva)") + "."
+                    "Promoción guardada" + (Boolean.TRUE.equals(activo) ? " (activa)" : " (inactiva)") + "."
             );
             return "redirect:/vendedor/promociones";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al guardar la promoción: " + (e.getMessage() != null ? e.getMessage() : ""));
-            return "redirect:/vendedor/promociones";
+            return "redirect:" + (id == null ? "/vendedor/promociones/nuevo" : "/vendedor/promociones/editar/" + id);
         }
     }
 
     @GetMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
-            promocionService.eliminar(id);
+            promocionService.eliminarPromocion(id);
             redirectAttributes.addFlashAttribute("success", "Promoción eliminada.");
             notificacionService.enviarNotificacionUI("warning", "Promoción eliminada.");
         } catch (Exception e) {
@@ -87,5 +195,5 @@ public class VendedorPromocionController {
         }
         return "redirect:/vendedor/promociones";
     }
-}
 
+}

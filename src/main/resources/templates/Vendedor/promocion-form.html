@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'producto')}">
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'promociones')}">
 
 <head>
     <meta charset="UTF-8">
-    <title>Crear/Editar Producto - Vendedor</title>
-    <link rel="stylesheet" th:href="@{/css/producto-vendedor.css}" />
+    <title>Crear/Editar Promoción - Vendedor</title>
+    <link rel="stylesheet" th:href="@{/css/promociones-vendedor.css}" />
 </head>
 
 <body>
@@ -13,11 +13,13 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-<h2 class="mb-0"><i class="fas fa-box text-primary"></i> <span th:text="${producto != null && producto.id != null ? 'Editar Producto' : 'Nuevo Producto'}">Producto</span></h2>
-            <p class="text-muted mb-0">Completa los datos del producto</p>
+            <h2 class="mb-0"><i class="fas fa-tags text-primary"></i>
+                <span th:text="${modo == 'editar'} ? 'Editar Promoción' : 'Nueva Promoción'">Promoción</span>
+            </h2>
+            <p class="text-muted mb-0">Completa los datos de la promoción</p>
         </div>
         <div>
-            <a class="btn btn-outline-secondary shadow-sm" th:href="@{/vendedor/productos}">
+            <a class="btn btn-outline-secondary shadow-sm" th:href="@{/vendedor/promociones}">
                 <i class="fas fa-arrow-left me-2"></i> Volver
             </a>
         </div>
@@ -32,93 +34,104 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <div class="card shadow-sm producto-card">
+    <div class="card shadow-sm">
         <div class="card-body p-4">
-            <form id="productoForm" th:action="@{/vendedor/productos/guardar}" method="post" enctype="multipart/form-data" th:object="${producto}" novalidate>
-                <input type="hidden" name="id" th:value="${producto != null ? producto.id : ''}" />
-                <div class="row g-4 producto-form-grid">
+            <form id="promocionForm" th:action="@{/vendedor/promociones/guardar}" method="post"
+                  th:object="${promocion}" novalidate>
+
+                <input type="hidden" name="id" th:value="${promocion != null ? promocion.id : ''}" />
+
+                <div class="row g-4">
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Nombre <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold text-dark">Nombre de la promoción <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-tag"></i></span>
                             <input type="text" class="form-control" name="nombre" th:value="*{nombre}" maxlength="255" required>
                         </div>
-                        <div class="invalid-feedback d-block d-none" data-error-for="nombre">Ingresa el nombre del producto.</div>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Categoría <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
-                            <input type="text" class="form-control" name="categoria" th:value="*{categoria}" list="categoriasList" maxlength="50" autocomplete="off" required>
+                        <label class="form-label fw-bold text-dark">Tipo de promoción <span class="text-danger">*</span></label>
+                        <select class="form-select" name="tipo" required>
+                            <option value="">Selecciona un tipo</option>
+                            <option value="PORCENTAJE" th:selected="${promocion != null && promocion.tipo == 'PORCENTAJE'}">Descuento por porcentaje (%)</option>
+                            <option value="2X1" th:selected="${promocion != null && promocion.tipo == '2X1'}">2x1</option>
+                            <option value="FIJO" th:selected="${promocion != null && promocion.tipo == 'FIJO'}">Descuento fijo (S/)</option>
+                        </select>
+                        <div class="text-muted small mt-1">
+                            "Porcentaje" y "Fijo" usan el campo Descuento; "2x1" usa la categoría o el producto seleccionado.
                         </div>
-                        <datalist id="categoriasList">
-                            <option th:each="cat : ${categorias}" th:value="${cat}"></option>
-                        </datalist>
-                        <div class="text-muted small mt-1">Escribe una nueva o elige una existente para mantener el catálogo ordenado.</div>
-                        <div class="invalid-feedback d-block d-none" data-error-for="categoria">Ingresa la categoría.</div>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Precio (S/) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold text-dark">Descuento <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                            <input type="number" step="0.01" min="0.01" max="999999.99" class="form-control" name="precio" th:value="*{precio}" required>
+                            <span class="input-group-text"><i class="fas fa-percent"></i></span>
+                            <input type="number" step="0.01" min="0" class="form-control" name="descuento" th:value="*{descuento}" required>
                         </div>
-                        <div class="invalid-feedback d-block d-none" data-error-for="precio">Ingresa un precio mayor a 0.</div>
+                        <div class="text-muted small mt-1">Para "Porcentaje" ingresa un número del 0 al 100. Para "Fijo" ingresa el monto en soles.</div>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Stock <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold text-dark">Monto mínimo de compra (opcional)</label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-cubes"></i></span>
-                            <input type="number" step="1" min="0" class="form-control" name="stock" th:value="*{stock}" required>
+                            <span class="input-group-text">S/</span>
+                            <input type="number" step="0.01" min="0" class="form-control" name="montoMinimo" th:value="*{montoMinimo}">
                         </div>
-                        <div class="invalid-feedback d-block d-none" data-error-for="stock">El stock no puede ser negativo.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Producto específico (opcional)</label>
+                        <select class="form-select" name="productoId">
+                            <option value="">Aplica a varios / todos</option>
+                            <option th:each="p : ${productos}"
+                                    th:value="${p.id}"
+                                    th:text="${p.nombre + ' (' + p.categoria + ')'}"
+                                    th:selected="${promocion != null && promocion.productoId != null && promocion.productoId == p.id}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Categoría aplicable (opcional)</label>
+                        <input type="text" class="form-control" name="categoriaAplicable" th:value="*{categoriaAplicable}"
+                               placeholder="Ej: Perro, Gato..." maxlength="50">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Fecha inicio (opcional)</label>
+                        <input type="date" class="form-control" name="fechaInicio" th:value="*{fechaInicio}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Fecha fin (opcional)</label>
+                        <input type="date" class="form-control" name="fechaFin" th:value="*{fechaFin}">
                     </div>
 
                     <div class="col-md-12">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <label class="form-label fw-bold text-dark mb-0">Descripción</label>
-                            <span class="text-muted small" id="descripcionCounter">0 / 500</span>
+                        <label class="form-label fw-bold text-dark mb-2">Días de la semana (opcional, deja vacío para todos los días)</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check" th:each="dia : ${ {1:'Lunes',2:'Martes',3:'Miércoles',4:'Jueves',5:'Viernes',6:'Sábado',7:'Domingo'} }">
+                                <input class="form-check-input" type="checkbox" name="diasSemana"
+                                       th:id="${'dia_' + dia.key}" th:value="${dia.key}"
+                                       th:checked="${diasSeleccionados != null && diasSeleccionados.contains('' + dia.key)}">
+                                <label class="form-check-label" th:for="${'dia_' + dia.key}" th:text="${dia.value}"></label>
+                            </div>
                         </div>
-                        <textarea class="form-control" name="descripcion" id="descripcionInput" rows="4" maxlength="500" th:text="*{descripcion}"></textarea>
                     </div>
 
                     <div class="col-md-12">
-                        <label class="form-label fw-bold text-dark">Foto del producto</label>
+                        <label class="form-label fw-bold text-dark">Descripción (opcional)</label>
+                        <textarea class="form-control" name="descripcion" rows="3" maxlength="500" th:text="*{descripcion}"></textarea>
+                    </div>
 
-                        <div class="pf-foto-row">
-                            <div class="pf-foto-preview" id="fotoPreviewWrap">
-                                <img id="fotoPreviewImg"
-                                     th:if="${producto != null && producto.foto != null && !#strings.isEmpty(producto.foto)}"
-                                     th:src="${producto.foto}"
-                                     alt="Foto actual del producto"
-                                     class="pf-foto-img" />
-                                <div id="fotoPreviewPlaceholder"
-                                     class="pf-foto-placeholder"
-                                     th:classappend="${producto != null && producto.foto != null && !#strings.isEmpty(producto.foto)} ? 'd-none' : ''">
-                                    <i class="fas fa-image"></i>
-                                </div>
-                            </div>
-
-                            <div class="flex-grow-1">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-upload"></i></span>
-                                    <input type="file" class="form-control" id="fotoInput" name="foto" accept="image/png,image/jpeg,image/webp,image/gif">
-                                </div>
-                                <div class="text-muted small mt-1">Opcional. JPG, PNG, WEBP o GIF, máx. 2MB.</div>
-
-                                <div class="form-check mt-2"
-                                     th:if="${producto != null && producto.foto != null && !#strings.isEmpty(producto.foto)}">
-                                    <input class="form-check-input" type="checkbox" id="eliminarFotoCheck" name="eliminarFoto" value="true">
-                                    <label class="form-check-label small" for="eliminarFotoCheck">
-                                        Quitar la foto actual (sin subir una nueva)
-                                    </label>
-                                </div>
-                                <div class="text-danger small mt-1 d-none" id="fotoError"></div>
-                            </div>
+                    <div class="col-md-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="activaCheck"
+                                   name="activo" value="true" th:checked="${promocion == null || promocion.activo == null || promocion.activo}">
+                            <input type="hidden" name="activo" value="false">
+                            <label class="form-check-label fw-bold" for="activaCheck">Promoción activa</label>
                         </div>
                     </div>
 
@@ -127,8 +140,8 @@
                 <hr class="my-4">
 
                 <div class="d-flex justify-content-between">
-                    <a class="btn btn-outline-secondary" th:href="@{/vendedor/productos}">Cancelar</a>
-                    <button type="submit" class="btn btn-primary shadow-sm" id="btnGuardarProducto">
+                    <a class="btn btn-outline-secondary" th:href="@{/vendedor/promociones}">Cancelar</a>
+                    <button type="submit" class="btn btn-primary shadow-sm" id="btnGuardarPromocion">
                         <i class="fas fa-save me-2"></i> Guardar
                     </button>
                 </div>
@@ -137,8 +150,6 @@
         </div>
     </div>
 </div>
-<script th:src="@{/js/producto-form-vendedor.js}"></script>
+<script th:src="@{/js/promociones-vendedor.js}"></script>
 </body>
 </html>
-
-

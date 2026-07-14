@@ -4,28 +4,116 @@
     const metodo = document.getElementById('metodoPago');
     const qrMetodoPago = document.getElementById('qrMetodoPago');
     const qrImg = document.getElementById('qrImg');
+    const qrTexto = document.getElementById('qrTexto');
+    const codigoOperacion = document.getElementById('codigoOperacion');
+    const qrZoomBtn = document.getElementById('qrZoomBtn');
+    const qrModalOverlay = document.getElementById('qrModalOverlay');
+    const qrModalImg = document.getElementById('qrModalImg');
+    const qrModalTexto = document.getElementById('qrModalTexto');
+    const qrModalClose = document.getElementById('qrModalClose');
 
-    if (metodo && qrMetodoPago && qrImg) {
-      const getQr = (value) => {
-        if (value === 'Yape') return '/Imagen/Iconos/qr-yape.png';
-        if (value === 'Plin') return '/Imagen/Iconos/qr-plin.png';
-        return null;
-      };
+    console.log('[QR] Script de método de pago cargado.', {
+      metodo: !!metodo,
+      qrMetodoPago: !!qrMetodoPago,
+      qrImg: !!qrImg,
+      qrZoomBtn: !!qrZoomBtn,
+      qrModalOverlay: !!qrModalOverlay,
+      qrModalImg: !!qrModalImg,
+    });
 
-      const render = () => {
-        const qr = getQr(metodo.value);
-        if (!qr) {
-          qrMetodoPago.style.display = 'none';
-          qrImg.src = '';
-          return;
-        }
-        qrMetodoPago.style.display = 'block';
-        qrImg.src = qr;
-      };
-
-      metodo.addEventListener('change', render);
-      render();
+    // Ruta del QR según el método de pago. Única fuente de verdad,
+    // usada tanto para pintar la miniatura como para abrir el modal.
+    function getQrPath(value) {
+      if (value === 'Yape') return '/Imagen/Iconos/qr-yape.png';
+      if (value === 'Plin') return '/Imagen/Iconos/qr-plin.png';
+      return null;
     }
+
+    function render() {
+      if (!metodo || !qrMetodoPago || !qrImg) {
+        console.warn('[QR] Faltan elementos en el DOM, no se puede pintar el bloque QR.');
+        return;
+      }
+
+      const qr = getQrPath(metodo.value);
+      console.log('[QR] Método seleccionado:', metodo.value, '-> ruta:', qr);
+
+      if (!qr) {
+        qrMetodoPago.style.display = 'none';
+        qrImg.removeAttribute('src');
+        if (codigoOperacion) {
+          codigoOperacion.required = false;
+          codigoOperacion.value = '';
+        }
+        return;
+      }
+
+      qrMetodoPago.style.display = 'block';
+      qrImg.src = qr;
+      qrImg.onerror = () => {
+        console.error(`[QR] No se pudo cargar la imagen: ${qr}. Verifica que el archivo exista en static/Imagen/Iconos/`);
+      };
+      qrImg.onload = () => {
+        console.log(`[QR] Imagen cargada correctamente: ${qr}`);
+      };
+
+      if (qrTexto) {
+        qrTexto.innerHTML = `<i class="fas fa-qrcode me-1"></i> Escanea el QR de ${metodo.value} para pagar`;
+      }
+      if (codigoOperacion) {
+        codigoOperacion.required = true;
+      }
+    }
+
+    if (metodo) {
+      metodo.addEventListener('change', render);
+      render(); // pinta el estado inicial (por si el form vuelve con error y ya había Yape/Plin seleccionado)
+    }
+
+    // ================= Zoom del QR =================
+    function abrirModal() {
+      console.log('[QR] Intentando abrir modal...');
+
+      if (!metodo || !qrModalOverlay || !qrModalImg) {
+        console.error('[QR] No se puede abrir el modal: falta metodo, qrModalOverlay o qrModalImg en el DOM.');
+        return;
+      }
+
+      const qr = getQrPath(metodo.value);
+      if (!qr) {
+        console.warn('[QR] Intento de abrir el modal sin un método de pago Yape/Plin seleccionado.');
+        return;
+      }
+
+      qrModalImg.src = qr;
+      if (qrModalTexto) {
+        qrModalTexto.textContent = `Escanea el QR de ${metodo.value} con tu app`;
+      }
+      qrModalOverlay.classList.add('is-open');
+      console.log('[QR] Modal abierto con:', qr);
+    }
+
+    function cerrarModal() {
+      qrModalOverlay?.classList.remove('is-open');
+    }
+
+    if (qrZoomBtn) {
+      qrZoomBtn.addEventListener('click', abrirModal);
+    } else {
+      console.warn('[QR] No se encontró el botón #qrZoomBtn en el DOM.');
+    }
+
+    if (qrImg) {
+      qrImg.addEventListener('click', abrirModal);
+    }
+
+    qrModalClose?.addEventListener('click', cerrarModal);
+    qrModalOverlay?.addEventListener('click', (e) => {
+      if (e.target === qrModalOverlay) cerrarModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') cerrarModal();
+    });
 
     // ================= Autocompletado de cliente =================
     const nombreInput = document.getElementById('clienteNombre');

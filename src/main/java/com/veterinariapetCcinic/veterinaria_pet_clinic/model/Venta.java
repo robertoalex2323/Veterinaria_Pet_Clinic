@@ -43,6 +43,10 @@ public class Venta {
     @Column(name = "metodo_pago", length = 50)
     private String metodoPago;
 
+    @Column(name = "codigo_operacion", length = 50)
+    private String codigoOperacion;
+
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receta_medica_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -118,6 +122,9 @@ public class Venta {
     public BigDecimal getDescuentoAplicado() { return descuentoAplicado; }
     public void setDescuentoAplicado(BigDecimal descuentoAplicado) { this.descuentoAplicado = descuentoAplicado; }
 
+    public String getCodigoOperacion() { return codigoOperacion; }
+public void setCodigoOperacion(String codigoOperacion) { this.codigoOperacion = codigoOperacion; }
+    
     public List<DetalleVenta> getDetalles() { return detalles; }
     public void setDetalles(List<DetalleVenta> detalles) { 
         this.detalles = detalles; 

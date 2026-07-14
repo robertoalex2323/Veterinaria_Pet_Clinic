@@ -409,6 +409,16 @@ public List<String> obtenerPromocionesAplicables(Venta venta) {
         return ventaRepository.findByOrderByFechaDesc();
     }
 
+    // Métodos requeridos por VendedorVentaController (compatibilidad)
+    public List<Venta> listarTodasLasVentas() {
+        return listarVentas();
+    }
+
+    // Devuelve ventas entre [inicio, fin] (ordenadas por fecha desc en el repository)
+    public List<Venta> buscarVentasPorFecha(LocalDateTime inicio, LocalDateTime fin) {
+        return ventaRepository.findByFechaBetween(inicio, fin);
+    }
+
     public List<Venta> listarVentasHoy() {
         return ventaRepository.findVentasDesde(LocalDate.now().atStartOfDay());
     }
@@ -426,6 +436,7 @@ public List<String> obtenerPromocionesAplicables(Venta venta) {
         return ventaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
     }
+
 
     // ============================================
     // 7. BOLETA DIGITAL
@@ -521,6 +532,9 @@ public List<String> obtenerPromocionesAplicables(Venta venta) {
             document.add(new Paragraph("Cliente: " + (venta.getCliente() != null ? venta.getCliente().getNombre() : "N/A"), normalFont));
             document.add(new Paragraph("Teléfono: " + (venta.getCliente() != null ? venta.getCliente().getTelefono() : "N/A"), normalFont));
             document.add(new Paragraph("Método de Pago: " + venta.getMetodoPago(), normalFont));
+            if (venta.getCodigoOperacion() != null && !venta.getCodigoOperacion().isBlank()) {
+                document.add(new Paragraph("N° de Operación: " + venta.getCodigoOperacion(), normalFont));
+            }
 
             if (venta.getDescuentoAplicado().compareTo(BigDecimal.ZERO) > 0) {
                 document.add(new Paragraph("Descuento aplicado: S/ " + venta.getDescuentoAplicado(), descuentoFont));

@@ -1,5 +1,6 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
+
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Promocion;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Producto;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cliente;
@@ -87,14 +88,11 @@ public class VendedorRecomendacionesController {
         List<Map<String, Object>> items = new ArrayList<>();
 
         for (Promocion promo : (activas != null ? activas : new ArrayList<Promocion>())) {
-            if (promo == null) continue;
+            if (promo == null || promo.getProductoId() == null) continue;
 
-            Long productoId = promo.getProductoId();
-            if (productoId == null) continue;
+            Producto p = productoService.buscarPorId(promo.getProductoId());
 
-            Producto p = productoService.buscarPorId(productoId);
-            if (p == null || p.getId() == null) continue;
-
+            if (p.getId() == null) continue;
 
             String nombre = p.getNombre() == null ? "" : p.getNombre().toLowerCase(Locale.ROOT);
             String categoria = p.getCategoria() == null ? "" : p.getCategoria().toLowerCase(Locale.ROOT);
@@ -128,7 +126,6 @@ public class VendedorRecomendacionesController {
             BigDecimal descuento = promo.getDescuento();
             if (descuento == null) descuento = BigDecimal.ZERO;
 
-
             item.put("razon", "Producto con promoción activa (descuento: " + descuento.toPlainString() + ").");
 
             items.add(item);
@@ -138,11 +135,8 @@ public class VendedorRecomendacionesController {
         if (items.isEmpty() && activas != null && !activas.isEmpty()) {
             items = new ArrayList<>();
             for (Promocion promo : activas) {
-                if (promo == null) continue;
-                Long productoId = promo.getProductoId();
-                if (productoId == null) continue;
-
-                Producto p = productoService.buscarPorId(productoId);
+                if (promo == null || promo.getProductoId() == null) continue;
+                Producto p = productoService.buscarPorId(promo.getProductoId());
                 if (p == null || p.getId() == null) continue;
 
                 BigDecimal precio = p.getPrecio();

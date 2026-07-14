@@ -48,29 +48,40 @@
                 <table class="table table-hover align-middle">
                     <thead>
                     <tr>
-                        <th>Producto</th>
+                        <th>Promoción</th>
+                        <th>Tipo</th>
+                        <th>Aplica a</th>
                         <th>Descuento</th>
                         <th>Precio oferta</th>
+                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${promociones == null or #lists.isEmpty(promociones)}">
-                        <td colspan="4" class="text-center text-muted py-4">No hay promociones para mostrar.</td>
+                        <td colspan="7" class="text-center text-muted py-4">No hay promociones para mostrar.</td>
                     </tr>
                     <tr th:each="p : ${promociones}">
                         <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <div>
-                                    <div class="fw-semibold" th:text="${p.productoNombre}"></div>
-                                    <div class="text-muted small" th:text="${p.productoCategoria}"></div>
-                                </div>
-                            </div>
+                            <div class="fw-semibold" th:text="${p.nombre}"></div>
+                            <div class="text-muted small" th:text="${p.descripcion}"></div>
                         </td>
                         <td>
-                            <span class="badge bg-success" th:text="${p.descuento + '%'}"></span>
+                            <span class="badge bg-secondary" th:text="${p.tipo}"></span>
                         </td>
-                        <td th:text="${p.precioOferta}"></td>
+                        <td>
+                            <div th:text="${p.productoNombre}"></div>
+                            <div class="text-muted small" th:text="${p.productoCategoria}"></div>
+                        </td>
+                        <td>
+                            <span class="badge bg-success"
+                                  th:text="${p.tipo == 'FIJO' ? ('S/ ' + p.descuento) : (p.descuento + '%')}"></span>
+                        </td>
+                        <td th:text="${p.precioOferta != null ? ('S/ ' + p.precioOferta) : '-'}"></td>
+                        <td>
+                            <span class="badge" th:classappend="${p.activo} ? 'bg-success' : 'bg-secondary'"
+                                  th:text="${p.activo} ? 'Activa' : 'Inactiva'"></span>
+                        </td>
                         <td>
                             <div class="btn-group" role="group">
                                 <a class="btn btn-outline-secondary btn-sm"
@@ -79,8 +90,8 @@
                                 </a>
                                 <a class="btn btn-outline-danger btn-sm"
                                    th:href="@{/vendedor/promociones/eliminar/{id}(id=${p.id})}"
-                                   th:attr="data-promo-nombre=${p.productoNombre}"
-                                   onclick="return confirm('¿Eliminar la promoción de ' + this.dataset.promoNombre + '?');">
+                                   th:attr="data-promo-nombre=${p.nombre}"
+                                   onclick="return confirm('¿Eliminar la promoción ' + this.dataset.promoNombre + '?');">
                                     <i class="fas fa-trash"></i>
                                 </a>
                             </div>
@@ -92,7 +103,6 @@
 
             <div class="text-muted small mt-3">
                 Nota: El módulo de promociones usa descuentos guardados en el backend.
-
             </div>
         </div>
     </div>
@@ -101,4 +111,3 @@
 <script th:src="@{/js/promociones-vendedor.js}"></script>
 </body>
 </html>
-
