@@ -75,3 +75,46 @@
     margin-bottom:10px;
   }
 }
+
+.lista-sugerencias-wrapper{
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+  z-index:1000;
+  margin-top:2px;
+}
+
+.lista-sugerencias{
+  list-style:none;
+  margin:0;
+  padding:4px;
+  background:#fff;
+  border:1px solid var(--vv-border);
+  border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+  max-height:260px;
+  overflow-y:auto;
+}
+
+.lista-sugerencias li{
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:.9rem;
+}
+
+.lista-sugerencias li:hover{
+  background:#f0f6ff;
+}
+
+.lista-sugerencias li .suf-nombre{
+  font-weight:600;
+  color:#2b2f33;
+}
+
+.lista-sugerencias li .suf-telefono{
+  color:#6c757d;
+  font-size:.8rem;
+  margin-left:6px;
+}

@@ -13,6 +13,9 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.VentaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -255,27 +258,32 @@ public class VendedorVentaController {
 
     @GetMapping("/historial")
     public String historialVentas(
+            @RequestParam(required = false, defaultValue = "") String q,
             @RequestParam(required = false) String fechaInicio,
             @RequestParam(required = false) String fechaFin,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size,
             Model model) {
 
-        List<Venta> ventas;
+        LocalDateTime inicio = (fechaInicio != null && !fechaInicio.isBlank())
+                ? LocalDate.parse(fechaInicio).atStartOfDay() : null;
+        LocalDateTime fin = (fechaFin != null && !fechaFin.isBlank())
+                ? LocalDate.parse(fechaFin).atTime(23, 59, 59) : null;
 
-        if (fechaInicio != null && !fechaInicio.isBlank()
-                && fechaFin != null && !fechaFin.isBlank()) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1));
+        Page<Venta> ventas = ventaService.buscarHistorial(q, inicio, fin, pageable);
 
-            LocalDateTime inicio = LocalDate.parse(fechaInicio).atStartOfDay();
-            LocalDateTime fin = LocalDate.parse(fechaFin).atTime(23, 59, 59);
-
-            ventas = ventaService.buscarVentasPorFecha(inicio, fin);
-
-        } else {
-            ventas = ventaService.listarTodasLasVentas();
-        }
-
-        model.addAttribute("ventas", ventas);
+        model.addAttribute("ventas", ventas.getContent());
+        model.addAttribute("page", ventas);
+        model.addAttribute("size", size);
+        model.addAttribute("q", q);
         model.addAttribute("fechaInicio", fechaInicio);
         model.addAttribute("fechaFin", fechaFin);
+        model.addAttribute("pageInfoText", ventas.getTotalElements() == 0 ? "Sin resultados" :
+                String.format("Mostrando %d - %d de %d",
+                        ventas.getNumber() * ventas.getSize() + 1,
+                        Math.min((ventas.getNumber() + 1) * ventas.getSize(), ventas.getTotalElements()),
+                        ventas.getTotalElements()));
 
         return "Vendedor/historial";
     }

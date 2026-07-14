@@ -69,7 +69,7 @@
                         <label class="form-label" for="clienteNombre">Nombre</label>
                         <div class="autocomplete-wrap">
                             <input class="form-control" id="clienteNombre" name="clienteNombre" required
-                                   placeholder="Ej: Juan Perez" autocomplete="off" maxlength="100"/>
+                                   placeholder="Ej: Dario Arroyo" autocomplete="off" maxlength="100"/>
                             <div id="clienteSugerencias" class="autocomplete-list d-none" role="listbox"></div>
                         </div>
                         <div class="form-text">Empieza a escribir para buscar un cliente ya registrado.</div>
@@ -77,14 +77,14 @@
                     <div class="col-md-3">
                         <label class="form-label" for="clienteTelefono">Teléfono</label>
                         <input class="form-control" id="clienteTelefono" name="clienteTelefono" required
-                               placeholder="Ej: 999999999" autocomplete="tel" inputmode="numeric"
+                               placeholder="Ej: 961721921" autocomplete="tel" inputmode="numeric"
                                pattern="\d{7,15}" maxlength="15"/>
                         <div class="form-text">Usa el teléfono registrado del cliente.</div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label" for="clienteEmail">Email (opcional)</label>
                         <input class="form-control" id="clienteEmail" name="clienteEmail" type="email"
-                               placeholder="Ej: juan@email.com" autocomplete="email" maxlength="100"/>
+                               placeholder="Ej: dariomilton127@gmail.com" autocomplete="email" maxlength="100"/>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label" for="metodoPago">Método de pago</label>
@@ -284,7 +284,6 @@
         </div>
     </div>
 
-    <!-- Los <script> también deben quedar dentro de #content por la misma razón -->
     <script th:src="@{/js/Registrar-vendedor.js}"></script>
     <script th:src="@{/js/registrar-venta-clientes-vendedor.js}"></script>
 

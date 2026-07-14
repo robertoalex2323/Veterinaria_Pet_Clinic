@@ -15,7 +15,7 @@
     <link rel="stylesheet" th:if="${currentPage == 'registrar_venta'}" th:href="@{/css/registrar_venta-vendedor.css}">
 
     <link rel="stylesheet" th:if="${currentPage == 'caja'}" th:href="@{/css/caja-vendedor.css}">
-    <link rel="stylesheet" th:if="${currentPage == 'historial_venta'}" th:href="@{/css/historial_ventas-vendedor.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'historial'}" th:href="@{/css/historial_ventas-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'promociones'}" th:href="@{/css/promociones-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'recomendaciones'}" th:href="@{/css/recomendaciones-vendedor.css}">
     <link rel="stylesheet" th:if="${currentPage == 'emitir_boleta'}" th:href="@{/css/emitir_boleta-vendedor.css}">
@@ -75,7 +75,7 @@
 
                 <!-- Historial de Ventas -->
                 <li class="nav-item">
-                    <a th:classappend="${currentPage == 'historial_ventas'} ? 'active' : ''" class="nav-link"
+                    <a th:classappend="${currentPage == 'historial'} ? 'active' : ''" class="nav-link"
                         href="/vendedor/ventas/historial">
                         <i class="fas fa-receipt"></i>
                         <span>Historial de Ventas</span>

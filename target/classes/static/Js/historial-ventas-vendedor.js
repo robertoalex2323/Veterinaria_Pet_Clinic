@@ -21,11 +21,71 @@
       });
     }
 
-    // Si en el futuro el backend devuelve sugerencias universales (opcional)
-    // este JS puede pintar resultados. (No depende de endpoint obligatorio.)
-    if (listaSugerencias && sugerencias) {
-      // No implementado: requiere formato/endpoint de sugerencias.
-      sugerencias.style.display = 'none';
+let debounceTimer = null;
+
+    const ocultarSugerencias = () => {
+      if (sugerencias) sugerencias.style.display = 'none';
+      if (listaSugerencias) listaSugerencias.innerHTML = '';
+    };
+
+    const pintarSugerencias = (items) => {
+      if (!listaSugerencias || !sugerencias) return;
+      listaSugerencias.innerHTML = '';
+
+      if (!items || items.length === 0) {
+        ocultarSugerencias();
+        return;
+      }
+
+      items.forEach((item) => {
+        const li = document.createElement('li');
+        li.innerHTML =
+          '<span class="suf-nombre"></span>' +
+          '<span class="suf-telefono"></span>';
+        li.querySelector('.suf-nombre').textContent = item.nombre || '';
+        li.querySelector('.suf-telefono').textContent = item.telefono || '';
+        li.addEventListener('click', () => {
+          input.value = item.nombre || item.telefono || '';
+          ocultarSugerencias();
+          goSearch();
+        });
+        listaSugerencias.appendChild(li);
+      });
+
+      sugerencias.style.display = 'block';
+    };
+
+    const buscarSugerencias = async (q) => {
+      if (!q) {
+        ocultarSugerencias();
+        return;
+      }
+      try {
+        const resp = await fetch('/vendedor/api/clientes/sugerencias?q=' + encodeURIComponent(q));
+        if (!resp.ok) {
+          ocultarSugerencias();
+          return;
+        }
+        const data = await resp.json();
+        pintarSugerencias(data);
+      } catch (e) {
+        console.error('Error al buscar sugerencias:', e);
+        ocultarSugerencias();
+      }
+    };
+
+    if (listaSugerencias && sugerencias && input) {
+      input.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const q = input.value.trim();
+        debounceTimer = setTimeout(() => buscarSugerencias(q), 300);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!sugerencias.contains(e.target) && e.target !== input) {
+          ocultarSugerencias();
+        }
+      });
     }
   });
 })();

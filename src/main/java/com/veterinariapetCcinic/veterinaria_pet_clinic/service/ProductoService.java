@@ -39,4 +39,11 @@ public class ProductoService {
     public Producto guardar(Producto producto) {
         return productoRepository.save(producto);
     }
+    
+    @Transactional
+    public void eliminar(Long id) {
+        Producto producto = buscarPorId(id);
+        producto.setActivo(false);
+        productoRepository.save(producto);
+    }
 }

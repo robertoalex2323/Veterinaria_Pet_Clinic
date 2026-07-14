@@ -47,26 +47,29 @@ public class VendedorController {
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
     private static final java.util.regex.Pattern EMAIL_PATTERN = java.util.regex.Pattern.compile(EMAIL_REGEX);
 
-    private final ProductoService productoService;
+private final ProductoService productoService;
     private final VentaRepository ventaRepository;
     private final UsuarioRepository usuarioRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final PromocionService promocionService;
     private final RecomendacionRepository recomendacionRepository;
+    private final com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository clienteRepository;
 
     public VendedorController(ProductoService productoService,
                                VentaRepository ventaRepository,
                                UsuarioRepository usuarioRepository,
                                BCryptPasswordEncoder passwordEncoder,
                                PromocionService promocionService,
-                               RecomendacionRepository recomendacionRepository) {
+                               RecomendacionRepository recomendacionRepository,
+                               com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository clienteRepository) {
         this.productoService = productoService;
         this.ventaRepository = ventaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.promocionService = promocionService;
         this.recomendacionRepository = recomendacionRepository;
-    }
+        this.clienteRepository = clienteRepository;
+    }   
 
 
     @GetMapping({"", "/"})
@@ -75,15 +78,19 @@ public class VendedorController {
         return "Vendedor/dashboard";
     }
 
+    @GetMapping("/historial")
+    public String historialRedirect() {
+        return "redirect:/vendedor/ventas/historial";
+    }
+
 
     @GetMapping({"/dashboard"})
+
     public String dashboard2(Authentication authentication, Model model, Principal principal) {
         model.addAttribute("nombreUsuario", principal != null ? principal.getName() : null);
         return "Vendedor/dashboard";
     }
 
-    // --- Datos para dashboard (opcional si el JS consume) ---
-    // Si tu front ya hace fetch, deja estos endpoints para que no falle.
     @GetMapping("/api/dashboard-metrics")
     @ResponseBody
     public Map<String, Object> dashboardMetrics(Principal principal) {
@@ -178,6 +185,25 @@ public class VendedorController {
             return resp;
         }
     }
+    // ============ SUGERENCIA ============
+
+    @GetMapping("/api/clientes/sugerencias")
+        @ResponseBody
+        public List<Map<String, String>> sugerenciasClientes(@RequestParam(required = false, defaultValue = "") String q) {
+            String query = q.trim();
+            if (query.isEmpty()) {
+                return Collections.emptyList();
+            }
+            return clienteRepository.findByNombreContainingIgnoreCase(query).stream()
+                    .limit(8)
+                    .map(c -> {
+                        Map<String, String> item = new HashMap<>();
+                        item.put("nombre", c.getNombre() != null ? c.getNombre() : "");
+                        item.put("telefono", c.getTelefono() != null ? c.getTelefono() : "");
+                        return item;
+                    })
+                    .collect(Collectors.toList());
+        }
 
     // ============ ULTIMAS VENTAS (para Caja POS) ============
     @GetMapping("/api/ventas/ultimas")
@@ -373,9 +399,14 @@ public class VendedorController {
     }
 
     @GetMapping("/productos/eliminar/{id}")
-    public String eliminarProducto(@PathVariable Long id, Model model,
-                                     RedirectAttributes redirectAttributes) {
-        redirectAttributes.addFlashAttribute("error", "Eliminar no implementado aún.");
+    public String eliminarProducto(@PathVariable Long id,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            productoService.eliminar(id);
+            redirectAttributes.addFlashAttribute("exito", "Producto eliminado correctamente.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "No se pudo eliminar el producto: " + e.getMessage());
+        }
         return "redirect:/vendedor/productos";
     }
 

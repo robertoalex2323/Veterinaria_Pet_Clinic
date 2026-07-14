@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.lowagie.text.Document;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
@@ -409,14 +411,17 @@ public List<String> obtenerPromocionesAplicables(Venta venta) {
         return ventaRepository.findByOrderByFechaDesc();
     }
 
-    // Métodos requeridos por VendedorVentaController (compatibilidad)
     public List<Venta> listarTodasLasVentas() {
         return listarVentas();
     }
 
-    // Devuelve ventas entre [inicio, fin] (ordenadas por fecha desc en el repository)
     public List<Venta> buscarVentasPorFecha(LocalDateTime inicio, LocalDateTime fin) {
         return ventaRepository.findByFechaBetween(inicio, fin);
+    }
+
+    public Page<Venta> buscarHistorial(String q, LocalDateTime inicio, LocalDateTime fin, Pageable pageable) {
+    String query = (q == null) ? "" : q.trim();
+    return ventaRepository.buscarHistorial(query, inicio, fin, pageable);
     }
 
     public List<Venta> listarVentasHoy() {
