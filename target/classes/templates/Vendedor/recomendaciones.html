@@ -20,7 +20,11 @@
 
     <div class="card shadow-sm rc-card">
         <div class="card-header">
-            <strong><i class="fas fa-robot me-2"></i> Recomendador</strong>
+            <div class="rc-hero-icon"><i class="fas fa-robot"></i></div>
+            <div>
+                <strong>Recomendador</strong>
+                <small>Combina catálogo, promociones activas y preferencia del cliente</small>
+            </div>
         </div>
 
         <div class="card-body">
@@ -38,10 +42,9 @@
                     <label class="form-label" for="prefQuery">Preferencia</label>
                     <select id="prefQuery" class="form-select">
                         <option value="">Cualquiera</option>
-                        <option value="descuento">Con descuento</option>
-                        <option value="gastro">Digestivo</option>
-                        <option value="piel">Piel y pelaje</option>
-                        <option value="vacunas">Vacunas</option>
+                        <option value="PORCENTAJE">Descuento por porcentaje (%)</option>
+                        <option value="2X1">2x1</option>
+                        <option value="FIJO">Descuento fijo (S/)</option>
                     </select>
                 </div>
 

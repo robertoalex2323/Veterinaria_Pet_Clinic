@@ -170,7 +170,57 @@ public class VendedorVentaController {
             return "redirect:/vendedor/ventas/registrar";
         }
     }
+/**
+     * Calcula el descuento (según promociones activas) SIN guardar nada ni
+     * descontar stock. Se usa para mostrar el descuento en vivo en la tabla
+     * de "Registrar Venta", antes de presionar "Guardar Venta".
+     */
+    @PostMapping(value = "/calcular-descuento", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public java.util.Map<String, Object> calcularDescuentoPreview(
+            @RequestParam(required = false, defaultValue = "") String productoIds,
+            @RequestParam(required = false, defaultValue = "") String cantidades) {
 
+        java.util.Map<String, Object> resp = new java.util.HashMap<>();
+        try {
+            List<Long> ids = parseLongList(productoIds);
+            List<Integer> cants = parseIntList(cantidades);
+
+            Venta preview = new Venta();
+            List<DetalleVenta> detalles = new ArrayList<>();
+            for (int i = 0; i < ids.size() && i < cants.size(); i++) {
+                int cantidad = cants.get(i);
+                if (cantidad <= 0) continue;
+
+                Producto producto = productoService.buscarPorId(ids.get(i));
+                if (producto == null) continue;
+
+                DetalleVenta detalle = new DetalleVenta();
+                detalle.setProducto(producto);
+                detalle.setCantidad(cantidad);
+                detalle.setPrecioUnitario(producto.getPrecio() != null ? producto.getPrecio() : BigDecimal.ZERO);
+                detalles.add(detalle);
+            }
+            preview.setDetalles(detalles); // dispara recalcularTotales() -> subtotal/igv/total
+
+            BigDecimal descuento = ventaService.calcularDescuentoPrevio(preview);
+            if (descuento.compareTo(preview.getSubtotal()) > 0) {
+                descuento = preview.getSubtotal();
+            }
+            BigDecimal totalConDescuento = preview.getTotal().subtract(descuento);
+
+            resp.put("success", true);
+            resp.put("subtotal", preview.getSubtotal());
+            resp.put("igv", preview.getIgv());
+            resp.put("descuento", descuento);
+            resp.put("total", totalConDescuento);
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", e.getMessage() != null ? e.getMessage() : "No se pudo calcular el descuento");
+        }
+        return resp;
+    }
+    
     @GetMapping("/clientes/buscar")
     @ResponseBody
     public List<ClienteSugerencia> buscarClientes(@RequestParam(required = false) String query) {

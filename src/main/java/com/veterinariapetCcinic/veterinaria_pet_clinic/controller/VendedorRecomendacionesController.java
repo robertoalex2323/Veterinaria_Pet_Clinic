@@ -24,6 +24,7 @@ import org.springframework.ui.Model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,7 +57,7 @@ public class VendedorRecomendacionesController {
     public String recomendaciones(Model model) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         model.addAttribute("nombreUsuario", auth != null ? auth.getName() : null);
-        
+
         List<String> categorias = productoService.listarTodos().stream()
             .map(Producto::getCategoria)
             .filter(c -> c != null && !c.trim().isEmpty())
@@ -65,6 +66,92 @@ public class VendedorRecomendacionesController {
         model.addAttribute("categorias", categorias);
 
         return "Vendedor/recomendaciones";
+    }
+
+    /**
+     * Normaliza el tipo de promoción (quita espacios y pasa a mayúsculas)
+     * para que las comparaciones nunca fallen por espacios o mayúsculas/minúsculas.
+     */
+    private String tipoNormalizado(Promocion promo) {
+        if (promo == null || promo.getTipo() == null) return "";
+        return promo.getTipo().trim().toUpperCase(Locale.ROOT);
+    }
+
+    /**
+     * Único punto de verdad para decidir si una promoción coincide con la
+     * preferencia elegida por el vendedor. Si el vendedor pidió "2x1" y la
+     * promoción es de otro tipo (o viceversa), NUNCA debe pasar este filtro.
+     */
+    private boolean coincideTipo(String prefQ, Promocion promo) {
+        if (prefQ == null || prefQ.isBlank()) return true; // "Cualquiera"
+        return prefQ.equals(tipoNormalizado(promo));
+    }
+
+    private static final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    /**
+     * Calcula el estado real de la promoción según sus fechas y el flag "activo":
+     * INACTIVA (desactivada manualmente), PROGRAMADA (aún no empieza),
+     * VENCIDA (ya terminó) o ACTIVA (vigente hoy).
+     */
+    private String estadoPromo(Promocion promo) {
+        if (promo == null) return "DESCONOCIDO";
+        if (promo.getActivo() != null && !promo.getActivo()) return "INACTIVA";
+
+        LocalDate hoy = LocalDate.now();
+        if (promo.getFechaInicio() != null && hoy.isBefore(promo.getFechaInicio())) return "PROGRAMADA";
+        if (promo.getFechaFin() != null && hoy.isAfter(promo.getFechaFin())) return "VENCIDA";
+        return "ACTIVA";
+    }
+
+    private String rangoFechas(Promocion promo) {
+        String inicio = promo.getFechaInicio() != null ? promo.getFechaInicio().format(FMT_FECHA) : "sin inicio";
+        String fin = promo.getFechaFin() != null ? promo.getFechaFin().format(FMT_FECHA) : "sin fin";
+        return inicio + " – " + fin;
+    }
+
+    /** Agrega fecha/estado de la promo al item que se envía al frontend. */
+    private void adjuntarInfoPromo(Map<String, Object> item, Promocion promo) {
+        item.put("estadoPromo", estadoPromo(promo));
+        item.put("fechaInicio", promo.getFechaInicio() != null ? promo.getFechaInicio().format(FMT_FECHA) : null);
+        item.put("fechaFin", promo.getFechaFin() != null ? promo.getFechaFin().format(FMT_FECHA) : null);
+        item.put("rangoFechas", rangoFechas(promo));
+    }
+
+    private int calcularConfianzaPromo(Promocion promo, Producto p, boolean matchPet) {
+        int score = 55;
+        String tipo = tipoNormalizado(promo);
+        switch (tipo) {
+            case "2X1" -> score += 20;
+            case "PORCENTAJE" -> {
+                BigDecimal d = promo != null ? promo.getDescuento() : null;
+                score += d != null ? Math.min(20, d.intValue() / 2) : 5;
+            }
+            case "FIJO" -> score += 12;
+            default -> score += 5;
+        }
+        if (p != null && p.getStock() != null && p.getStock() <= 5) score += 12;
+        if (matchPet) score += 8;
+        return Math.min(99, score);
+    }
+
+    private int calcularConfianzaCatalogo(Producto p, boolean matchPet) {
+        int score = 35;
+        if (p != null && p.getStock() != null && p.getStock() <= 5) score += 20;
+        if (matchPet) score += 10;
+        return Math.min(70, score);
+    }
+
+    private String razonPromo(Promocion promo, int confianza, boolean stockBajo) {
+        String base;
+        if ("2X1".equalsIgnoreCase(promo.getTipo())) {
+            base = "promoción 2x1 activa";
+        } else {
+            BigDecimal d = promo.getDescuento() == null ? BigDecimal.ZERO : promo.getDescuento();
+            base = "descuento activo (" + d.toPlainString() + (promo.getTipo() != null && promo.getTipo().equalsIgnoreCase("PORCENTAJE") ? "%" : " S/") + ")";
+        }
+        String extra = stockBajo ? " y baja rotación de stock" : "";
+        return "🤖 IA · " + confianza + "% de coincidencia — " + base + extra + ".";
     }
 
     /**
@@ -78,84 +165,119 @@ public class VendedorRecomendacionesController {
             @RequestParam(value = "pref", required = false) String pref) {
 
         String petQ = pet == null ? "" : pet.trim().toLowerCase(Locale.ROOT);
-        String prefQ = pref == null ? "" : pref.trim().toLowerCase(Locale.ROOT);
+        String prefQ = pref == null ? "" : pref.trim().toUpperCase(Locale.ROOT);
 
-        // Promos activas del sistema (fuente 1 de recomendaciones)
         List<Promocion> activas = promocionService.getPromocionesActivas();
 
-
-        // Filtrado opcional por texto: si no hay coincidencia, hacemos fallback con productos activos.
         List<Map<String, Object>> items = new ArrayList<>();
+        java.util.Set<Long> idsAgregados = new java.util.HashSet<>();
 
         for (Promocion promo : (activas != null ? activas : new ArrayList<Promocion>())) {
-            if (promo == null || promo.getProductoId() == null) continue;
+            if (promo == null) continue;
 
-            Producto p = productoService.buscarPorId(promo.getProductoId());
+            if (!coincideTipo(prefQ, promo)) continue;
 
-            if (p.getId() == null) continue;
+            List<Producto> productosPromo = new ArrayList<>();
 
-            String nombre = p.getNombre() == null ? "" : p.getNombre().toLowerCase(Locale.ROOT);
-            String categoria = p.getCategoria() == null ? "" : p.getCategoria().toLowerCase(Locale.ROOT);
-
-            boolean matchText = true;
-            if (!petQ.isBlank()) {
-                matchText = nombre.contains(petQ) || categoria.contains(petQ);
+            if (promo.getProductoId() != null) {
+                try {
+                    Producto p = productoService.buscarPorId(promo.getProductoId());
+                    if (p != null) productosPromo.add(p);
+                } catch (Exception ex) {
+                    continue;
+                }
+            } else if (promo.getCategoriaAplicable() != null && !promo.getCategoriaAplicable().isBlank()) {
+                for (Producto p : productoService.listarTodos()) {
+                    if (p != null && promo.getCategoriaAplicable().equalsIgnoreCase(p.getCategoria())) {
+                        productosPromo.add(p);
+                    }
+                }
+            } else {
+                productosPromo.addAll(productoService.listarTodos());
             }
-            // Si pref existe, lo mapeamos a palabras presentes en categoría/nombre (regla mínima, pero sobre promociones reales)
-            if (matchText && !prefQ.isBlank()) {
-                matchText = switch (prefQ) {
-                    case "descuento" -> nombre.contains("promo") || nombre.contains("oferta") || categoria.contains("promo") || categoria.contains("oferta");
-                    case "gastro" -> categoria.contains("gastro") || nombre.contains("gastro");
-                    case "piel" -> categoria.contains("piel") || nombre.contains("piel") || categoria.contains("pelaje") || nombre.contains("pelaje");
-                    case "vacunas" -> categoria.contains("vacun") || nombre.contains("vacun");
-                    default -> true;
-                };
-            }
 
-            if (!matchText) continue;
+            for (Producto p : productosPromo) {
+                if (p == null || p.getId() == null || idsAgregados.contains(p.getId())) continue;
 
-            BigDecimal precio = p.getPrecio();
-            String precioFormateado = precio == null ? "-" : precio.toPlainString();
+                String nombre = p.getNombre() == null ? "" : p.getNombre().toLowerCase(Locale.ROOT);
+                String categoria = p.getCategoria() == null ? "" : p.getCategoria().toLowerCase(Locale.ROOT);
 
-            Map<String, Object> item = new HashMap<>();
-            item.put("id", p.getId());
-            item.put("nombre", p.getNombre());
-            item.put("categoria", p.getCategoria());
-            item.put("precioFormateado", precioFormateado);
+                if (!petQ.isBlank() && !(nombre.contains(petQ) || categoria.contains(petQ))) continue;
 
-            BigDecimal descuento = promo.getDescuento();
-            if (descuento == null) descuento = BigDecimal.ZERO;
-
-            item.put("razon", "Producto con promoción activa (descuento: " + descuento.toPlainString() + ").");
-
-            items.add(item);
-        }
-
-        // fallback 1: si no había matches por pet/pref, devolvemos todas las promos activas (sin filtrar)
-        if (items.isEmpty() && activas != null && !activas.isEmpty()) {
-            items = new ArrayList<>();
-            for (Promocion promo : activas) {
-                if (promo == null || promo.getProductoId() == null) continue;
-                Producto p = productoService.buscarPorId(promo.getProductoId());
-                if (p == null || p.getId() == null) continue;
+                idsAgregados.add(p.getId());
 
                 BigDecimal precio = p.getPrecio();
-
                 String precioFormateado = precio == null ? "-" : precio.toPlainString();
-                BigDecimal descuento = promo.getDescuento() == null ? BigDecimal.ZERO : promo.getDescuento();
+                boolean stockBajo = p.getStock() != null && p.getStock() <= 5;
+                boolean matchPet = !petQ.isBlank();
+                int confianza = calcularConfianzaPromo(promo, p, matchPet);
 
                 Map<String, Object> item = new HashMap<>();
                 item.put("id", p.getId());
                 item.put("nombre", p.getNombre());
                 item.put("categoria", p.getCategoria());
                 item.put("precioFormateado", precioFormateado);
-                item.put("razon", "Producto con promoción activa (descuento: " + descuento.toPlainString() + ").");
+                item.put("confianza", confianza);
+                item.put("razon", razonPromo(promo, confianza, stockBajo));
+                adjuntarInfoPromo(item, promo);
                 items.add(item);
             }
         }
 
-        // fallback 2: si sigue vacío (ej: no hay promos activas), usamos productos activos y aplicamos filtros mínimos
-        if (items.isEmpty()) {
+        // fallback 1: relajamos SOLO la categoría (pet), pero seguimos respetando el tipo elegido (pref)
+        if (items.isEmpty() && activas != null && !activas.isEmpty()) {
+            items = new ArrayList<>();
+            java.util.Set<Long> idsFallback = new java.util.HashSet<>();
+            for (Promocion promo : activas) {
+                if (promo == null) continue;
+                if (!coincideTipo(prefQ, promo)) continue;
+
+                List<Producto> productosPromo = new ArrayList<>();
+                if (promo.getProductoId() != null) {
+                    try {
+                        Producto p = productoService.buscarPorId(promo.getProductoId());
+                        if (p != null) productosPromo.add(p);
+                    } catch (Exception ex) {
+                        continue;
+                    }
+                } else if (promo.getCategoriaAplicable() != null && !promo.getCategoriaAplicable().isBlank()) {
+                    for (Producto p : productoService.listarTodos()) {
+                        if (p != null && promo.getCategoriaAplicable().equalsIgnoreCase(p.getCategoria())) {
+                            productosPromo.add(p);
+                        }
+                    }
+                } else {
+                    productosPromo.addAll(productoService.listarTodos());
+                }
+
+                for (Producto p : productosPromo) {
+                    if (p == null || p.getId() == null || !idsFallback.add(p.getId())) continue;
+
+                    BigDecimal precio = p.getPrecio();
+                    String precioFormateado = precio == null ? "-" : precio.toPlainString();
+                    boolean stockBajo = p.getStock() != null && p.getStock() <= 5;
+                    int confianza = calcularConfianzaPromo(promo, p, false);
+
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", p.getId());
+                    item.put("nombre", p.getNombre());
+                    item.put("categoria", p.getCategoria());
+                    item.put("precioFormateado", precioFormateado);
+                    item.put("confianza", confianza);
+                    item.put("razon", razonPromo(promo, confianza, stockBajo));
+                    adjuntarInfoPromo(item, promo);
+                    items.add(item);
+                }
+            }
+        }
+
+        // fallback 2: SOLO si NO se pidió un tipo de promoción específico.
+        // Si el vendedor eligió "2x1" (o cualquier otro tipo) y no hay ninguna
+        // promoción activa de ese tipo, NO se debe mostrar nada del catálogo
+        // general: mostrar otro producto aquí daría la falsa impresión de que
+        // tiene esa promoción cuando no la tiene.
+        boolean sePidioTipoEspecifico = !prefQ.isBlank();
+        if (items.isEmpty() && !sePidioTipoEspecifico) {
             List<Producto> catalogo = productoService.listarTodos();
             if (catalogo != null) {
                 for (Producto p : catalogo) {
@@ -164,37 +286,24 @@ public class VendedorRecomendacionesController {
                     String nombre = p.getNombre() == null ? "" : p.getNombre().toLowerCase(Locale.ROOT);
                     String categoria = p.getCategoria() == null ? "" : p.getCategoria().toLowerCase(Locale.ROOT);
 
-                    boolean match = true;
-                    if (!petQ.isBlank()) {
-                        match = nombre.contains(petQ) || categoria.contains(petQ);
-                    }
-                    if (match && !prefQ.isBlank()) {
-                        match = switch (prefQ) {
-                            case "descuento" -> nombre.contains("promo") || nombre.contains("oferta") || categoria.contains("promo") || categoria.contains("oferta");
-                            case "gastro" -> categoria.contains("gastro") || nombre.contains("gastro");
-                            case "piel" -> categoria.contains("piel") || nombre.contains("piel") || categoria.contains("pelaje") || nombre.contains("pelaje");
-                            case "vacunas" -> categoria.contains("vacun") || nombre.contains("vacun");
-                            default -> true;
-                        };
-                    }
-                    if (!match) continue;
+                    if (!petQ.isBlank() && !(nombre.contains(petQ) || categoria.contains(petQ))) continue;
 
                     BigDecimal precio = p.getPrecio();
                     String precioFormateado = precio == null ? "-" : precio.toPlainString();
 
                     int stock = p.getStock() != null ? p.getStock() : 0;
-                    String razon;
-                    if (stock <= 5) {
-                        razon = "📦 Bajo stock (" + stock + "). Recomendado para rotación.";
-                    } else {
-                        razon = "🎯 Recomendación por catálogo y preferencia.";
-                    }
+                    boolean matchPet = !petQ.isBlank();
+                    int confianza = calcularConfianzaCatalogo(p, matchPet);
+                    String razon = stock <= 5
+                            ? "🤖 IA · " + confianza + "% de coincidencia — bajo stock (" + stock + "), buen candidato para rotación."
+                            : "🤖 IA · " + confianza + "% de coincidencia — sugerido según catálogo y preferencia.";
 
                     Map<String, Object> item = new HashMap<>();
                     item.put("id", p.getId());
                     item.put("nombre", p.getNombre());
                     item.put("categoria", p.getCategoria());
                     item.put("precioFormateado", precioFormateado);
+                    item.put("confianza", confianza);
                     item.put("razon", razon);
                     items.add(item);
 
@@ -205,15 +314,17 @@ public class VendedorRecomendacionesController {
 
         String aiMessage = "¡Hola! He analizado el catálogo y las preferencias solicitadas. ";
         if (items.isEmpty()) {
-            aiMessage += "No encontré promociones específicas para esta categoría o preferencia, así que te muestro nuestras mejores opciones con descuento.";
+            aiMessage += !prefQ.isBlank()
+                    ? "No encontré promociones activas de ese tipo para esta categoría."
+                    : "No encontré promociones específicas para esta categoría o preferencia, así que te muestro nuestras mejores opciones con descuento.";
         } else {
             aiMessage += "Aquí tienes las recomendaciones ideales que he seleccionado especialmente para el cliente.";
         }
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("items", items);
         response.put("message", aiMessage);
-        
+
         return response;
     }
 
@@ -279,5 +390,3 @@ public class VendedorRecomendacionesController {
         }
     }
 }
-
-

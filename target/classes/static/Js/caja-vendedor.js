@@ -87,6 +87,45 @@
     }
   }
 
+  // ── Fetch estado del turno ───────────────────────────────────
+  async function fetchTurnoStatus() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // máx. 5s de espera
+    try {
+      const resp = await fetch('/vendedor/api/turno-status', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return await resp.json();
+    } catch (e) {
+      clearTimeout(timeoutId);
+      console.error('Error fetch turno status:', e);
+      return null;
+    }
+  }
+
+  // ── Render badge de turno ────────────────────────────────────
+  function renderTurno(status) {
+    const badge = document.getElementById('turnoBadge');
+    const dot = document.getElementById('turnoDot');
+    const texto = document.getElementById('turnoTexto');
+    if (!badge || !texto) return;
+
+    if (!status) {
+      texto.textContent = 'Sin conexión con el servidor';
+      badge.classList.add('cerrado');
+      if (dot) dot.style.display = 'none';
+      return;
+    }
+
+    texto.textContent = status.mensaje;
+    badge.classList.toggle('cerrado', !status.abierto);
+    if (dot) dot.style.display = status.abierto ? '' : 'none';
+  }
+
   // ── Render ticket list ────────────────────────────────────────
   function renderTickets(ventas) {
     const listEl = document.getElementById('ticketList');
@@ -126,6 +165,9 @@
   // ── Boot ──────────────────────────────────────────────────────
   async function boot() {
     startClock();
+
+    // Estado real del turno (no depende de las métricas)
+    fetchTurnoStatus().then(renderTurno);
 
     const metrics = await fetchMetrics();
 

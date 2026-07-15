@@ -83,10 +83,57 @@
       qtyInput.value = val;
     }
 
+    // ---------- Descuento en vivo (consulta al backend con las promos reales) ----------
+    const descuentoTextoEl = document.getElementById('descuentoTexto');
+    const descuentoStatEl = document.getElementById('descuentoStat');
+    let descuentoTimeout = null;
+    let descuentoController = null;
+
+    async function actualizarDescuentoEnVivo(ids, cantidades) {
+      if (descuentoController) descuentoController.abort();
+
+      if (ids.length === 0) {
+        if (descuentoTextoEl) descuentoTextoEl.textContent = '0.00';
+        if (descuentoStatEl) descuentoStatEl.classList.add('d-none');
+        return;
+      }
+
+      descuentoController = new AbortController();
+      try {
+        const params = new URLSearchParams();
+        params.append('productoIds', ids.join(','));
+        params.append('cantidades', cantidades.join(','));
+
+        const resp = await fetch('/vendedor/ventas/calcular-descuento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body: params.toString(),
+          signal: descuentoController.signal,
+        });
+        const data = await resp.json();
+        const descuento = data && data.success ? Number(data.descuento) || 0 : 0;
+
+        if (descuentoTextoEl) descuentoTextoEl.textContent = formatMoney(descuento);
+        if (descuentoStatEl) descuentoStatEl.classList.toggle('d-none', descuento <= 0);
+
+        // Re-aplicamos el descuento real (con IGV ya calculado por el backend) al total mostrado.
+        if (totalEl && data && data.success) {
+          totalEl.textContent = formatMoney(Number(data.total) || 0);
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          if (descuentoTextoEl) descuentoTextoEl.textContent = '0.00';
+          if (descuentoStatEl) descuentoStatEl.classList.add('d-none');
+        }
+      }
+    }
+
     // ---------- Resumen general: SIEMPRE recorre el DOM en tiempo real ----------
     function actualizarResumen() {
       let subtotal = 0;
       let items = 0;
+      const idsSeleccionados = [];
+      const cantidadesSeleccionadas = [];
 
       todasLasFilas().forEach((fila) => {
         const chk = fila.querySelector('.producto-check');
@@ -100,6 +147,8 @@
         const precio = safeNumberFromText(precioEl.textContent);
         subtotal += precio * cantidad;
         items += 1;
+        idsSeleccionados.push(chk.value);
+        cantidadesSeleccionadas.push(cantidad);
       });
 
       const igv = subtotal * IGV_TASA;
@@ -107,15 +156,21 @@
 
       if (subtotalTextoEl) subtotalTextoEl.textContent = formatMoney(subtotal);
       if (igvTextoEl) igvTextoEl.textContent = formatMoney(igv);
-      if (totalEl) totalEl.textContent = formatMoney(total);
+      if (totalEl) totalEl.textContent = formatMoney(total); // valor provisional, sin descuento
       if (subtotalHiddenEl) subtotalHiddenEl.value = formatMoney(subtotal);
       if (itemsEl) itemsEl.textContent = String(items);
 
       if (btnGuardar) {
         btnGuardar.disabled = items === 0;
       }
-    }
 
+      // Consultamos el descuento real al backend (con debounce para no saturar).
+      clearTimeout(descuentoTimeout);
+      descuentoTimeout = setTimeout(() => {
+        actualizarDescuentoEnVivo(idsSeleccionados, cantidadesSeleccionadas);
+      }, 250);
+    }
+    
     function recalcularTodo() {
       todasLasFilas().forEach((fila) => {
         toggleFilaSeleccionada(fila);

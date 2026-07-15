@@ -108,7 +108,12 @@
                 <div class="rc-price fs-5">S/ ${escapeHtml(p.precioFormateado)}</div>
               </div>
             </div>
-            ${p.razon ? `<div class="mt-3 small px-3 py-2 rc-reason"><i class="fas fa-magic me-2"></i>${escapeHtml(p.razon)}</div>` : ''}
+            
+            ${typeof p.confianza === 'number' ? `
+              <div class="mt-2 rc-confianza-bar">
+                <div class="rc-confianza-fill" style="width:${p.confianza}%"></div>
+              </div>` : ''}
+            ${p.razon ? `<div class="mt-2 small px-3 py-2 rc-reason"><i class="fas fa-robot me-2"></i>${escapeHtml(p.razon)}</div>` : ''}
 
             <div class="mt-3 d-grid">
               <button type="button" class="btn btn-success btn-sm rc-mark-exitosa"
@@ -240,5 +245,6 @@
           </div>
         </div>`;
     });
+    recommend();
   }
 })();

@@ -73,6 +73,11 @@
     animation: posPulse 1.5s infinite;
 }
 
+.pos-turno-badge.cerrado {
+    background: linear-gradient(135deg, #94A3B8, #64748B);
+    box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+}
+
 /* ══ PANTALLA LED — La estrella ═════════════════════════════ */
 .pos-display {
     background: var(--pos-dark);

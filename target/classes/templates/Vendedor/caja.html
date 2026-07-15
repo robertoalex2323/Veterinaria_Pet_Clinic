@@ -14,9 +14,9 @@
                 <h2><i class="fas fa-cash-register"></i> Caja</h2>
                 <p class="pos-subtitle">Control de caja y movimientos del turno actual.</p>
             </div>
-            <div class="pos-turno-badge">
-                <span class="dot-pulse"></span>
-                Turno Abierto
+            <div id="turnoBadge" class="pos-turno-badge">
+                <span id="turnoDot" class="dot-pulse"></span>
+                <span id="turnoTexto">Verificando turno...</span>
             </div>
         </div>
 
@@ -130,8 +130,8 @@
             </div>
         </div>
     </div>
-</div>
 
-<script th:src="@{/js/caja-vendedor.js}"></script>
+    <script th:src="@{/js/caja-vendedor.js}"></script>
+</div>
 </body>
 </html>

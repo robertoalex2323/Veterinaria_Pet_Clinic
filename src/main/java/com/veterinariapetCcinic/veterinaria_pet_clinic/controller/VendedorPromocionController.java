@@ -10,6 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.WebDataBinder;
+import java.beans.PropertyEditorSupport;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -61,6 +63,19 @@ public class VendedorPromocionController {
         m.put("fechaFin", p.getFechaFin());
         m.put("activo", p.getActivo());
 
+        LocalDate hoy = LocalDate.now();
+        String estadoVigencia;
+        if (!Boolean.TRUE.equals(p.getActivo())) {
+            estadoVigencia = "INACTIVA";
+        } else if (p.getFechaInicio() != null && hoy.isBefore(p.getFechaInicio())) {
+            estadoVigencia = "PROGRAMADA";
+        } else if (p.getFechaFin() != null && hoy.isAfter(p.getFechaFin())) {
+            estadoVigencia = "VENCIDA";
+        } else {
+            estadoVigencia = "ACTIVA";
+        }
+        m.put("estadoVigencia", estadoVigencia);
+
         String productoNombre = null;
         String productoCategoria = p.getCategoriaAplicable();
         BigDecimal precioOferta = null;
@@ -93,6 +108,7 @@ public class VendedorPromocionController {
     public String nuevo(Model model) {
         List<Producto> productos = productoService.listarTodos();
         model.addAttribute("productos", productos);
+        model.addAttribute("categorias", obtenerCategoriasDisponibles(productos));
         if (!model.containsAttribute("promocion")) {
             model.addAttribute("promocion", new Promocion());
         }
@@ -105,6 +121,7 @@ public class VendedorPromocionController {
     public String editar(@PathVariable Long id, Model model) {
         List<Producto> productos = productoService.listarTodos();
         model.addAttribute("productos", productos);
+        model.addAttribute("categorias", obtenerCategoriasDisponibles(productos));
         if (!model.containsAttribute("promocion")) {
             Promocion promocion = promocionService.getPromocionPorId(id);
             model.addAttribute("promocion", promocion);
@@ -126,29 +143,65 @@ public class VendedorPromocionController {
                 .collect(Collectors.toList());
     }
 
+    private List<String> obtenerCategoriasDisponibles(List<Producto> productos) {
+        return productos.stream()
+                .map(Producto::getCategoria)
+                .filter(c -> c != null && !c.isBlank())
+                .map(String::trim)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(BigDecimal.class, new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) {
+                setValue(text == null || text.isBlank() ? null : new BigDecimal(text.trim().replace(",", ".")));
+            }
+        });
+        binder.registerCustomEditor(LocalDate.class, new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) {
+                setValue(text == null || text.isBlank() ? null : LocalDate.parse(text.trim()));
+            }
+        });
+    }
+
     @PostMapping("/guardar")
     public String guardar(
             @RequestParam(required = false) Long id,
             @RequestParam String nombre,
             @RequestParam(required = false) String descripcion,
             @RequestParam String tipo,
-            @RequestParam BigDecimal descuento,
+            @RequestParam(required = false) BigDecimal descuento,
             @RequestParam(required = false) String categoriaAplicable,
             @RequestParam(required = false) Long productoId,
             @RequestParam(required = false) BigDecimal montoMinimo,
             @RequestParam(required = false) List<String> diasSemana,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false, defaultValue = "true") Boolean activo,
             RedirectAttributes redirectAttributes) {
 
         String nombreLimpio = nombre == null ? "" : nombre.trim();
         String tipoLimpio = tipo == null ? "" : tipo.trim();
 
-        if (nombreLimpio.isEmpty() || tipoLimpio.isEmpty() || descuento == null) {
+        if (nombreLimpio.isEmpty() || tipoLimpio.isEmpty()) {
             redirectAttributes.addFlashAttribute("error",
-                    "Completa el nombre, el tipo y el descuento de la promoción.");
+                    "Completa el nombre y el tipo de la promoción.");
             return "redirect:" + (id == null ? "/vendedor/promociones/nuevo" : "/vendedor/promociones/editar/" + id);
+        }
+
+        BigDecimal descuentoVal = descuento;
+        if (descuentoVal == null) {
+            if ("2X1".equalsIgnoreCase(tipoLimpio)) {
+                descuentoVal = BigDecimal.ZERO;
+            } else {
+                redirectAttributes.addFlashAttribute("error", "El descuento es obligatorio para este tipo de promoción.");
+                return "redirect:" + (id == null ? "/vendedor/promociones/nuevo" : "/vendedor/promociones/editar/" + id);
+            }
         }
 
         try {
@@ -156,7 +209,7 @@ public class VendedorPromocionController {
             promocion.setNombre(nombreLimpio);
             promocion.setDescripcion(descripcion);
             promocion.setTipo(tipoLimpio);
-            promocion.setDescuento(descuento);
+            promocion.setDescuento(descuentoVal);
             promocion.setCategoriaAplicable(categoriaAplicable != null && !categoriaAplicable.isBlank() ? categoriaAplicable.trim() : null);
             promocion.setProductoId(productoId);
             promocion.setMontoMinimo(montoMinimo);

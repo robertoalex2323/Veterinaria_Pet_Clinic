@@ -79,8 +79,9 @@
                         </td>
                         <td th:text="${p.precioOferta != null ? ('S/ ' + p.precioOferta) : '-'}"></td>
                         <td>
-                            <span class="badge" th:classappend="${p.activo} ? 'bg-success' : 'bg-secondary'"
-                                  th:text="${p.activo} ? 'Activa' : 'Inactiva'"></span>
+                            <span class="badge"
+                                  th:classappend="${p.estadoVigencia == 'ACTIVA'} ? 'bg-success' : (${p.estadoVigencia == 'PROGRAMADA'} ? 'bg-info' : (${p.estadoVigencia == 'VENCIDA'} ? 'bg-warning text-dark' : 'bg-secondary'))"
+                                  th:text="${p.estadoVigencia == 'ACTIVA'} ? 'Activa' : (${p.estadoVigencia == 'PROGRAMADA'} ? 'Programada' : (${p.estadoVigencia == 'VENCIDA'} ? 'Vencida' : 'Inactiva'))"></span>
                         </td>
                         <td>
                             <div class="btn-group" role="group">
