@@ -58,6 +58,7 @@ private final ProductoService productoService;
     private final PromocionService promocionService;
     private final RecomendacionRepository recomendacionRepository;
     private final com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository clienteRepository;
+    private final com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService notificacionService;
 
     public VendedorController(ProductoService productoService,
                                VentaRepository ventaRepository,
@@ -65,7 +66,8 @@ private final ProductoService productoService;
                                BCryptPasswordEncoder passwordEncoder,
                                PromocionService promocionService,
                                RecomendacionRepository recomendacionRepository,
-                               com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository clienteRepository) {
+                               com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository clienteRepository,
+                               com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService notificacionService) {
         this.productoService = productoService;
         this.ventaRepository = ventaRepository;
         this.usuarioRepository = usuarioRepository;
@@ -73,6 +75,7 @@ private final ProductoService productoService;
         this.promocionService = promocionService;
         this.recomendacionRepository = recomendacionRepository;
         this.clienteRepository = clienteRepository;
+        this.notificacionService = notificacionService;
     }   
 
 
@@ -407,7 +410,10 @@ private final ProductoService productoService;
     public String eliminarProducto(@PathVariable Long id,
                                     RedirectAttributes redirectAttributes) {
         try {
+            Producto producto = productoService.buscarPorId(id);
+            String nombre = producto != null ? producto.getNombre() : ("#" + id);
             productoService.eliminar(id);
+            notificacionService.enviarNotificacionUI("warning", "Producto eliminado: " + nombre);
             redirectAttributes.addFlashAttribute("exito", "Producto eliminado correctamente.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "No se pudo eliminar el producto: " + e.getMessage());
@@ -557,6 +563,13 @@ private final ProductoService productoService;
 
             productoService.guardar(producto);
 
+            boolean esNuevo = (id == null);
+            notificacionService.enviarNotificacionUI(
+                    "success",
+                    esNuevo
+                            ? "Producto creado: " + producto.getNombre()
+                            : "Producto actualizado: " + producto.getNombre());
+
             redirectAttributes.addFlashAttribute("success",
                     id != null ? "Producto actualizado correctamente." : "Producto creado correctamente.");
             return "redirect:/vendedor/productos";
@@ -579,6 +592,3 @@ private final ProductoService productoService;
         }
     }
 }
-
-
-

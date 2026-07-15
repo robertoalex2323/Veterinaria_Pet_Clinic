@@ -63,34 +63,32 @@
         </div>
     </div>
 
+    <script th:inline="javascript">
+        // Mantener compatibilidad con el layout: al enviar, sincroniza ventaId -> hidden.
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.querySelector('input[name="ventaId"]');
+            const hidden = document.getElementById('ventaIdHidden');
+            const form = document.getElementById('emitirForm');
+            const btnDescargar = document.getElementById('btnDescargarPdf');
+
+            if (input && hidden && form) {
+                form.addEventListener('submit', function () {
+                    hidden.value = input.value;
+                });
+            }
+
+            if (btnDescargar && input) {
+                btnDescargar.addEventListener('click', function () {
+                    const ventaId = input.value.trim();
+                    if (!ventaId || Number(ventaId) <= 0) {
+                        alert('Ingresa un ID de venta válido antes de descargar.');
+                        return;
+                    }
+                    window.open('/vendedor/ventas/' + ventaId + '/boleta.pdf', '_blank');
+                });
+            }
+        });
+    </script>
 </div>
-
-<script th:inline="javascript">
-    // Mantener compatibilidad con el layout: al enviar, sincroniza ventaId -> hidden.
-    document.addEventListener('DOMContentLoaded', function () {
-        const input = document.querySelector('input[name="ventaId"]');
-        const hidden = document.getElementById('ventaIdHidden');
-        const form = document.getElementById('emitirForm');
-        const btnDescargar = document.getElementById('btnDescargarPdf');
-
-        if (input && hidden && form) {
-            form.addEventListener('submit', function () {
-                hidden.value = input.value;
-            });
-        }
-
-        if (btnDescargar && input) {
-            btnDescargar.addEventListener('click', function () {
-                const ventaId = input.value.trim();
-                if (!ventaId || Number(ventaId) <= 0) {
-                    alert('Ingresa un ID de venta válido antes de descargar.');
-                    return;
-                }
-                window.open('/vendedor/ventas/' + ventaId + '/boleta.pdf', '_blank');
-            });
-        }
-    });
-</script>
-
 </body>
 </html>
