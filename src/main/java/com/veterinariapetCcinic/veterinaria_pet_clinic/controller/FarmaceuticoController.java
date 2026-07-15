@@ -55,7 +55,7 @@ public class FarmaceuticoController {
     private final NotificacionService notificacionService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public FarmaceuticoController(ProveedorService proveedorService, 
+    public FarmaceuticoController(ProveedorService proveedorService,
                                  MedicamentoService medicamentoService,
                                  VentaService ventaService,
                                  RecetaService recetaService,
@@ -87,13 +87,83 @@ public class FarmaceuticoController {
         }
     }
 
+    // ===========================================================
+    // DASHBOARD (con estadísticas reales desde la base de datos)
+    // ===========================================================
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         model.addAttribute("currentPage", "dashboard");
-        model.addAttribute("bajoStockCount", medicamentoService.listarBajoStock().size());
+
+        // ----- Datos base (tarjetas principales) -----
+        List<Medicamento> todosMedicamentos = medicamentoService.listarTodos();
+        int totalMedicamentos = todosMedicamentos.size();
+        int bajoStockCount = medicamentoService.listarBajoStock().size();
+        int recetasPendientes = recetaService.listarPendientes().size();
+
         model.addAttribute("ventasHoy", ventaService.calcularVentasHoy());
-        model.addAttribute("recetasPendientes", recetaService.listarPendientes().size());
+        model.addAttribute("bajoStockCount", bajoStockCount);
+        model.addAttribute("recetasPendientes", recetasPendientes);
+        model.addAttribute("medicamentosActivos", totalMedicamentos);
+
+        // ----- Estadísticas adicionales (todas reales) -----
+        int totalProveedores = proveedorService.listarTodos().size();
+
+        // Recetas dispensadas (completadas) y eficiencia de procesamiento
+        var todasLasRecetas = farmaceuticoService.obtenerTodasLasRecetas();
+        long recetasDispensadas = todasLasRecetas.stream()
+                .filter(r -> r.getEstado() == RecetaEstado.DISPENSADA)
+                .count();
+        int totalRecetas = todasLasRecetas.size();
+        int eficienciaPorc = (totalRecetas > 0)
+                ? Math.round(recetasDispensadas * 100f / totalRecetas)
+                : 0;
+
+        model.addAttribute("totalMedicamentos", totalMedicamentos);
+        model.addAttribute("recetasCompletadas", (int) recetasDispensadas);
+        model.addAttribute("proveedoresActivos", totalProveedores);
+        model.addAttribute("eficienciaPorc", eficienciaPorc);
+
+        // Distribución de stock para el gráfico doughnut (normal vs bajo)
+        int stockNormal = Math.max(totalMedicamentos - bajoStockCount, 0);
+        model.addAttribute("stockNormalCount", stockNormal);
+
         return "farmaceutico/dashboard";
+    }
+
+    // ===========================================================
+    // API: Estadísticas del dashboard (para refresco automático)
+    // ===========================================================
+    @GetMapping("/api/dashboard/estadisticas")
+    @ResponseBody
+    public Map<String, Object> estadisticasDashboard() {
+        Map<String, Object> stats = new HashMap<>();
+        try {
+            List<Medicamento> todos = medicamentoService.listarTodos();
+            int totalMedicamentos = todos.size();
+            int bajoStock = medicamentoService.listarBajoStock().size();
+
+            var todasLasRecetas = farmaceuticoService.obtenerTodasLasRecetas();
+            long dispensadas = todasLasRecetas.stream()
+                    .filter(r -> r.getEstado() == RecetaEstado.DISPENSADA)
+                    .count();
+            int totalRecetas = todasLasRecetas.size();
+            int eficiencia = (totalRecetas > 0) ? Math.round(dispensadas * 100f / totalRecetas) : 0;
+
+            stats.put("success", true);
+            stats.put("ventasHoy", ventaService.calcularVentasHoy());
+            stats.put("totalMedicamentos", totalMedicamentos);
+            stats.put("bajoStockCount", bajoStock);
+            stats.put("stockNormalCount", Math.max(totalMedicamentos - bajoStock, 0));
+            stats.put("recetasPendientes", recetaService.listarPendientes().size());
+            stats.put("recetasCompletadas", (int) dispensadas);
+            stats.put("proveedoresActivos", proveedorService.listarTodos().size());
+            stats.put("eficienciaPorc", eficiencia);
+            stats.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        } catch (Exception e) {
+            stats.put("success", false);
+            stats.put("error", e.getMessage());
+        }
+        return stats;
     }
 
     @GetMapping("/inventario")
