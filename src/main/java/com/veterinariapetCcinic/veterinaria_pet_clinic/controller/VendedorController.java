@@ -25,6 +25,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 
 import java.math.BigDecimal;
@@ -232,6 +236,7 @@ private final ProductoService productoService;
                 .collect(Collectors.toList());
     }
 
+    
     private String getNombreUsuario() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? auth.getName() : "Vendedor";

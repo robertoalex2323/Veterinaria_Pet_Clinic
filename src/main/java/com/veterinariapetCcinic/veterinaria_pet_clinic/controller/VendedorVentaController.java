@@ -21,11 +21,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -231,6 +236,26 @@ public class VendedorVentaController {
                     Objects.requireNonNullElse(e.getMessage(), "Error al emitir la boleta."));
             return "redirect:/vendedor/ventas/emitir";
         }
+    }
+    
+    @GetMapping("/{id}/boleta.pdf")
+    @ResponseBody
+    public ResponseEntity<ByteArrayResource> descargarBoletaPdf(@PathVariable Long id) {
+        Venta venta = ventaService.buscarPorId(id);
+        if (venta == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] pdf = ventaService.generarBoletaPDFReal(id);
+
+        String filename = "Comprobante_PetClinic_" + id + ".pdf";
+
+        ByteArrayResource resource = new ByteArrayResource(pdf);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+
+        return ResponseEntity.ok().headers(headers).contentLength(pdf.length).body(resource);
     }
 
     private String getNombreUsuario() {

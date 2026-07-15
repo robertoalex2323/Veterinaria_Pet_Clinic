@@ -28,6 +28,15 @@ public class DataLoader {
             RecetaMedicaRepository recetaRepository) {
 
         return args -> {
+              veterinarioRepository.findAll().forEach(vet -> {
+                  if (vet.getNombre() != null
+                          && (vet.getNombre().toLowerCase().contains("gomez")
+                          || vet.getNombre().toLowerCase().contains("gómez"))) {
+                      vet.setNombre("Dra. Alberca");
+                      veterinarioRepository.save(vet);
+                  }
+              });
+
               if (medicamentoRepository.count() > 0) {
                   System.out.println("Los datos ya existen. Corrigiendo URLs de imágenes si es necesario...");
                   medicamentoRepository.findAll().forEach(med -> {
@@ -109,7 +118,7 @@ public class DataLoader {
             pacienteRepository.save(paciente);
 
             Veterinario vet = new Veterinario();
-            vet.setNombre("Dr. Gómez");
+            vet.setNombre("Dra. Alberca");
             vet.setEspecialidad("Medicina interna");
             veterinarioRepository.save(vet);
 

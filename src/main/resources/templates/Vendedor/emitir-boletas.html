@@ -47,10 +47,13 @@
             <form id="emitirForm" th:action="@{/vendedor/ventas/emitir}" method="post" class="mt-4">
                 <input type="hidden" name="ventaId" id="ventaIdHidden"/>
 
-                <div class="d-flex justify-content-end gap-2 mt-3">
+               <div class="d-flex justify-content-end gap-2 mt-3">
                     <a th:href="@{/vendedor/ventas/registrar}" class="btn btn-outline-secondary">
                         <i class="fas fa-plus me-2"></i> Registrar nueva venta
                     </a>
+                    <button type="button" id="btnDescargarPdf" class="btn btn-outline-primary">
+                        <i class="fas fa-download me-2"></i> Descargar PDF
+                    </button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-file-pdf me-2"></i> Generar y enviar PDF
                     </button>
@@ -68,10 +71,22 @@
         const input = document.querySelector('input[name="ventaId"]');
         const hidden = document.getElementById('ventaIdHidden');
         const form = document.getElementById('emitirForm');
+        const btnDescargar = document.getElementById('btnDescargarPdf');
 
         if (input && hidden && form) {
             form.addEventListener('submit', function () {
                 hidden.value = input.value;
+            });
+        }
+
+        if (btnDescargar && input) {
+            btnDescargar.addEventListener('click', function () {
+                const ventaId = input.value.trim();
+                if (!ventaId || Number(ventaId) <= 0) {
+                    alert('Ingresa un ID de venta válido antes de descargar.');
+                    return;
+                }
+                window.open('/vendedor/ventas/' + ventaId + '/boleta.pdf', '_blank');
             });
         }
     });

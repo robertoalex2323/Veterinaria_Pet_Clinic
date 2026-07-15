@@ -25,6 +25,10 @@ public class RecetaItem {
     private Integer cantidad;
     private String dosis;
     private String frecuencia;
+    private String via;
+    private String unidad;
+    private String duracion;
+    private String notas;
 
     // getters y setters
     public Long getId() { return id; }
@@ -39,4 +43,12 @@ public class RecetaItem {
     public void setDosis(String dosis) { this.dosis = dosis; }
     public String getFrecuencia() { return frecuencia; }
     public void setFrecuencia(String frecuencia) { this.frecuencia = frecuencia; }
+    public String getVia() { return via; }
+    public void setVia(String via) { this.via = via; }
+    public String getUnidad() { return unidad; }
+    public void setUnidad(String unidad) { this.unidad = unidad; }
+    public String getDuracion() { return duracion; }
+    public void setDuracion(String duracion) { this.duracion = duracion; }
+    public String getNotas() { return notas; }
+    public void setNotas(String notas) { this.notas = notas; }
 }
