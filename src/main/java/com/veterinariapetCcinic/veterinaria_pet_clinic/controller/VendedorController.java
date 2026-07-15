@@ -523,6 +523,8 @@ private final ProductoService productoService;
             producto.setStock(stockVal);
             producto.setDescripcion(descripcion != null ? descripcion.trim() : "");
 
+            String fotoAnterior = producto.getFoto();
+
             if (eliminarFoto && !hayFotoNueva) {
                 producto.setFoto(null);
             }
@@ -549,6 +551,10 @@ private final ProductoService productoService;
                 producto.setFoto("/Imagen/Productos/" + fileName);
             }
 
+            if ((hayFotoNueva || eliminarFoto) && fotoAnterior != null && !fotoAnterior.equals(producto.getFoto())) {
+                eliminarArchivoFoto(fotoAnterior);
+            }
+
             productoService.guardar(producto);
 
             redirectAttributes.addFlashAttribute("success",
@@ -559,6 +565,17 @@ private final ProductoService productoService;
             redirectAttributes.addFlashAttribute("producto", producto);
             redirectAttributes.addFlashAttribute("error", "Error al guardar el producto: " + (e.getMessage() != null ? e.getMessage() : ""));
             return "redirect:" + redirectDestino;
+        }
+    }
+
+    private void eliminarArchivoFoto(String rutaFoto) {
+        try {
+            if (rutaFoto == null || !rutaFoto.startsWith("/Imagen/Productos/")) return;
+            String nombreArchivo = rutaFoto.substring("/Imagen/Productos/".length());
+            java.nio.file.Path archivo = java.nio.file.Paths.get("src/main/resources/static/Imagen/Productos/").resolve(nombreArchivo);
+            java.nio.file.Files.deleteIfExists(archivo);
+        } catch (Exception e) {
+            log.warn("No se pudo eliminar la foto anterior '{}': {}", rutaFoto, e.getMessage());
         }
     }
 }

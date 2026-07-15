@@ -77,13 +77,32 @@
                         <textarea class="form-control" name="descripcion" rows="4" th:text="*{descripcion}"></textarea>
                     </div>
 
-                    <div class="col-md-12">
+<div class="col-md-12">
                         <label class="form-label fw-bold text-dark">Foto del producto</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-image"></i></span>
-                            <input type="file" class="form-control" name="foto" accept="image/*">
+                        <div class="pf-foto-row mb-2">
+                            <div class="pf-foto-preview">
+                                <img th:if="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                     th:src="${producto.foto}" class="pf-foto-img" alt="Foto actual" />
+                                <i th:unless="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                   class="fas fa-image pf-foto-placeholder"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div th:if="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                     class="small text-muted mb-1">
+                                    Actual: <span th:text="${#strings.substringAfter(producto.foto, '/Imagen/Productos/')}"></span>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-image"></i></span>
+                                    <input type="file" class="form-control" name="foto" accept="image/*">
+                                </div>
+                                <div class="text-muted small mt-1">Sube una imagen para reemplazar la actual.</div>
+                                <div th:if="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                     class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" name="eliminarFoto" value="true" id="eliminarFoto">
+                                    <label class="form-check-label small" for="eliminarFoto">Eliminar foto actual</label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-muted small mt-1">(Opcional) Sube una imagen para mostrarla en el producto.</div>
                     </div>
 
 

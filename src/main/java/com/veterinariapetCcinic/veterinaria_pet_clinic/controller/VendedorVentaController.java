@@ -238,6 +238,17 @@ public class VendedorVentaController {
         }
     }
     
+    @GetMapping("/ver/{id}")
+    public String verVenta(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        Venta venta = ventaService.buscarPorId(id);
+        if (venta == null) {
+            redirectAttributes.addFlashAttribute("error", "No se encontró la venta con ID: " + id);
+            return "redirect:/vendedor/ventas/historial";
+        }
+        model.addAttribute("venta", venta);
+        return "Vendedor/venta-ver";
+    }
+
     @GetMapping("/{id}/boleta.pdf")
     @ResponseBody
     public ResponseEntity<ByteArrayResource> descargarBoletaPdf(@PathVariable Long id) {
