@@ -54,6 +54,13 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("✅ Usuario VETERINARIO creado exitosamente");
         }
 
+        // Mantener los datos institucionales del veterinario aun cuando la base ya exista.
+        usuarioRepository.findByUsername("veterinario").ifPresent(vet -> {
+            vet.setNombre("Dra. Katherine Alberca");
+            vet.setEmail("kalberca29@gmail.com");
+            usuarioRepository.save(vet);
+        });
+
         // 3. RECEPCIONISTA
         if (!usuarioRepository.existsByUsername("recepcionista")) {
             Usuario recep = new Usuario();

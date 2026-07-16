@@ -21,6 +21,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const requestedButton = tabs.find(tab => tab.dataset.settingsTab === requestedTab);
     if (requestedButton) requestedButton.click();
 
+    const passwordForm = document.querySelector(".security-password-form");
+    passwordForm?.addEventListener("submit", event => {
+        const nueva = passwordForm.querySelector("[name='passwordNueva']");
+        const confirmacion = passwordForm.querySelector("[name='confirmacionPassword']");
+        if (nueva.value !== confirmacion.value) {
+            event.preventDefault();
+            confirmacion.setCustomValidity("Las contraseñas no coinciden.");
+            confirmacion.reportValidity();
+        } else {
+            confirmacion.setCustomValidity("");
+        }
+    });
+
     const settings = window.vetThemeSettings || {};
     const current = settings.get ? settings.get() : { mode: "light", color: "lavender", text: "medium" };
 

@@ -58,6 +58,9 @@ public class CitaService {
         Cita citaGuardada = Objects.requireNonNull(citaRepository.save(cita));
         log.info("Cita agendada exitosamente: ID {} para mascota {}", citaGuardada.getId(), citaGuardada.getMascota().getNombre());
         notificacionService.enviarConfirmacionCita(citaGuardada);
+        if (citaGuardada.getVeterinario() != null) {
+            notificacionService.enviarNotificacionVeterinario(citaGuardada);
+        }
         return citaGuardada;
     }
     

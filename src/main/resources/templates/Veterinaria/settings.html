@@ -94,16 +94,16 @@
                         </header>
                         <div class="profile-settings">
                             <div class="profile-photo">
-                                <div class="settings-avatar large" th:text="${usuario != null and usuario.nombre != null ? usuario.nombre.substring(0, 1).toUpperCase() : 'DG'}">DG</div>
+                                <div class="settings-avatar large">DG</div>
                                 <small class="settings-readonly-note">Información administrada por el sistema</small>
                             </div>
                             <label>
                                 <span>Nombre completo</span>
-                                <input type="text" readonly th:value="${usuario != null ? usuario.nombre : 'No registrado'}">
+                                <input type="text" readonly value="Dra. Katherine Alberca">
                             </label>
                             <label>
                                 <span>Correo</span>
-                                <input type="email" readonly th:value="${usuario != null and usuario.email != null ? usuario.email : 'No registrado'}">
+                                <input type="email" readonly value="kalberca29@gmail.com">
                             </label>
                             <label>
                                 <span>Cedula profesional</span>
