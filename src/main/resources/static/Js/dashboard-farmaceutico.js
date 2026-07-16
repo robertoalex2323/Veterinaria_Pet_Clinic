@@ -1,10 +1,4 @@
-/**
- * ============================================================
- * DASHBOARD FARMACÉUTICO - JavaScript unificado
- * Gráficos, estadísticas reales, tabla de ventas, export/print
- * Ubicación: static/Js/dashboard-farmaceutico.js
- * ============================================================
- */
+
 
 class DashboardFarmaceutico {
     constructor() {

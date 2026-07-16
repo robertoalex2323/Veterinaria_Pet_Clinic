@@ -18,18 +18,18 @@
         </p>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-xl-6">
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-7">
             <div class="card form-card border-0 shadow-lg">
                 <div class="card-body p-4">
-                    <form th:action="@{/farmaceutico/proveedores/guardar}" method="post" th:object="${proveedor}">
+                    <form id="formProveedor" th:action="@{/farmaceutico/proveedores/guardar}" method="post" th:object="${proveedor}">
                         <input type="hidden" name="id" th:value="${proveedor.id}">
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Nombre del Proveedor <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-building"></i></span>
-                                <input type="text" name="nombre" class="form-control" th:value="${proveedor.nombre}" placeholder="Ej: Distribuidora Farma SAC" required>
+                                <input type="text" id="nombreInput" name="nombre" class="form-control" th:value="${proveedor.nombre}" placeholder="Ej: Distribuidora Farma SAC" required>
                             </div>
                         </div>
 
@@ -37,8 +37,10 @@
                             <label class="form-label fw-semibold">RUC <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                                <input type="text" name="ruc" class="form-control" th:value="${proveedor.ruc}" placeholder="Ej: 20123456789" required>
+                                <input type="text" id="rucInput" name="ruc" class="form-control" th:value="${proveedor.ruc}"
+                                       placeholder="Ej: 20123456789" inputmode="numeric" maxlength="11" required>
                             </div>
+                            <div class="form-text">Debe tener exactamente 11 dígitos.</div>
                         </div>
 
                         <div class="row g-3 mb-3">
@@ -46,14 +48,14 @@
                                 <label class="form-label fw-semibold">Contacto</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
-                                    <input type="text" name="contacto" class="form-control" th:value="${proveedor.contacto}" placeholder="Nombre del contacto">
+                                    <input type="text" id="contactoInput" name="contacto" class="form-control" th:value="${proveedor.contacto}" placeholder="Nombre del contacto">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Teléfono</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                                    <input type="text" name="telefono" class="form-control" th:value="${proveedor.telefono}" placeholder="Ej: +51 999 888 777">
+                                    <input type="text" id="telefonoInput" name="telefono" class="form-control" th:value="${proveedor.telefono}" placeholder="Ej: +51 999 888 777">
                                 </div>
                             </div>
                         </div>
@@ -62,7 +64,7 @@
                             <label class="form-label fw-semibold">Email</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                                <input type="email" name="email" class="form-control" th:value="${proveedor.email}" placeholder="contacto@proveedor.com">
+                                <input type="email" id="emailInput" name="email" class="form-control" th:value="${proveedor.email}" placeholder="contacto@proveedor.com">
                             </div>
                         </div>
 
@@ -70,7 +72,7 @@
                             <label class="form-label fw-semibold">Dirección</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                <textarea name="direccion" class="form-control" rows="2" placeholder="Av. Principal 123, Lima" th:inline="text">[[${proveedor.direccion}]]</textarea>
+                                <textarea id="direccionInput" name="direccion" class="form-control" rows="2" placeholder="Av. Principal 123, Lima" th:inline="text">[[${proveedor.direccion}]]</textarea>
                             </div>
                         </div>
 
@@ -86,7 +88,55 @@
                 </div>
             </div>
         </div>
+
+        <!-- Vista previa en vivo: cómo se verá la tarjeta del proveedor -->
+        <div class="col-lg-4">
+            <div class="preview-sticky">
+                <p class="preview-label"><i class="fas fa-eye me-1"></i> Vista previa</p>
+                <div class="card-proveedor">
+                    <div class="card-proveedor-header">
+                        <div class="prov-avatar"><i class="fas fa-building"></i></div>
+                        <div class="prov-header-info">
+                            <h5 class="prov-nombre" id="previewNombre" th:text="${proveedor.nombre != null and !proveedor.nombre.isEmpty() ? proveedor.nombre : 'Nombre del proveedor'}">Nombre del proveedor</h5>
+                            <span class="prov-ruc" id="previewRuc" th:text="'RUC: ' + (${proveedor.ruc != null and !proveedor.ruc.isEmpty()} ? ${proveedor.ruc} : '—')">RUC: —</span>
+                        </div>
+                    </div>
+                    <div class="card-proveedor-body">
+                        <div class="prov-detalle">
+                            <span class="detalle-icon"><i class="fas fa-user-tie"></i></span>
+                            <div>
+                                <span class="detalle-label">Contacto</span>
+                                <span class="detalle-valor" id="previewContacto" th:text="${proveedor.contacto != null and !proveedor.contacto.isEmpty() ? proveedor.contacto : 'Sin contacto registrado'}">Sin contacto registrado</span>
+                            </div>
+                        </div>
+                        <div class="prov-detalle">
+                            <span class="detalle-icon"><i class="fas fa-phone"></i></span>
+                            <div>
+                                <span class="detalle-label">Teléfono</span>
+                                <span class="detalle-valor" id="previewTelefono" th:text="${proveedor.telefono != null and !proveedor.telefono.isEmpty() ? proveedor.telefono : 'Sin teléfono registrado'}">Sin teléfono registrado</span>
+                            </div>
+                        </div>
+                        <div class="prov-detalle">
+                            <span class="detalle-icon"><i class="fas fa-envelope"></i></span>
+                            <div>
+                                <span class="detalle-label">Email</span>
+                                <span class="detalle-valor" id="previewEmail" th:text="${proveedor.email != null and !proveedor.email.isEmpty() ? proveedor.email : 'Sin email registrado'}">Sin email registrado</span>
+                            </div>
+                        </div>
+                        <div class="prov-detalle">
+                            <span class="detalle-icon"><i class="fas fa-map-marker-alt"></i></span>
+                            <div>
+                                <span class="detalle-label">Dirección</span>
+                                <span class="detalle-valor" id="previewDireccion" th:text="${proveedor.direccion != null and !proveedor.direccion.isEmpty() ? proveedor.direccion : 'Sin dirección registrada'}">Sin dirección registrada</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script th:src="@{/js/proveedor-farmaceutico.js}"></script>
 </div>
 </body>
 </html>

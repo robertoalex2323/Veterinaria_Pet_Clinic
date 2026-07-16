@@ -248,22 +248,50 @@ public class FarmaceuticoController {
 
     @PostMapping("/proveedores/guardar")
     public String guardarProveedor(@ModelAttribute Proveedor proveedor, RedirectAttributes ra) {
+        // ----- Normalizar y validar antes de tocar la base de datos -----
+        if (proveedor.getNombre() != null) proveedor.setNombre(proveedor.getNombre().trim());
+        if (proveedor.getRuc() != null) proveedor.setRuc(proveedor.getRuc().trim());
+        if (proveedor.getContacto() != null) proveedor.setContacto(proveedor.getContacto().trim());
+        if (proveedor.getTelefono() != null) proveedor.setTelefono(proveedor.getTelefono().trim());
+        if (proveedor.getEmail() != null) proveedor.setEmail(proveedor.getEmail().trim());
+        if (proveedor.getDireccion() != null) proveedor.setDireccion(proveedor.getDireccion().trim());
+
+        if (proveedor.getNombre() == null || proveedor.getNombre().isEmpty()) {
+            ra.addFlashAttribute("error", "El nombre del proveedor es obligatorio.");
+            return "redirect:/farmaceutico/proveedores" + (proveedor.getId() != null ? "/nuevo?id=" + proveedor.getId() : "/nuevo");
+        }
+        if (proveedor.getRuc() == null || !proveedor.getRuc().matches("\\d{11}")) {
+            ra.addFlashAttribute("error", "El RUC debe tener exactamente 11 dígitos.");
+            return "redirect:/farmaceutico/proveedores" + (proveedor.getId() != null ? "/nuevo?id=" + proveedor.getId() : "/nuevo");
+        }
+
+        Proveedor existente = proveedorService.buscarPorRuc(proveedor.getRuc());
+        boolean rucEnUso = existente != null && !existente.getId().equals(proveedor.getId());
+        if (rucEnUso) {
+            ra.addFlashAttribute("error", "Ya existe un proveedor registrado con el RUC " + proveedor.getRuc() + ".");
+            return "redirect:/farmaceutico/proveedores" + (proveedor.getId() != null ? "/nuevo?id=" + proveedor.getId() : "/nuevo");
+        }
+
         try {
             boolean isNew = (proveedor.getId() == null);
             proveedorService.guardar(proveedor);
             if (isNew) {
                 sendNotification("success", "Nuevo proveedor registrado: " + proveedor.getNombre());
+                ra.addFlashAttribute("success", "Proveedor registrado exitosamente.");
             } else {
                 sendNotification("info", "Proveedor actualizado: " + proveedor.getNombre());
+                ra.addFlashAttribute("success", "Proveedor actualizado exitosamente.");
             }
-            ra.addFlashAttribute("success", "Proveedor guardado exitosamente.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Error al guardar el proveedor: " + e.getMessage());
         }
         return "redirect:/farmaceutico/proveedores";
     }
 
-    @GetMapping("/proveedores/eliminar/{id}")
+    // Antes era @GetMapping: un borrado no debe dispararse con una simple
+    // navegación/GET (riesgo de prefetch, crawlers, etc). Ahora usa POST,
+    // igual que el borrado de medicamentos.
+    @PostMapping("/proveedores/eliminar/{id}")
     public String eliminarProveedor(@PathVariable Long id, RedirectAttributes ra) {
         try {
             String nombre = proveedorService.buscarPorId(id).getNombre();
@@ -271,7 +299,7 @@ public class FarmaceuticoController {
             sendNotification("warning", "Proveedor eliminado: " + nombre);
             ra.addFlashAttribute("success", "Proveedor eliminado correctamente.");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Error al eliminar proveedor: " + e.getMessage());
+            ra.addFlashAttribute("error", "No se pudo eliminar el proveedor. Puede que esté asociado a medicamentos registrados.");
         }
         return "redirect:/farmaceutico/proveedores";
     }

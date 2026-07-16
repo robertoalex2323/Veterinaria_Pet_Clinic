@@ -154,3 +154,79 @@
         font-size: 1.2rem;
     }
 }
+
+/* ===========================
+   BARRA DE ESTADÍSTICAS
+=========================== */
+.proveedores-stats-bar {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #E8F5E9;
+    border: 2px solid #111;
+    border-radius: 999px;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #111;
+}
+
+.stat-chip i {
+    color: #1D9E75;
+}
+
+.stat-chip strong {
+    color: #1D9E75;
+    font-size: 1rem;
+}
+
+/* ===========================
+   FORMULARIO: VALIDACIÓN RUC
+=========================== */
+#rucInput.is-valid {
+    border-color: #1D9E75 !important;
+    background-image: none;
+}
+
+#rucInput.is-invalid {
+    border-color: #EF4444 !important;
+    background-image: none;
+}
+
+/* ===========================
+   VISTA PREVIA (form-proveedor)
+=========================== */
+.preview-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6B7280;
+    margin-bottom: 0.75rem;
+}
+
+.preview-sticky {
+    position: sticky;
+    top: 1.5rem;
+}
+
+.preview-sticky .card-proveedor {
+    box-shadow: 5px 5px 0 #111;
+}
+
+.preview-sticky .card-proveedor-footer {
+    display: none;
+}
+
+@media (max-width: 991px) {
+    .preview-sticky {
+        position: static;
+        margin-top: 1.5rem;
+    }
+}
