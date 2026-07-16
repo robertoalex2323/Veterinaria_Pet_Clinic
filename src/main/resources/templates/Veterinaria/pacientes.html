@@ -223,9 +223,9 @@
                 <div>
                     <label>Urgencia clasificada</label>
                     <select name="urgencia">
-                        <option value="Baja">Baja</option>
-                        <option value="Media">Media</option>
-                        <option value="Alta" selected>Alta</option>
+                        <option value="Baja" data-default-priority="baja">Baja</option>
+                        <option value="Media" data-default-priority="media">Media</option>
+                        <option value="Alta" data-default-priority="alta" selected>Alta</option>
                         <option value="Critica">Critica</option>
                     </select>
                 </div>
@@ -331,11 +331,11 @@
                 <div class="modal-grid-4">
                     <div class="modal-field">
                         <label>Peso (kg)</label>
-                        <input type="number" step="0.01" name="peso" placeholder="0.0" required>
+                        <input type="number" step="0.01" name="peso" data-clinical-input="weight" placeholder="0.0" required>
                     </div>
                     <div class="modal-field">
                         <label>Temperatura (°C)</label>
-                        <input type="number" step="0.1" name="temperatura" placeholder="38.5" required>
+                        <input type="number" step="0.1" name="temperatura" data-clinical-input="temperature" placeholder="38.5" required>
                     </div>
                     <div class="modal-field">
                         <label>FC (bpm)</label>
@@ -388,6 +388,7 @@
     </div>
 </div>
 
+<script src="/js/dashboard-veterinaria.js"></script>
 <script>
 function abrirModalTriaje(btn) {
     document.getElementById('modal-cita-id').value = btn.dataset.citaId;
@@ -398,6 +399,11 @@ function abrirModalTriaje(btn) {
     const avatarMap = { perro: '🐶', gato: '🐱', ave: '🐦' };
     document.getElementById('modal-avatar').textContent = avatarMap[especie] || '🐾';
 
+    const clinical = window.vetClinicalSettings.get();
+    const pesoLabel = document.querySelector('[name="peso"]').previousElementSibling;
+    const tempLabel = document.querySelector('[name="temperatura"]').previousElementSibling;
+    if (pesoLabel) pesoLabel.textContent = clinical.weightUnit === 'lb' ? 'Peso (lb)' : 'Peso (kg)';
+    if (tempLabel) tempLabel.textContent = clinical.temperatureUnit === 'fahrenheit' ? 'Temperatura (°F)' : 'Temperatura (°C)';
     document.getElementById('modalTriaje').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
@@ -415,6 +421,8 @@ function abrirModalFinalizarTriaje(btn) {
         (btn.dataset.mascotaNombre || 'Paciente') + ' - ' + (btn.dataset.dueno || 'Propietario');
     document.getElementById('finalizar-motivo').textContent = btn.dataset.motivo || 'Sin motivo registrado';
 
+    const option = document.querySelector(`#formFinalizarTriaje [data-default-priority="${window.vetClinicalSettings.get().defaultPriority}"]`);
+    if (option) option.selected = true;
     document.getElementById('modalFinalizarTriaje').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
@@ -438,6 +446,18 @@ document.getElementById('modalTriaje').addEventListener('click', function(e) {
 
 document.getElementById('modalFinalizarTriaje').addEventListener('click', function(e) {
     if (e.target === this) cerrarModalFinalizarTriaje();
+});
+
+document.getElementById('formTriaje').addEventListener('submit', function() {
+    const clinical = window.vetClinicalSettings.get();
+    this.querySelectorAll('[data-clinical-input]').forEach(input => {
+        const value = Number(input.value);
+        if (!Number.isFinite(value)) return;
+        input.value = input.dataset.clinicalInput === 'weight' && clinical.weightUnit === 'lb'
+            ? (value / 2.2046226218).toFixed(2)
+            : input.dataset.clinicalInput === 'temperature' && clinical.temperatureUnit === 'fahrenheit'
+                ? ((value - 32) * 5 / 9).toFixed(1) : value;
+    });
 });
 
 // Buscador

@@ -1980,6 +1980,12 @@ kbd {
     gap: 8px;
 }
 
+.settings-save-status {
+    margin: 2px 0 0;
+    color: #70809b;
+    font-size: 13px;
+}
+
 .profile-settings label span,
 .simple-settings-list label span,
 .appearance-settings h3 {

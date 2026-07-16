@@ -23,6 +23,20 @@ document.addEventListener("DOMContentLoaded", () => {
     bindChoice("[data-theme-mode]", "themeMode", current.mode, value => settings.set && settings.set({ mode: value }));
     bindChoice("[data-theme-color]", "themeColor", current.color, value => settings.set && settings.set({ color: value }));
     bindChoice("[data-text-size]", "textSize", current.text, value => settings.set && settings.set({ text: value }));
+
+    const clinicalSettings = window.vetClinicalSettings;
+    if (clinicalSettings) {
+        const clinicalCurrent = clinicalSettings.get();
+        document.querySelectorAll("[data-clinical-setting]").forEach(control => {
+            const key = control.dataset.clinicalSetting;
+            control.value = clinicalCurrent[key];
+            control.addEventListener("change", () => {
+                clinicalSettings.set({ [key]: control.value });
+                const status = document.querySelector(".settings-save-status");
+                if (status) status.textContent = "Preferencia guardada. Se aplicara en todo el panel.";
+            });
+        });
+    }
 });
 
 function bindChoice(selector, datasetKey, initialValue, onChange) {

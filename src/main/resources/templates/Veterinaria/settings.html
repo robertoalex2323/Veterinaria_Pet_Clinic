@@ -217,9 +217,9 @@
                             <h2>Preferencias Clinicas</h2>
                         </header>
                         <div class="simple-settings-list">
-                            <label><span>Unidad de peso</span><select><option>Kilogramos</option><option>Libras</option></select></label>
-                            <label><span>Temperatura</span><select><option>Celsius</option><option>Fahrenheit</option></select></label>
-                            <label><span>Prioridad por defecto</span><select><option>Media</option><option>Alta</option><option>Baja</option></select></label>
+                            <label><span>Unidad de peso</span><select data-clinical-setting="weightUnit"><option value="kg">Kilogramos</option><option value="lb">Libras</option></select></label>
+                            <label><span>Temperatura</span><select data-clinical-setting="temperatureUnit"><option value="celsius">Celsius</option><option value="fahrenheit">Fahrenheit</option></select></label>
+                            <label><span>Prioridad por defecto</span><select data-clinical-setting="defaultPriority"><option value="media">Media</option><option value="alta">Alta</option><option value="baja">Baja</option></select></label>
                         </div>
                     </article>
 
@@ -253,8 +253,9 @@
                             <h2>Idioma</h2>
                         </header>
                         <div class="simple-settings-list">
-                            <label><span>Idioma del sistema</span><select><option>Espanol</option><option>English</option></select></label>
-                            <label><span>Region</span><select><option>Peru</option><option>Colombia</option><option>Mexico</option></select></label>
+                            <label><span>Idioma del sistema</span><select data-clinical-setting="language"><option value="es">Espanol</option><option value="en">English</option></select></label>
+                            <label><span>Region</span><select data-clinical-setting="region"><option value="PE">Peru</option><option value="CO">Colombia</option><option value="MX">Mexico</option></select></label>
+                            <p class="settings-save-status" aria-live="polite">Los cambios se guardan automaticamente.</p>
                         </div>
                     </article>
                 </section>

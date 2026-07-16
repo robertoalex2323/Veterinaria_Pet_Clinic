@@ -1,4 +1,5 @@
 const VET_THEME_STORAGE_KEY = "vetDashboardTheme";
+const VET_CLINICAL_SETTINGS_STORAGE_KEY = "vetClinicalSettings";
 
 (function initVeterinaryTheme() {
     const defaults = { mode: "light", color: "lavender", text: "medium" };
@@ -44,6 +45,76 @@ const VET_THEME_STORAGE_KEY = "vetDashboardTheme";
             if (current.mode === "auto") applyTheme(current);
         });
     }
+})();
+
+(function initClinicalPreferences() {
+    const defaults = { weightUnit: "kg", temperatureUnit: "celsius", defaultPriority: "media", language: "es", region: "PE" };
+    const translations = {
+        "Configuracion": "Settings", "Preferencias Clinicas": "Clinical Preferences", "Unidad de peso": "Weight unit",
+        "Temperatura": "Temperature", "Prioridad por defecto": "Default priority", "Idioma": "Language",
+        "Idioma del sistema": "System language", "Region": "Region", "Kilogramos": "Kilograms", "Libras": "Pounds",
+        "Media": "Medium", "Alta": "High", "Baja": "Low", "Historial Clinico": "Clinical History",
+        "Reportes Clinicos": "Clinical Reports", "Peso": "Weight", "Signos Vitales Actuales": "Current Vital Signs",
+        "Consultas Anteriores": "Previous Consultations", "Editar": "Edit", "Guardar signos": "Save vital signs",
+        "Cancelar": "Cancel", "Seleccionar Paciente": "Select Patient", "Vista Previa": "Preview",
+        "Generar Reporte": "Generate Report", "Datos del Paciente": "Patient Information", "Paciente": "Patient",
+        "Dueno": "Owner", "Fecha": "Date", "No registrado": "Not registered", "Registrado": "Registered"
+    };
+
+    function read() {
+        try { return { ...defaults, ...JSON.parse(localStorage.getItem(VET_CLINICAL_SETTINGS_STORAGE_KEY) || "{}") }; }
+        catch (error) { return { ...defaults }; }
+    }
+    function formatNumber(value, digits) {
+        return new Intl.NumberFormat(read().language === "en" ? "en-US" : "es-PE", { maximumFractionDigits: digits }).format(value);
+    }
+    function formatWeight(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return "-";
+        const usePounds = read().weightUnit === "lb";
+        return `${formatNumber(usePounds ? number * 2.2046226218 : number, 2)} ${usePounds ? "lb" : "kg"}`;
+    }
+    function formatTemperature(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return "-";
+        const fahrenheit = read().temperatureUnit === "fahrenheit";
+        return `${formatNumber(fahrenheit ? (number * 9 / 5) + 32 : number, 1)} °${fahrenheit ? "F" : "C"}`;
+    }
+    function translateText(text) {
+        return read().language === "en" && translations[text.trim()] ? text.replace(text.trim(), translations[text.trim()]) : text;
+    }
+    function applyToPage() {
+        const settings = read();
+        document.documentElement.lang = settings.language;
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+                const parent = node.parentElement;
+                return parent && !["SCRIPT", "STYLE", "TEXTAREA", "OPTION"].includes(parent.tagName) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+            }
+        });
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(node => {
+            let text = node.nodeValue;
+            text = text.replace(/(-?\d+(?:[.,]\d+)?)\s*kg\b/gi, (_, value) => formatWeight(String(value).replace(",", ".")));
+            text = text.replace(/(-?\d+(?:[.,]\d+)?)\s*°?C\b/gi, (_, value) => formatTemperature(String(value).replace(",", ".")));
+            node.nodeValue = translateText(text);
+        });
+    }
+    window.vetClinicalSettings = {
+        get: read,
+        set(partial) {
+            const next = { ...read(), ...partial };
+            localStorage.setItem(VET_CLINICAL_SETTINGS_STORAGE_KEY, JSON.stringify(next));
+            window.dispatchEvent(new CustomEvent("vetClinicalSettingsChanged", { detail: next }));
+            return next;
+        },
+        formatWeight,
+        formatTemperature,
+        applyToPage
+    };
+    document.addEventListener("DOMContentLoaded", applyToPage);
+    window.addEventListener("vetClinicalSettingsChanged", () => window.location.reload());
 })();
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -157,7 +228,7 @@ function mostrarFichaPaciente(p) {
             </div>
             <div class="profile-box">
                 <label>Peso</label>
-                <strong>${escapeHtml(p.peso || "No registrado")}</strong>
+                <strong>${escapeHtml(formatWeightFromText(p.peso) || "No registrado")}</strong>
             </div>
             <div class="profile-box">
                 <label>Dueño</label>
@@ -186,7 +257,7 @@ function mostrarFichaPaciente(p) {
                 <div class="profile-grid">
                     <div class="profile-box">
                         <label>Temperatura</label>
-                        <strong>${escapeHtml(p.temperatura || "-")}</strong>
+                        <strong>${escapeHtml(formatTemperatureFromText(p.temperatura) || "-")}</strong>
                     </div>
                     <div class="profile-box">
                         <label>FC</label>
@@ -211,6 +282,16 @@ function mostrarFichaPaciente(p) {
             </div>
         `}
     `;
+}
+
+function formatWeightFromText(value) {
+    const number = parseFloat(String(value || "").replace(",", "."));
+    return Number.isFinite(number) ? window.vetClinicalSettings.formatWeight(number) : value;
+}
+
+function formatTemperatureFromText(value) {
+    const number = parseFloat(String(value || "").replace(",", "."));
+    return Number.isFinite(number) ? window.vetClinicalSettings.formatTemperature(number) : value;
 }
 
 function iconoPorEspecie(especie) {
