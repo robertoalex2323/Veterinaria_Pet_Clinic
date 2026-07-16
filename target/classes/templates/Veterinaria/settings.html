@@ -94,24 +94,24 @@
                         </header>
                         <div class="profile-settings">
                             <div class="profile-photo">
-                                <div class="settings-avatar large">DG</div>
-                                <button type="button">Cambiar foto</button>
+                                <div class="settings-avatar large" th:text="${usuario != null and usuario.nombre != null ? usuario.nombre.substring(0, 1).toUpperCase() : 'DG'}">DG</div>
+                                <small class="settings-readonly-note">Información administrada por el sistema</small>
                             </div>
                             <label>
                                 <span>Nombre completo</span>
-                                <input type="text" th:value="${nombreUsuario != null ? nombreUsuario : 'Dr. Gomez'}">
+                                <input type="text" readonly th:value="${usuario != null ? usuario.nombre : 'No registrado'}">
                             </label>
                             <label>
                                 <span>Correo</span>
-                                <input type="email" value="dr.gomez@petclinic.com">
+                                <input type="email" readonly th:value="${usuario != null and usuario.email != null ? usuario.email : 'No registrado'}">
                             </label>
                             <label>
                                 <span>Cedula profesional</span>
-                                <input type="text" value="VET-2019-04821">
+                                <input type="text" readonly value="VET-2019-04821">
                             </label>
                             <label>
                                 <span>Especialidad</span>
-                                <select>
+                                <select disabled>
                                     <option>Pequenos animales</option>
                                     <option>Animales exoticos</option>
                                     <option>Cirugia veterinaria</option>
@@ -119,9 +119,9 @@
                             </label>
                             <div class="profile-stats">
                                 <strong>Estadisticas del perfil</strong>
-                                <p><span>Consultas este mes</span><b>48</b></p>
-                                <p><span>Pacientes activos</span><b>12</b></p>
-                                <p><span>Diagnosticos IA</span><b>23</b></p>
+                                <p><span>Consultas este mes</span><b th:text="${consultasMes}">0</b></p>
+                                <p><span>Pacientes activos</span><b th:text="${pacientesActivos}">0</b></p>
+                                <p><span>Diagnosticos IA registrados</span><b th:text="${diagnosticosIa}">0</b></p>
                             </div>
                         </div>
                     </article>
@@ -186,27 +186,27 @@
                             <label class="notification-card">
                                 <i class="dot rose-dot"></i>
                                 <span><strong>Alertas criticas de pacientes</strong><small>Temperatura, signos vitales anormales</small></span>
-                                <input type="checkbox" checked>
+                                <input type="checkbox" data-notification-setting="criticalAlerts" checked>
                             </label>
                             <label class="notification-card">
                                 <i class="dot mint-dot"></i>
                                 <span><strong>Recordatorio de citas</strong><small>15 min antes de cada consulta</small></span>
-                                <input type="checkbox" checked>
+                                <input type="checkbox" data-notification-setting="appointmentReminders" checked>
                             </label>
                             <label class="notification-card">
                                 <i class="dot sky-dot"></i>
                                 <span><strong>Solicitudes de farmacia</strong><small>Validacion y despacho de recetas</small></span>
-                                <input type="checkbox" checked>
+                                <input type="checkbox" data-notification-setting="pharmacyRequests" checked>
                             </label>
                             <label class="notification-card">
                                 <i class="dot amber-dot"></i>
                                 <span><strong>Vacunas pendientes</strong><small>Recordatorios de calendario</small></span>
-                                <input type="checkbox">
+                                <input type="checkbox" data-notification-setting="vaccineReminders">
                             </label>
                             <label class="notification-card">
                                 <i class="fas fa-volume-up muted-icon"></i>
                                 <span><strong>Sonido de alertas</strong><small>Reproducir audio al recibir alertas</small></span>
-                                <input type="checkbox" checked>
+                                <input type="checkbox" data-notification-setting="alertSound" checked>
                             </label>
                         </div>
                     </article>
@@ -231,7 +231,14 @@
                         <div class="simple-settings-list">
                             <label><span>Sesion activa</span><input type="text" value="Veterinaria - navegador actual" readonly></label>
                             <label><span>Verificacion de cuenta</span><input type="text" value="Activa" readonly></label>
-                            <button class="settings-secondary-button" type="button">Cambiar contrasena</button>
+                            <div th:if="${success}" class="settings-feedback success" th:text="${success}"></div>
+                            <div th:if="${error}" class="settings-feedback error" th:text="${error}"></div>
+                            <form class="security-password-form" th:action="@{/veterinaria/settings/password}" method="post">
+                                <label><span>Contraseña actual</span><input type="password" name="passwordActual" required autocomplete="current-password"></label>
+                                <label><span>Nueva contraseña</span><input type="password" name="passwordNueva" minlength="8" required autocomplete="new-password"></label>
+                                <label><span>Confirmar contraseña</span><input type="password" name="confirmacionPassword" minlength="8" required autocomplete="new-password"></label>
+                                <button class="settings-secondary-button" type="submit">Cambiar contraseña</button>
+                            </form>
                         </div>
                     </article>
 

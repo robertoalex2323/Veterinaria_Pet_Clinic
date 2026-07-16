@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +45,7 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ConsultaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MedicamentoService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SeguimientoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SignosVitalesService;
 
@@ -65,6 +67,8 @@ public class VeterinariaController {
     private final UsuarioRepository usuarioRepository;
     private final MedicamentoService medicamentoService;
     private final FarmaceuticoService farmaceuticoService;
+    private final NotificacionService notificacionService;
+    private final PasswordEncoder passwordEncoder;
 
     public VeterinariaController(CitaRepository citaRepository,
                                   CitaService citaService,
@@ -76,7 +80,9 @@ public class VeterinariaController {
                                   AgendaService agendaService,
                                   AlertaCriticaService alertaCriticaService,
                                   MedicamentoService medicamentoService,
-                                  FarmaceuticoService farmaceuticoService) {
+                                  FarmaceuticoService farmaceuticoService,
+                                  NotificacionService notificacionService,
+                                  PasswordEncoder passwordEncoder) {
         this.citaRepository = citaRepository;
         this.citaService = citaService;
         this.mascotaService = mascotaService;
@@ -88,6 +94,8 @@ public class VeterinariaController {
         this.alertaCriticaService = alertaCriticaService;
         this.medicamentoService = medicamentoService;
         this.farmaceuticoService = farmaceuticoService;
+        this.notificacionService = notificacionService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     private String getUsername() {
@@ -865,6 +873,8 @@ private void clasificarYGuardarSignos(SignosVitales signos, Mascota mascota, Con
                         + ", FR: " + signos.getFrecuenciaRespiratoria(),
                 "CRITICA"
         );
+        notificacionService.enviarNotificacionUI("critical", "Alerta crítica: " + mascota.getNombre()
+                + " presenta signos vitales fuera de rango.");
     }
 }
 
@@ -1188,8 +1198,47 @@ public String resolverAlerta(@PathVariable Long id, RedirectAttributes redirectA
     @GetMapping("/settings")
     public String settings(Model model) {
         model.addAttribute("currentPage", "settings");
-        usuarioRepository.findByUsername(getUsername()).ifPresent(u ->
-            model.addAttribute("nombreUsuario", u.getNombre()));
+        Usuario usuario = getUsuarioActual();
+        if (usuario != null) {
+            model.addAttribute("nombreUsuario", usuario.getNombre());
+            model.addAttribute("usuario", usuario);
+            long consultasMes = consultaService.buscarPorVeterinario(usuario.getId()).stream()
+                    .filter(c -> c.getFechaConsulta() != null
+                            && c.getFechaConsulta().getYear() == LocalDate.now().getYear()
+                            && c.getFechaConsulta().getMonth() == LocalDate.now().getMonth())
+                    .count();
+            model.addAttribute("consultasMes", consultasMes);
+        } else {
+            model.addAttribute("consultasMes", 0L);
+        }
+        model.addAttribute("pacientesActivos", filtrarActivas(mascotaService.listarTodosConCliente()).size());
+        model.addAttribute("diagnosticosIa", 0L);
         return "Veterinaria/settings";
+    }
+
+    @PostMapping("/settings/password")
+    public String cambiarPassword(@RequestParam String passwordActual,
+                                  @RequestParam String passwordNueva,
+                                  @RequestParam String confirmacionPassword,
+                                  RedirectAttributes redirectAttributes) {
+        Usuario usuario = getUsuarioActual();
+        if (usuario == null || !passwordEncoder.matches(passwordActual, usuario.getPassword())) {
+            redirectAttributes.addFlashAttribute("error", "La contraseña actual no es correcta.");
+        } else if (passwordNueva == null || passwordNueva.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "La nueva contraseña debe tener al menos 8 caracteres.");
+        } else if (!passwordNueva.equals(confirmacionPassword)) {
+            redirectAttributes.addFlashAttribute("error", "La confirmación de contraseña no coincide.");
+        } else {
+            usuario.setPassword(passwordEncoder.encode(passwordNueva));
+            usuarioRepository.save(usuario);
+            redirectAttributes.addFlashAttribute("success", "Contraseña actualizada correctamente.");
+        }
+        return "redirect:/veterinaria/settings?tab=seguridad";
+    }
+
+    @GetMapping("/api/ui-notifications")
+    @ResponseBody
+    public List<NotificacionService.UINotification> notificacionesUi() {
+        return notificacionService.getAndClearUINotifications();
     }
 }

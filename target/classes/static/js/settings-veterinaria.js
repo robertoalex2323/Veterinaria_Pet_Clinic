@@ -17,6 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    const requestedButton = tabs.find(tab => tab.dataset.settingsTab === requestedTab);
+    if (requestedButton) requestedButton.click();
+
     const settings = window.vetThemeSettings || {};
     const current = settings.get ? settings.get() : { mode: "light", color: "lavender", text: "medium" };
 
