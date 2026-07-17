@@ -161,6 +161,18 @@
     font-weight: 800;
 }
 
+.agenda-empty {
+    min-height: 180px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: #8b93a6;
+    border: 1px dashed #d9deea;
+    border-radius: 18px;
+    padding: 24px;
+    font-weight: 600;
+}
+
 @media (max-width: 760px) {
     .alertas-header-card,
     .alerta-actions {

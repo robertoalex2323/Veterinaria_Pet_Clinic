@@ -1188,6 +1188,8 @@ public String resolverAlerta(@PathVariable Long id, RedirectAttributes redirectA
     @GetMapping("/settings")
     public String settings(Model model) {
         model.addAttribute("currentPage", "settings");
+        usuarioRepository.findByUsername(getUsername()).ifPresent(u ->
+            model.addAttribute("nombreUsuario", u.getNombre()));
         return "Veterinaria/settings";
     }
 }

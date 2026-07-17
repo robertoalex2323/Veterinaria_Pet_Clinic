@@ -86,18 +86,19 @@ public class SecurityConfig {
                             boolean esFarmaceutico = authentication.getAuthorities().stream()
                                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_FARMACEUTICO"));
                             
-                            // ¡AGREGADO POR TI! Redirección para VENDEDOR
                             boolean esVendedor = authentication.getAuthorities().stream()
                                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_VENDEDOR"));
 
+
                             if (esAdmin) {
+
                                 response.sendRedirect("/admin/dashboard");
                             } else if (esVeterinario) {
                                 response.sendRedirect("/veterinaria/dashboard");
                             } else if (esFarmaceutico) {
                                 response.sendRedirect("/farmaceutico/dashboard");
                             } else if (esVendedor) {
-                                response.sendRedirect("/vendedor");
+                                response.sendRedirect("/vendedor/dashboard");
                             } else {
                                 response.sendRedirect("/recepcionista/dashboard");
                             }

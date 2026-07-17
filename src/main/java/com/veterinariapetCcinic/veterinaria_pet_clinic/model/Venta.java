@@ -1,27 +1,13 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "ventas")
@@ -43,7 +29,7 @@ public class Venta {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     @JsonIgnoreProperties({"password", "email", "hibernateLazyInitializer", "handler"})
-    private Usuario usuario; 
+    private Usuario usuario;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal = BigDecimal.ZERO;
@@ -57,6 +43,10 @@ public class Venta {
     @Column(name = "metodo_pago", length = 50)
     private String metodoPago;
 
+    @Column(name = "codigo_operacion", length = 50)
+    private String codigoOperacion;
+
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receta_medica_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -65,9 +55,12 @@ public class Venta {
     @Column(name = "comprobante_enviado")
     private Boolean comprobanteEnviado = false;
 
+    @Column(name = "descuento_aplicado", precision = 10, scale = 2)
+    private BigDecimal descuentoAplicado = BigDecimal.ZERO;
+
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-@JsonIgnoreProperties({"venta", "hibernateLazyInitializer", "handler"})
-private List<DetalleVenta> detalles = new ArrayList<>();
+    @JsonIgnoreProperties({"venta", "hibernateLazyInitializer", "handler"})
+    private List<DetalleVenta> detalles = new ArrayList<>();
 
     public static final BigDecimal IGV_TASA = new BigDecimal("0.18");
 
@@ -93,11 +86,11 @@ private List<DetalleVenta> detalles = new ArrayList<>();
     }
 
     public String getFechaFormateada() {
-        return fecha != null ? fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
+        return fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
 
     public Long getId() { return id; }
-    public void setId(Long idVenta) { this.id = idVenta; }
+    public void setId(Long id) { this.id = id; }
 
     public LocalDateTime getFecha() { return fecha; }
     public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
@@ -106,7 +99,7 @@ private List<DetalleVenta> detalles = new ArrayList<>();
     public void setCliente(Cliente cliente) { this.cliente = cliente; }
 
     public Usuario getUsuario() { return usuario; }
-    public void setUsuario(Usuario user) { this.usuario = user; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
 
     public BigDecimal getSubtotal() { return subtotal; }
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
@@ -115,7 +108,7 @@ private List<DetalleVenta> detalles = new ArrayList<>();
     public void setIgv(BigDecimal igv) { this.igv = igv; }
 
     public BigDecimal getTotal() { return total; }
-    public void setTotal(BigDecimal totalAmount) { this.total = totalAmount; }
+    public void setTotal(BigDecimal total) { this.total = total; }
 
     public String getMetodoPago() { return metodoPago; }
     public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
@@ -126,9 +119,15 @@ private List<DetalleVenta> detalles = new ArrayList<>();
     public Boolean getComprobanteEnviado() { return comprobanteEnviado; }
     public void setComprobanteEnviado(Boolean comprobanteEnviado) { this.comprobanteEnviado = comprobanteEnviado; }
 
+    public BigDecimal getDescuentoAplicado() { return descuentoAplicado; }
+    public void setDescuentoAplicado(BigDecimal descuentoAplicado) { this.descuentoAplicado = descuentoAplicado; }
+
+    public String getCodigoOperacion() { return codigoOperacion; }
+public void setCodigoOperacion(String codigoOperacion) { this.codigoOperacion = codigoOperacion; }
+    
     public List<DetalleVenta> getDetalles() { return detalles; }
-    public void setDetalles(List<DetalleVenta> items) { 
-        this.detalles = items; 
+    public void setDetalles(List<DetalleVenta> detalles) { 
+        this.detalles = detalles; 
         recalcularTotales(); 
     }
 }

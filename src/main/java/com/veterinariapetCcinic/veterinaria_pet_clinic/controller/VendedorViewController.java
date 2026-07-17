@@ -8,6 +8,6 @@ public class VendedorViewController {
 
     @GetMapping("/vendedor")
     public String vendedorPanel() {
-        return "vendedor";
+        return "vendedor/vendedor";
     }
 }

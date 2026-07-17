@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'caja')}">
+<head>
+    <meta charset="UTF-8" />
+    <title>Caja - Vendedor</title>
+    <link rel="stylesheet" th:href="@{/css/caja-vendedor.css}" />
+</head>
+<body>
+<div id="content">
+    <div class="caja-pos-wrapper">
+        <div class="caja-pos-header">
+            <div>
+                <h2><i class="fas fa-cash-register"></i> Caja</h2>
+                <p class="pos-subtitle">Control de caja y movimientos del turno actual.</p>
+            </div>
+            <div id="turnoBadge" class="pos-turno-badge">
+                <span id="turnoDot" class="dot-pulse"></span>
+                <span id="turnoTexto">Verificando turno...</span>
+            </div>
+        </div>
+
+        <div id="cajaMsg" class="mb-3"></div>
+
+        <!-- ══ PANTALLA LED — Total del día ═════════════════════════ -->
+        <div class="pos-display">
+            <div class="pos-display-top">
+                <span class="pos-display-label">Total Recaudado — Hoy</span>
+                <span class="pos-display-clock" id="posReloj">00:00:00</span>
+            </div>
+            <div class="pos-display-body">
+                <div class="pos-display-main">
+                    <div class="pos-display-amount">
+                        <span class="pos-display-currency">S/</span>
+                        <span id="ingresosHoy">0.00</span>
+                    </div>
+                    <div class="pos-display-desc">Ingresos acumulados del día</div>
+                </div>
+                <div class="pos-display-side">
+                    <div class="pos-display-mini">
+                        <div class="pos-display-mini-label">Ventas</div>
+                        <div id="ventasHoy" class="pos-display-mini-value text-green">0</div>
+                    </div>
+                    <div class="pos-display-mini">
+                        <div class="pos-display-mini-label">Boletas</div>
+                        <div id="boletasEmitidas" class="pos-display-mini-value text-blue">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ Flujo de Caja ════════════════════════════════════════ -->
+        <div class="pos-cashflow-grid">
+            <div class="pos-cashflow-card cf-green">
+                <div class="pos-cf-icon icon-green">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="pos-cf-info">
+                    <span class="pos-cf-label">Entradas</span>
+                    <span id="cfEntradas" class="pos-cf-value">0</span>
+                </div>
+            </div>
+            <div class="pos-cashflow-card cf-red">
+                <div class="pos-cf-icon icon-red">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="pos-cf-info">
+                    <span class="pos-cf-label">Promos Aplicadas</span>
+                    <span id="promosActivas" class="pos-cf-value">0</span>
+                </div>
+            </div>
+            <div class="pos-cashflow-card cf-blue">
+                <div class="pos-cf-icon icon-blue">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="pos-cf-info">
+                    <span class="pos-cf-label">Recomendaciones</span>
+                    <span id="recomendacionesGeneradas" class="pos-cf-value">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ Paneles Inferiores ═══════════════════════════════════ -->
+        <div class="pos-bottom-grid">
+
+            <!-- Últimas transacciones (estilo ticket) -->
+            <div class="pos-section">
+                <div class="pos-section-header">
+                    <h3><i class="fas fa-receipt"></i> Últimas Ventas</h3>
+                </div>
+                <div class="pos-section-body">
+                    <ul id="ticketList" class="pos-ticket-list">
+                        <li class="pos-ticket-empty">
+                            <i class="fas fa-inbox"></i>
+                            Cargando ventas del día...
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Resumen del turno -->
+            <div class="pos-section">
+                <div class="pos-section-header">
+                    <h3><i class="fas fa-clipboard-check"></i> Resumen del Turno</h3>
+                </div>
+                <div class="pos-section-body">
+                    <ul class="pos-shift-list">
+                        <li class="pos-shift-item">
+                            <span class="pos-shift-label"><i class="fas fa-shopping-cart"></i> Ventas realizadas</span>
+                            <span id="shiftVentas" class="pos-shift-value">—</span>
+                        </li>
+                        <li class="pos-shift-item">
+                            <span class="pos-shift-label"><i class="fas fa-file-invoice"></i> Boletas emitidas</span>
+                            <span id="shiftBoletas" class="pos-shift-value">—</span>
+                        </li>
+                        <li class="pos-shift-item">
+                            <span class="pos-shift-label"><i class="fas fa-tags"></i> Promociones activas</span>
+                            <span id="shiftPromos" class="pos-shift-value">—</span>
+                        </li>
+                        <li class="pos-shift-item">
+                            <span class="pos-shift-label"><i class="fas fa-user-check"></i> Recomendaciones</span>
+                            <span id="shiftReco" class="pos-shift-value">—</span>
+                        </li>
+                        <li class="pos-shift-item">
+                            <span class="pos-shift-label"><i class="fas fa-coins"></i> Total recaudado</span>
+                            <span id="shiftTotal" class="pos-shift-value" style="color:#059669;">—</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/caja-vendedor.js}"></script>
+</div>
+</body>
+</html>

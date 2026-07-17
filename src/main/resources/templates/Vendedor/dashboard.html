@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'dashboard')}">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Dashboard - Vendedor</title>
+    </head>
+
+    <body>
+        <div id="content">
+            <!-- Hero section con animación y textos limpios -->
+            <section class="hero mb-4">
+                <div class="d-flex align-items-center gap-2">
+                    <h1 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-chart-line text-success"></i> Panel del Vendedor
+                    </h1>
+                </div>
+                <p class="subtitle text-muted mb-0">Resumen operativo de ventas, promociones y recomendaciones del día.</p>
+            </section>
+
+            <!-- Tarjetas de Estadísticas con animaciones premium, iconos y glow effects -->
+            <section class="stats-grid">
+                <div class="stat-card" style="--accent-color: #10B981; --accent-light: rgba(16, 185, 129, 0.1);">
+                    <div class="stat-info">
+                        <span class="stat-label">Ventas Hoy</span>
+                        <div class="stat-value" id="ventasHoy">0</div>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-shopping-basket"></i>
+                    </div>
+                </div>
+                <div class="stat-card" style="--accent-color: #3B82F6; --accent-light: rgba(59, 130, 246, 0.1);">
+                    <div class="stat-info">
+                        <span class="stat-label">Promociones Activas</span>
+                        <div class="stat-value" id="promosActivas">0</div>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                </div>
+                <div class="stat-card" style="--accent-color: #F59E0B; --accent-light: rgba(245, 158, 11, 0.1);">
+                    <div class="stat-info">
+                        <span class="stat-label">Boletas Emitidas</span>
+                        <div class="stat-value" id="boletasEmitidas">0</div>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                </div>
+                <div class="stat-card" style="--accent-color: #8B5CF6; --accent-light: rgba(139, 92, 246, 0.1);">
+                    <div class="stat-info">
+                        <span class="stat-label">Recomendaciones</span>
+                        <div class="stat-value" id="recomendacionesGeneradas">0</div>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gráficos del sistema -->
+            <section class="charts-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>
+                            <i class="fas fa-chart-area text-success"></i> Desempeño de Ventas (Últimos 7 Días)
+                        </h2>
+                        <span class="badge">Boletas</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="ventas7diasChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>
+                            <i class="fas fa-chart-bar text-primary"></i> Distribución por Categoría
+                        </h2>
+                        <span class="badge">Top Ventas</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="ventasPorCategoriaChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel de Enlaces Rápidos -->
+            <section class="panel quick-links-panel">
+                <div class="panel-header">
+                    <h2>
+                        <i class="fas fa-bolt text-warning"></i> Accesos Rápidos Operativos
+                    </h2>
+                    <span class="badge text-muted" style="background: transparent; border: none;">Accesos Directos</span>
+                </div>
+                <div class="quick-links">
+                    <a class="quick-link" href="/vendedor/ventas/registrar">
+                        <i class="fas fa-cart-plus"></i>
+                        <span>Registrar Venta</span>
+                    </a>
+                    <a class="quick-link" href="/vendedor/historial">
+                        <i class="fas fa-history"></i>
+                        <span>Historial de Ventas</span>
+                    </a>
+                    <a class="quick-link" href="/vendedor/promociones">
+                        <i class="fas fa-tags"></i>
+                        <span>Promociones</span>
+                    </a>
+                    <a class="quick-link" href="/vendedor/recomendaciones">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>Recomendaciones</span>
+                    </a>
+                    <a class="quick-link" href="/vendedor/ventas/emitir">
+                        <i class="fas fa-receipt"></i>
+                        <span>Emitir Boletas</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Script JS de inicialización y gráficos -->
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script th:src="@{/js/dashboard-vendedor.js}"></script>
+        </div>
+    </body>
+
+</html>

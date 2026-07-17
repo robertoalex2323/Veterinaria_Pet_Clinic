@@ -1,0 +1,602 @@
+:root {
+    --pos-dark: #0A0E17;
+    --pos-panel: #111827;
+    --pos-surface: #1E293B;
+    --pos-border: rgba(51, 65, 85, 0.6);
+    --pos-green: #00FF88;
+    --pos-green-dim: rgba(0, 255, 136, 0.15);
+    --pos-green-glow: 0 0 20px rgba(0, 255, 136, 0.25);
+    --pos-blue: #38BDF8;
+    --pos-blue-dim: rgba(56, 189, 248, 0.12);
+    --pos-amber: #FBBF24;
+    --pos-amber-dim: rgba(251, 191, 36, 0.12);
+    --pos-red: #F87171;
+    --pos-red-dim: rgba(248, 113, 113, 0.12);
+    --pos-cyan: #22D3EE;
+    --pos-white: #F8FAFC;
+    --pos-muted: #94A3B8;
+    --pos-radius: 16px;
+    --pos-radius-sm: 10px;
+}
+
+/* ── Caja Container ─────────────────────────────────────────── */
+.caja-pos-wrapper {
+    animation: posSlideUp 0.5s ease-out;
+}
+
+/* ── Header con reloj ───────────────────────────────────────── */
+.caja-pos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.caja-pos-header h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1E293B;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.caja-pos-header h2 i {
+    color: #10B981;
+}
+
+.caja-pos-header .pos-subtitle {
+    color: #64748B;
+    font-size: 0.9rem;
+    margin-top: 2px;
+}
+
+.pos-turno-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.pos-turno-badge .dot-pulse {
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    animation: posPulse 1.5s infinite;
+}
+
+.pos-turno-badge.cerrado {
+    background: linear-gradient(135deg, #94A3B8, #64748B);
+    box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+}
+
+/* ══ PANTALLA LED — La estrella ═════════════════════════════ */
+.pos-display {
+    background: var(--pos-dark);
+    border-radius: var(--pos-radius);
+    padding: 0;
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--pos-border);
+    position: relative;
+}
+
+.pos-display::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.3), transparent);
+}
+
+.pos-display-top {
+    background: var(--pos-panel);
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--pos-border);
+}
+
+.pos-display-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--pos-muted);
+}
+
+.pos-display-clock {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 0.85rem;
+    color: var(--pos-green);
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.pos-display-body {
+    padding: 32px 28px 28px;
+    display: flex;
+    align-items: flex-end;
+    gap: 28px;
+}
+
+.pos-display-main {
+    flex: 1;
+}
+
+.pos-display-amount {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--pos-green);
+    line-height: 1;
+    text-shadow: var(--pos-green-glow);
+    letter-spacing: 2px;
+    transition: text-shadow 0.3s ease;
+}
+
+.pos-display:hover .pos-display-amount {
+    text-shadow: 0 0 30px rgba(0, 255, 136, 0.4), 0 0 60px rgba(0, 255, 136, 0.15);
+}
+
+.pos-display-currency {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 1.4rem;
+    color: rgba(0, 255, 136, 0.5);
+    font-weight: 700;
+    margin-right: 6px;
+    vertical-align: super;
+}
+
+.pos-display-desc {
+    font-size: 0.82rem;
+    color: var(--pos-muted);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pos-display-side {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 160px;
+}
+
+.pos-display-mini {
+    background: var(--pos-surface);
+    border-radius: var(--pos-radius-sm);
+    padding: 12px 16px;
+    border: 1px solid var(--pos-border);
+}
+
+.pos-display-mini-label {
+    font-size: 0.68rem;
+    color: var(--pos-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.pos-display-mini-value {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--pos-white);
+}
+
+.pos-display-mini-value.text-green  { color: var(--pos-green); }
+.pos-display-mini-value.text-blue   { color: var(--pos-blue); }
+.pos-display-mini-value.text-amber  { color: var(--pos-amber); }
+
+/* ══ Flujo de Caja ══════════════════════════════════════════ */
+.pos-cashflow-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+    animation: posSlideUp 0.55s ease-out;
+}
+
+.pos-cashflow-card {
+    background: #fff;
+    border-radius: var(--pos-radius);
+    padding: 20px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.pos-cashflow-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--cf-accent, #10B981);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.pos-cashflow-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.pos-cashflow-card:hover::after {
+    opacity: 1;
+}
+
+.pos-cashflow-card.cf-green  { --cf-accent: #10B981; }
+.pos-cashflow-card.cf-red    { --cf-accent: #F87171; }
+.pos-cashflow-card.cf-blue   { --cf-accent: #3B82F6; }
+
+.pos-cf-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.pos-cashflow-card:hover .pos-cf-icon {
+    transform: scale(1.1);
+}
+
+.pos-cf-icon.icon-green  { background: rgba(16, 185, 129, 0.1);  color: #059669; }
+.pos-cf-icon.icon-red    { background: rgba(248, 113, 113, 0.1); color: #DC2626; }
+.pos-cf-icon.icon-blue   { background: rgba(59, 130, 246, 0.1);  color: #2563EB; }
+
+.pos-cf-info {
+    flex: 1;
+}
+
+.pos-cf-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pos-cf-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin-top: 2px;
+}
+
+/* ══ Últimas Transacciones (estilo ticket) ══════════════════ */
+.pos-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    animation: posSlideUp 0.6s ease-out;
+}
+
+.pos-section {
+    background: #fff;
+    border-radius: var(--pos-radius);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+
+.pos-section-header {
+    padding: 16px 20px;
+    border-bottom: 1px dashed rgba(226, 232, 240, 0.8);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pos-section-header h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pos-section-header h3 i {
+    color: #10B981;
+}
+
+.pos-section-body {
+    padding: 16px 20px;
+}
+
+/* Ticket-style transactions */
+.pos-ticket-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pos-ticket-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dotted #E2E8F0;
+    font-size: 0.88rem;
+}
+
+.pos-ticket-item:last-child {
+    border-bottom: none;
+}
+
+.pos-ticket-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pos-ticket-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+.pos-ticket-icon.t-sale  { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.pos-ticket-icon.t-promo { background: rgba(139, 92, 246, 0.1);  color: #7C3AED; }
+.pos-ticket-icon.t-void  { background: rgba(248, 113, 113, 0.1); color: #DC2626; }
+
+.pos-ticket-desc {
+    font-weight: 600;
+    color: #1E293B;
+}
+
+.pos-ticket-time {
+    font-size: 0.75rem;
+    color: #94A3B8;
+}
+
+.pos-ticket-amount {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-weight: 800;
+    color: #059669;
+    font-size: 0.92rem;
+}
+
+.pos-ticket-amount.negative {
+    color: #DC2626;
+}
+
+.pos-ticket-empty {
+    text-align: center;
+    padding: 24px;
+    color: #94A3B8;
+    font-size: 0.85rem;
+}
+
+.pos-ticket-empty i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    opacity: 0.4;
+}
+
+/* ── Resumen de turno ───────────────────────────────────────── */
+.pos-shift-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pos-shift-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 0.88rem;
+}
+
+.pos-shift-item:last-child {
+    border-bottom: none;
+}
+
+.pos-shift-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    font-weight: 500;
+}
+
+.pos-shift-label i {
+    width: 20px;
+    text-align: center;
+    color: #10B981;
+    font-size: 0.85rem;
+}
+
+.pos-shift-value {
+    font-weight: 700;
+    color: #0F172A;
+}
+
+/* ── Acciones de Caja ───────────────────────────────────────── */
+.pos-actions-bar {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    animation: posSlideUp 0.65s ease-out;
+    flex-wrap: wrap;
+}
+
+.pos-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pos-action-btn:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.pos-action-btn.btn-pos-primary {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.pos-action-btn.btn-pos-primary:hover {
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    color: #fff;
+}
+
+.pos-action-btn.btn-pos-outline {
+    background: #fff;
+    color: #1E293B;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.pos-action-btn.btn-pos-outline:hover {
+    border-color: #10B981;
+    color: #059669;
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.12);
+}
+
+/* ── Message area ───────────────────────────────────────────── */
+#cajaMsg {
+    min-height: 1.5rem;
+}
+
+#cajaMsg .alert {
+    border-radius: 12px;
+    border: none;
+    font-weight: 500;
+}
+
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes posSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes posPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+@keyframes posGlow {
+    0%, 100% { text-shadow: 0 0 20px rgba(0, 255, 136, 0.25); }
+    50% { text-shadow: 0 0 30px rgba(0, 255, 136, 0.45), 0 0 60px rgba(0, 255, 136, 0.2); }
+}
+
+.pos-display-amount {
+    animation: posGlow 3s ease-in-out infinite;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 992px) {
+    .pos-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+    .pos-cashflow-grid {
+        grid-template-columns: 1fr;
+    }
+    .pos-display-body {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .pos-display-side {
+        flex-direction: row;
+        width: 100%;
+        min-width: unset;
+    }
+    .pos-display-mini {
+        flex: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .pos-display-amount {
+        font-size: 2.5rem;
+    }
+    .pos-display-body {
+        padding: 24px 20px 20px;
+    }
+    .pos-cashflow-grid {
+        grid-template-columns: 1fr;
+    }
+    .pos-actions-bar {
+        flex-direction: column;
+    }
+    .pos-action-btn {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .pos-display-side {
+        flex-direction: column;
+    }
+    .pos-display-amount {
+        font-size: 2rem;
+    }
+}
+
+/* ── Reduce motion ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .caja-pos-wrapper,
+    .pos-cashflow-grid,
+    .pos-bottom-grid,
+    .pos-actions-bar,
+    .pos-cashflow-card,
+    .pos-cf-icon,
+    .pos-action-btn,
+    .pos-display-amount,
+    .dot-pulse {
+        transition: none !important;
+        animation: none !important;
+    }
+}

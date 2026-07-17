@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'producto')}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Crear/Editar Producto - Vendedor</title>
+    <link rel="stylesheet" th:href="@{/css/producto-vendedor.css}" />
+</head>
+
+<body>
+<div id="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+<h2 class="mb-0"><i class="fas fa-box text-primary"></i> <span th:text="${producto != null && producto.id != null ? 'Editar Producto' : 'Nuevo Producto'}">Producto</span></h2>
+            <p class="text-muted mb-0">Completa los datos del producto</p>
+        </div>
+        <div>
+            <a class="btn btn-outline-secondary shadow-sm" th:href="@{/vendedor/productos}">
+                <i class="fas fa-arrow-left me-2"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card shadow-sm producto-card">
+        <div class="card-body p-4">
+            <form th:action="@{/vendedor/productos/guardar}" method="post" enctype="multipart/form-data" th:object="${producto}">
+                <input type="hidden" name="id" th:value="${producto != null ? producto.id : ''}" />
+                <div class="row g-4 producto-form-grid">
+
+
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Nombre <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                            <input type="text" class="form-control" name="nombre" th:value="*{nombre}" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Categoría <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
+                            <input type="text" class="form-control" name="categoria" th:value="*{categoria}" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Precio <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                            <input type="number" step="0.01" class="form-control" name="precio" th:value="*{precio}" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Stock <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-cubes"></i></span>
+                            <input type="number" step="1" class="form-control" name="stock" th:value="*{stock}" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold text-dark">Descripción</label>
+                        <textarea class="form-control" name="descripcion" rows="4" th:text="*{descripcion}"></textarea>
+                    </div>
+
+<div class="col-md-12">
+                        <label class="form-label fw-bold text-dark">Foto del producto</label>
+                        <div class="pf-foto-row mb-2">
+                            <div class="pf-foto-preview">
+                                <img th:if="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                     th:src="${producto.foto}" class="pf-foto-img" alt="Foto actual" />
+                                <i th:unless="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                   class="fas fa-image pf-foto-placeholder"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div th:if="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                     class="small text-muted mb-1">
+                                    Actual: <span th:text="${#strings.substringAfter(producto.foto, '/Imagen/Productos/')}"></span>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-image"></i></span>
+                                    <input type="file" class="form-control" name="foto" accept="image/*">
+                                </div>
+                                <div class="text-muted small mt-1">Sube una imagen para reemplazar la actual.</div>
+                                <div th:if="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                     class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" name="eliminarFoto" value="true" id="eliminarFoto">
+                                    <label class="form-check-label small" for="eliminarFoto">Eliminar foto actual</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-between">
+                    <a class="btn btn-outline-secondary" th:href="@{/vendedor/productos}">Cancelar</a>
+                    <button type="submit" class="btn btn-primary shadow-sm">
+                        <i class="fas fa-save me-2"></i> Guardar
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
