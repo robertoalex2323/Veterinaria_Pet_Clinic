@@ -15,6 +15,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +34,7 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Proveedor;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.RecetaEstado;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MedicamentoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
@@ -46,6 +49,9 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/farmaceutico")
 public class FarmaceuticoController {
 
+    private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+    private static final java.util.regex.Pattern EMAIL_PATTERN = java.util.regex.Pattern.compile(EMAIL_REGEX);
+
     private final ProveedorService proveedorService;
     private final MedicamentoService medicamentoService;
     private final VentaService ventaService;
@@ -54,6 +60,8 @@ public class FarmaceuticoController {
     private final PdfReportService pdfService;
     private final NotificacionService notificacionService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final UsuarioRepository usuarioRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public FarmaceuticoController(ProveedorService proveedorService,
                                  MedicamentoService medicamentoService,
@@ -62,7 +70,9 @@ public class FarmaceuticoController {
                                  FarmaceuticoService farmaceuticoService,
                                  PdfReportService pdfService,
                                  NotificacionService notificacionService,
-                                 SimpMessagingTemplate messagingTemplate) {
+                                 SimpMessagingTemplate messagingTemplate,
+                                 UsuarioRepository usuarioRepository,
+                                 BCryptPasswordEncoder passwordEncoder) {
         this.proveedorService = proveedorService;
         this.medicamentoService = medicamentoService;
         this.ventaService = ventaService;
@@ -71,6 +81,20 @@ public class FarmaceuticoController {
         this.pdfService = pdfService;
         this.notificacionService = notificacionService;
         this.messagingTemplate = messagingTemplate;
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    private String getNombreUsuario() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null ? auth.getName() : "Farmaceutico";
+    }
+
+    private boolean isValidEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+        return EMAIL_PATTERN.matcher(email.trim()).matches();
     }
 
     private void sendNotification(String type, String message) {
@@ -85,6 +109,53 @@ public class FarmaceuticoController {
         } catch (Exception e) {
             // WebSocket may not be connected
         }
+    }
+
+    // ===========================================================
+    // Subida segura de imágenes de medicamento
+    // ===========================================================
+    private static final java.util.Set<String> EXTENSIONES_IMAGEN_PERMITIDAS =
+            java.util.Set.of("jpg", "jpeg", "png", "gif", "webp");
+    private static final long TAMANO_MAXIMO_IMAGEN_BYTES = 5L * 1024 * 1024; // 5 MB
+
+
+    private String guardarImagenMedicamento(MultipartFile archivo) throws IOException {
+        if (archivo == null || archivo.isEmpty()) {
+            return null;
+        }
+
+        if (archivo.getSize() > TAMANO_MAXIMO_IMAGEN_BYTES) {
+            throw new IllegalArgumentException("La imagen supera el tamaño máximo permitido (5 MB).");
+        }
+
+        String contentType = archivo.getContentType();
+        if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
+            throw new IllegalArgumentException("El archivo debe ser una imagen válida (JPG, PNG, GIF o WEBP).");
+        }
+
+        String nombreOriginal = archivo.getOriginalFilename();
+        String extension = "";
+        if (nombreOriginal != null && nombreOriginal.contains(".")) {
+            extension = nombreOriginal.substring(nombreOriginal.lastIndexOf('.') + 1).toLowerCase();
+        }
+
+        if (!EXTENSIONES_IMAGEN_PERMITIDAS.contains(extension)) {
+            throw new IllegalArgumentException("Formato de imagen no permitido. Usa JPG, PNG, GIF o WEBP.");
+        }
+
+        String nombreArchivo = UUID.randomUUID().toString() + "." + extension;
+
+        Path carpeta = Paths.get("src/main/resources/static/Imagen/Medicamento/").toAbsolutePath().normalize();
+        Files.createDirectories(carpeta);
+
+        Path ruta = carpeta.resolve(nombreArchivo).normalize();
+        if (!ruta.startsWith(carpeta)) {
+            // Defensa extra: si por algún motivo la ruta resultante se sale de la carpeta esperada.
+            throw new IllegalArgumentException("Nombre de archivo inválido.");
+        }
+
+        Files.write(ruta, archivo.getBytes());
+        return "/Imagen/Medicamento/" + nombreArchivo;
     }
 
     // ===========================================================
@@ -105,10 +176,8 @@ public class FarmaceuticoController {
         model.addAttribute("recetasPendientes", recetasPendientes);
         model.addAttribute("medicamentosActivos", totalMedicamentos);
 
-        // ----- Estadísticas adicionales (todas reales) -----
         int totalProveedores = proveedorService.listarTodos().size();
 
-        // Recetas dispensadas (completadas) y eficiencia de procesamiento
         var todasLasRecetas = farmaceuticoService.obtenerTodasLasRecetas();
         long recetasDispensadas = todasLasRecetas.stream()
                 .filter(r -> r.getEstado() == RecetaEstado.DISPENSADA)
@@ -188,11 +257,7 @@ public class FarmaceuticoController {
                                      RedirectAttributes ra) {
         try {
             if (imagenArchivo != null && !imagenArchivo.isEmpty()) {
-                String nombreArchivo = UUID.randomUUID().toString() + "_" + imagenArchivo.getOriginalFilename();
-                Path ruta = Paths.get("src/main/resources/static/Imagen/Medicamento/" + nombreArchivo);
-                Files.createDirectories(ruta.getParent());
-                Files.write(ruta, imagenArchivo.getBytes());
-                medicamento.setImagenUrl("/Imagen/Medicamento/" + nombreArchivo);
+                medicamento.setImagenUrl(guardarImagenMedicamento(imagenArchivo));
             }
             boolean isNew = (medicamento.getId() == null);
             medicamentoService.guardar(medicamento);
@@ -202,6 +267,8 @@ public class FarmaceuticoController {
                 sendNotification("info", "Medicamento actualizado: " + medicamento.getNombre());
             }
             ra.addFlashAttribute("success", "Medicamento registrado en inventario.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Error al guardar: " + e.getMessage());
         }
@@ -248,7 +315,6 @@ public class FarmaceuticoController {
 
     @PostMapping("/proveedores/guardar")
     public String guardarProveedor(@ModelAttribute Proveedor proveedor, RedirectAttributes ra) {
-        // ----- Normalizar y validar antes de tocar la base de datos -----
         if (proveedor.getNombre() != null) proveedor.setNombre(proveedor.getNombre().trim());
         if (proveedor.getRuc() != null) proveedor.setRuc(proveedor.getRuc().trim());
         if (proveedor.getContacto() != null) proveedor.setContacto(proveedor.getContacto().trim());
@@ -288,9 +354,6 @@ public class FarmaceuticoController {
         return "redirect:/farmaceutico/proveedores";
     }
 
-    // Antes era @GetMapping: un borrado no debe dispararse con una simple
-    // navegación/GET (riesgo de prefetch, crawlers, etc). Ahora usa POST,
-    // igual que el borrado de medicamentos.
     @PostMapping("/proveedores/eliminar/{id}")
     public String eliminarProveedor(@PathVariable Long id, RedirectAttributes ra) {
         try {
@@ -414,7 +477,7 @@ public class FarmaceuticoController {
     }
 
     // ===========================
-    // VISTA: procesar venta (POST tradicional)
+    // VISTA: procesar venta 
     // ===========================
     @PostMapping("/ventas/procesar")
     public String procesarVenta(@ModelAttribute Venta venta, RedirectAttributes ra) {
@@ -432,7 +495,81 @@ public class FarmaceuticoController {
     @GetMapping("/perfil")
     public String verPerfil(Model model) {
         model.addAttribute("currentPage", "perfil");
+
+        String username = getNombreUsuario();
+        model.addAttribute("nombreUsuario", username);
+
+        usuarioRepository.findByUsername(username).ifPresent(usuario -> {
+            model.addAttribute("usuario", usuario);
+            model.addAttribute("nombreCompleto", usuario.getNombre());
+        });
+
         return "farmaceutico/perfil";
+    }
+
+    @PostMapping("/perfil/actualizar")
+    public String actualizarPerfil(@RequestParam String nombre,
+            @RequestParam String email,
+            @RequestParam(required = false) String currentPassword,
+            @RequestParam(required = false) String newPassword,
+            RedirectAttributes redirectAttributes) {
+
+        String username = getNombreUsuario();
+
+        try {
+            if (email == null || email.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error",
+                        "El correo electrónico no puede estar vacío. Por favor, ingrese un email válido.");
+                return "redirect:/farmaceutico/perfil";
+            }
+
+            if (!isValidEmail(email)) {
+                redirectAttributes.addFlashAttribute("error",
+                        "Formato de correo electrónico inválido. Por favor, ingrese un email válido (ejemplo: usuario@dominio.com).");
+                return "redirect:/farmaceutico/perfil";
+            }
+
+            Usuario usuario = usuarioRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            usuarioRepository.findByEmail(email.trim()).ifPresent(existingUser -> {
+                if (!existingUser.getId().equals(usuario.getId())) {
+                    throw new RuntimeException("El correo electrónico '" + email.trim() + "' ya está registrado por otro usuario.");
+                }
+            });
+
+            usuario.setNombre(nombre);
+            usuario.setEmail(email.trim());
+
+            if (newPassword != null && !newPassword.trim().isEmpty()) {
+                if (newPassword.length() < 6) {
+                    throw new RuntimeException("La nueva contraseña debe tener al menos 6 caracteres.");
+                }
+
+                if (currentPassword == null || !passwordEncoder.matches(currentPassword, usuario.getPassword())) {
+                    throw new RuntimeException("La contraseña actual es incorrecta.");
+                }
+                usuario.setPassword(passwordEncoder.encode(newPassword));
+            }
+
+            usuarioRepository.save(usuario);
+            redirectAttributes.addFlashAttribute("success", "Perfil actualizado correctamente");
+
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.contains("ya está registrado")) {
+                redirectAttributes.addFlashAttribute("error", errorMessage);
+            } else if (errorMessage != null && errorMessage.contains("contraseña")) {
+                redirectAttributes.addFlashAttribute("error", "Error de seguridad: " + errorMessage);
+            } else if (errorMessage != null && errorMessage.contains("formato")) {
+                redirectAttributes.addFlashAttribute("error", errorMessage);
+            } else {
+                redirectAttributes.addFlashAttribute("error",
+                        "Error al actualizar el perfil. Por favor, verifique los datos ingresados.");
+            }
+        }
+
+        return "redirect:/farmaceutico/perfil";
     }
 
     // ===========================
@@ -547,14 +684,12 @@ public class FarmaceuticoController {
     public String subirImagen(@PathVariable Long id, @RequestParam("archivo") MultipartFile archivo, RedirectAttributes ra) {
         try {
             Medicamento med = medicamentoService.buscarPorId(id);
-            String nombreArchivo = UUID.randomUUID().toString() + "_" + archivo.getOriginalFilename();
-            Path ruta = Paths.get("src/main/resources/static/Imagen/Medicamento/" + nombreArchivo);
-            Files.createDirectories(ruta.getParent());
-            Files.write(ruta, archivo.getBytes());
-            med.setImagenUrl("/Imagen/Medicamento/" + nombreArchivo);
+            med.setImagenUrl(guardarImagenMedicamento(archivo));
             medicamentoService.guardar(med);
             ra.addFlashAttribute("success", "Imagen subida correctamente.");
             sendNotification("success", "Imagen actualizada para: " + med.getNombre());
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
         } catch (IOException e) {
             ra.addFlashAttribute("error", "Error al subir la imagen: " + e.getMessage());
         }
