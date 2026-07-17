@@ -95,23 +95,23 @@
                         <div class="profile-settings">
                             <div class="profile-photo">
                                 <div class="settings-avatar large">DG</div>
-                                <button type="button">Cambiar foto</button>
+                                <small class="settings-readonly-note">Información administrada por el sistema</small>
                             </div>
                             <label>
                                 <span>Nombre completo</span>
-                                <input type="text" th:value="${nombreUsuario != null ? nombreUsuario : 'Dr. Gomez'}">
+                                <input type="text" readonly th:value="${usuario != null ? usuario.nombre : (nombreUsuario != null ? nombreUsuario : 'Dra. Katherine Alberca')}">
                             </label>
                             <label>
                                 <span>Correo</span>
-                                <input type="email" value="dr.gomez@petclinic.com">
+                                <input type="email" readonly th:value="${usuario != null ? usuario.email : 'kalberca29@gmail.com'}">
                             </label>
                             <label>
                                 <span>Cedula profesional</span>
-                                <input type="text" value="VET-2019-04821">
+                                <input type="text" readonly value="VET-2019-04821">
                             </label>
                             <label>
                                 <span>Especialidad</span>
-                                <select>
+                                <select disabled>
                                     <option>Pequenos animales</option>
                                     <option>Animales exoticos</option>
                                     <option>Cirugia veterinaria</option>
@@ -119,9 +119,9 @@
                             </label>
                             <div class="profile-stats">
                                 <strong>Estadisticas del perfil</strong>
-                                <p><span>Consultas este mes</span><b>48</b></p>
-                                <p><span>Pacientes activos</span><b>12</b></p>
-                                <p><span>Diagnosticos IA</span><b>23</b></p>
+                                <p><span>Consultas este mes</span><b th:text="${consultasMes}">0</b></p>
+                                <p><span>Pacientes activos</span><b th:text="${pacientesActivos}">0</b></p>
+                                <p><span>Diagnosticos IA registrados</span><b th:text="${diagnosticosIa}">0</b></p>
                             </div>
                         </div>
                     </article>
@@ -186,27 +186,27 @@
                             <label class="notification-card">
                                 <i class="dot rose-dot"></i>
                                 <span><strong>Alertas criticas de pacientes</strong><small>Temperatura, signos vitales anormales</small></span>
-                                <input type="checkbox" checked>
+                                <input type="checkbox" data-notification-setting="criticalAlerts" checked>
                             </label>
                             <label class="notification-card">
                                 <i class="dot mint-dot"></i>
                                 <span><strong>Recordatorio de citas</strong><small>15 min antes de cada consulta</small></span>
-                                <input type="checkbox" checked>
+                                <input type="checkbox" data-notification-setting="appointmentReminders" checked>
                             </label>
                             <label class="notification-card">
                                 <i class="dot sky-dot"></i>
                                 <span><strong>Solicitudes de farmacia</strong><small>Validacion y despacho de recetas</small></span>
-                                <input type="checkbox" checked>
+                                <input type="checkbox" data-notification-setting="pharmacyRequests" checked>
                             </label>
                             <label class="notification-card">
                                 <i class="dot amber-dot"></i>
                                 <span><strong>Vacunas pendientes</strong><small>Recordatorios de calendario</small></span>
-                                <input type="checkbox">
+                                <input type="checkbox" data-notification-setting="vaccineReminders">
                             </label>
                             <label class="notification-card">
                                 <i class="fas fa-volume-up muted-icon"></i>
                                 <span><strong>Sonido de alertas</strong><small>Reproducir audio al recibir alertas</small></span>
-                                <input type="checkbox" checked>
+                                <input type="checkbox" data-notification-setting="alertSound" checked>
                             </label>
                         </div>
                     </article>
@@ -217,9 +217,9 @@
                             <h2>Preferencias Clinicas</h2>
                         </header>
                         <div class="simple-settings-list">
-                            <label><span>Unidad de peso</span><select><option>Kilogramos</option><option>Libras</option></select></label>
-                            <label><span>Temperatura</span><select><option>Celsius</option><option>Fahrenheit</option></select></label>
-                            <label><span>Prioridad por defecto</span><select><option>Media</option><option>Alta</option><option>Baja</option></select></label>
+                            <label><span>Unidad de peso</span><select data-clinical-setting="weightUnit"><option value="kg">Kilogramos</option><option value="lb">Libras</option></select></label>
+                            <label><span>Temperatura</span><select data-clinical-setting="temperatureUnit"><option value="celsius">Celsius</option><option value="fahrenheit">Fahrenheit</option></select></label>
+                            <label><span>Prioridad por defecto</span><select data-clinical-setting="defaultPriority"><option value="media">Media</option><option value="alta">Alta</option><option value="baja">Baja</option></select></label>
                         </div>
                     </article>
 
@@ -231,7 +231,14 @@
                         <div class="simple-settings-list">
                             <label><span>Sesion activa</span><input type="text" value="Veterinaria - navegador actual" readonly></label>
                             <label><span>Verificacion de cuenta</span><input type="text" value="Activa" readonly></label>
-                            <button class="settings-secondary-button" type="button">Cambiar contrasena</button>
+                            <div th:if="${success}" class="settings-feedback success" th:text="${success}"></div>
+                            <div th:if="${error}" class="settings-feedback error" th:text="${error}"></div>
+                            <form class="security-password-form" th:action="@{/veterinaria/settings/password}" method="post">
+                                <label><span>Contraseña actual</span><input type="password" name="passwordActual" required autocomplete="current-password"></label>
+                                <label><span>Nueva contraseña</span><input type="password" name="passwordNueva" minlength="8" required autocomplete="new-password"></label>
+                                <label><span>Confirmar contraseña</span><input type="password" name="confirmacionPassword" minlength="8" required autocomplete="new-password"></label>
+                                <button class="settings-secondary-button" type="submit">Cambiar contraseña</button>
+                            </form>
                         </div>
                     </article>
 
@@ -253,8 +260,9 @@
                             <h2>Idioma</h2>
                         </header>
                         <div class="simple-settings-list">
-                            <label><span>Idioma del sistema</span><select><option>Espanol</option><option>English</option></select></label>
-                            <label><span>Region</span><select><option>Peru</option><option>Colombia</option><option>Mexico</option></select></label>
+                            <label><span>Idioma del sistema</span><select data-clinical-setting="language"><option value="es">Espanol</option><option value="en">English</option></select></label>
+                            <label><span>Region</span><select data-clinical-setting="region"><option value="PE">Peru</option><option value="CO">Colombia</option><option value="MX">Mexico</option></select></label>
+                            <p class="settings-save-status" aria-live="polite">Los cambios se guardan automaticamente.</p>
                         </div>
                     </article>
                 </section>
@@ -262,9 +270,8 @@
         </main>
     </div>
 
-     <script th:src="@{/js/dashboard-veterinaria.js}"></script>
-     <script th:src="@{/js/settings-veterinaria.js}"></script>
-</div>
+    <script src="/js/dashboard-veterinaria.js"></script>
+    <script src="/js/settings-veterinaria.js"></script>
 </body>
 
 </html>

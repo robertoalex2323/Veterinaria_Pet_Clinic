@@ -225,10 +225,10 @@
 
         <div class="editar-signos-grid">
             <label>Peso
-                <input type="number" step="0.01" name="peso" th:value="${ultimoSigno.peso}">
+                <input type="number" step="0.01" name="peso" data-clinical-input="weight" th:value="${ultimoSigno.peso}">
             </label>
             <label>Temperatura
-                <input type="number" step="0.1" name="temperatura" th:value="${ultimoSigno.temperatura}">
+                <input type="number" step="0.1" name="temperatura" data-clinical-input="temperature" th:value="${ultimoSigno.temperatura}">
             </label>
             <label>FC
                 <input type="number" name="frecuenciaCardiaca" th:value="${ultimoSigno.frecuenciaCardiaca}">
@@ -321,6 +321,7 @@
     </main>
 </div>
 
+<script src="/js/dashboard-veterinaria.js"></script>
 <script th:inline="javascript">
 document.addEventListener('DOMContentLoaded', () => {
     const pesoData = document.getElementById('pesoData');
@@ -330,14 +331,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const pesos = pesoData.dataset.pesos ? pesoData.dataset.pesos.split(',').map(Number) : [];
     if (fechas.length === 0 || pesos.length === 0) return;
 
+    const clinical = window.vetClinicalSettings.get();
+    const factor = clinical.weightUnit === 'lb' ? 2.2046226218 : 1;
+    const unit = clinical.weightUnit === 'lb' ? 'lb' : 'kg';
     const ctx = document.getElementById('chartPeso').getContext('2d');
     new Chart(ctx, {
         type: 'line',
         data: {
             labels: fechas,
             datasets: [{
-                label: 'Peso (kg)',
-                data: pesos,
+                label: `Peso (${unit})`,
+                data: pesos.map(peso => peso * factor),
                 borderColor: '#3b82f6',
                 backgroundColor: 'rgba(59,130,246,0.08)',
                 tension: 0.4,
@@ -353,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 x: { grid: { display: false } },
                 y: {
                     grid: { color: 'rgba(0,0,0,0.05)' },
-                    ticks: { callback: v => v + ' kg' }
+                    ticks: { callback: v => v + ' ' + unit }
                 }
             }
         }
@@ -398,6 +402,28 @@ function toggleEditarSignos() {
     if (!form) return;
     form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const clinical = window.vetClinicalSettings.get();
+    document.querySelectorAll('[data-clinical-input]').forEach(input => {
+        const raw = Number(input.value);
+        if (!Number.isFinite(raw)) return;
+        input.value = input.dataset.clinicalInput === 'weight' && clinical.weightUnit === 'lb'
+            ? (raw * 2.2046226218).toFixed(2)
+            : input.dataset.clinicalInput === 'temperature' && clinical.temperatureUnit === 'fahrenheit'
+                ? ((raw * 9 / 5) + 32).toFixed(1) : raw;
+    });
+    document.getElementById('formEditarSignos')?.addEventListener('submit', () => {
+        document.querySelectorAll('[data-clinical-input]').forEach(input => {
+            const value = Number(input.value);
+            if (!Number.isFinite(value)) return;
+            input.value = input.dataset.clinicalInput === 'weight' && clinical.weightUnit === 'lb'
+                ? (value / 2.2046226218).toFixed(2)
+                : input.dataset.clinicalInput === 'temperature' && clinical.temperatureUnit === 'fahrenheit'
+                    ? ((value - 32) * 5 / 9).toFixed(1) : value;
+        });
+    });
+});
 </script>
 </body>
 </html>

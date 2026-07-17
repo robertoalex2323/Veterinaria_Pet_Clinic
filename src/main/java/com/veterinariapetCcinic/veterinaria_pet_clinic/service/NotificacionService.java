@@ -334,6 +334,12 @@ public class NotificacionService {
         log.info("📧 Notificando al veterinario ID: {}",
                 (cita.getVeterinario() != null ? cita.getVeterinario().getId() : "No asignado"));
         log.info("📝 Mensaje:\n{}", mensaje);
+        if (cita.getVeterinario() != null) {
+            enviarEmail(cita.getVeterinario().getEmail(),
+                    "Nueva cita asignada - Pet Clinic", mensaje);
+        }
+        addUINotification("appointment", "Nueva cita asignada: " + cita.getMascota().getNombre()
+                + " el " + cita.getFechaHora().format(FORMATTER));
     }
 
     public void enviarInformeCliente(Cliente cliente, String mensaje) {
