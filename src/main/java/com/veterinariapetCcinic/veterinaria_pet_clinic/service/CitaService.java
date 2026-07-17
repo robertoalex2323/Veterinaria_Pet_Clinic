@@ -223,9 +223,11 @@ public class CitaService {
         // 2. Crear la nueva cita con los mismos datos básicos
         Cita nuevaCita = new Cita();
         nuevaCita.setMascota(citaOriginal.getMascota());
-        nuevaCita.setMotivo(citaOriginal.getMotivo());          
+        nuevaCita.setVeterinario(citaOriginal.getVeterinario());
+        nuevaCita.setMotivo(citaOriginal.getMotivo());
         nuevaCita.setFechaHora(nuevaFechaHora);
         nuevaCita.setObservaciones("Reprogramada desde cita ID " + citaId + ". Motivo: " + motivoReprogramacion);
+
         // 3. Guardar (pasa por validación de disponibilidad, bloqueo de agenda, notificaciones)
         Cita nuevaGuardada = guardar(nuevaCita);
 

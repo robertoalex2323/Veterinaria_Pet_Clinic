@@ -35,10 +35,11 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     
     long countByEstado(String estado);
 
-    // Consecutivo para comprobante PET2026-00000X
-    @Query("SELECT p FROM Pago p WHERE p.comprobante LIKE 'PET2026-%' ORDER BY p.fechaPago DESC")
-    List<Pago> findTopByComprobantePet2026();
-
-    @Query("SELECT COALESCE(MAX(p.comprobante), 'PET2026-00000') FROM Pago p WHERE p.comprobante LIKE 'PET2026-%'")
-    String findMaxComprobantePet2026();
+    /**
+     * Obtiene el máximo comprobante para un prefijo de año (ej: PET2027-00000).
+     * Debe pasarse el prefijo completo tipo: "PET{YYYY}-".
+     */
+    @Query("SELECT COALESCE(MAX(p.comprobante), :prefijo) FROM Pago p WHERE p.comprobante LIKE CONCAT(:prefijo, '%')")
+    String findMaxComprobantePorPrefijo(@Param("prefijo") String prefijo);
 }
+

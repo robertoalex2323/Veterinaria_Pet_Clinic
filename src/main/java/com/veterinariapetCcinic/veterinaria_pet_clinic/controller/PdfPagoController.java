@@ -1,5 +1,7 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
+import java.time.Year;
+
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -37,8 +39,10 @@ public class PdfPagoController {
 
         String comprobante = pago.getComprobante();
         if (comprobante == null || comprobante.isBlank()) {
-            comprobante = "PET2026-00001";
+            int year = Year.now().getValue();
+            comprobante = String.format("PET%d-%05d", year, 1);
         }
+
 
         String filename = comprobante + ".pdf";
 

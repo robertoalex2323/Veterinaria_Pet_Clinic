@@ -77,11 +77,13 @@ public class PagoService {
 
 
     /**
-     * Obtiene el comprobante máximo con prefijo PET2026- (ej: PET2026-00001).
+     * Obtiene el comprobante máximo para el prefijo de año.
+     * El prefijo debe incluir el guion final, por ejemplo: "PET2027-".
      */
-    public String obtenerMaxComprobantePet2026() {
-        return pagoRepository.findMaxComprobantePet2026();
+    public String obtenerMaxComprobantePorPrefijo(String prefijo) {
+        return pagoRepository.findMaxComprobantePorPrefijo(prefijo);
     }
+
 
     @Transactional
     public void actualizarEstado(Long id, String nuevoEstado) {
