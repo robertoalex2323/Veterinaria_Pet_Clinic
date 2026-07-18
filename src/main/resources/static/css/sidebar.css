@@ -8,6 +8,8 @@
     color: white;
     z-index: 1000;
     transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
 }
 
@@ -48,6 +50,7 @@
 /* Navegación */
 .sidebar-nav {
     padding: 0 12px;
+    flex: 1 0 auto;
 }
 
 .nav-item {
@@ -83,10 +86,8 @@
 
 /* User info */
 .sidebar-user {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    flex-shrink: 0;
+    margin-top: 20px;
     padding: 16px 20px;
     border-top: 1px solid rgba(255,255,255,0.1);
     background: rgba(0,0,0,0.1);
