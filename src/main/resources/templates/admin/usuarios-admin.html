@@ -8,9 +8,55 @@
 <div th:fragment="content">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0"><i class="fas fa-user-shield text-primary"></i> Usuarios</h2>
-            <p class="text-muted mb-0">Listado de usuarios registrados en el sistema</p>
+            <h2 class="mb-0"><i class="fas fa-user-shield text-primary"></i> Seguridad y Usuarios</h2>
+            <p class="text-muted mb-0">Gestiona usuarios, roles, restablecimientos y bloqueos.</p>
         </div>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}">OK</div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}">Error</div>
+
+    <div class="admin-dashboard-grid mb-4">
+        <article class="admin-panel">
+            <div class="admin-panel-header">
+                <h3>Crear usuario</h3>
+                <span>Alta controlada</span>
+            </div>
+            <form class="admin-form-grid" th:action="@{/admin/usuarios}" method="post">
+                <label>Usuario
+                    <input name="username" required maxlength="50" placeholder="usuario">
+                </label>
+                <label>Nombre
+                    <input name="nombre" required maxlength="100" placeholder="Nombre completo">
+                </label>
+                <label>Email
+                    <input name="email" type="email" maxlength="100" placeholder="correo@dominio.com">
+                </label>
+                <label>Rol
+                    <select name="rol" required>
+                        <option th:each="rol : ${roles}" th:value="${rol}" th:text="${rol}">ROL</option>
+                    </select>
+                </label>
+                <label class="admin-form-wide">Password inicial
+                    <input name="password" type="password" required minlength="6" placeholder="Minimo 6 caracteres">
+                </label>
+                <button class="btn btn-primary admin-form-wide" type="submit">
+                    <i class="fas fa-user-plus"></i> Crear usuario
+                </button>
+            </form>
+        </article>
+
+        <article class="admin-panel">
+            <div class="admin-panel-header">
+                <h3>Politicas activas</h3>
+                <span>Seguridad</span>
+            </div>
+            <div class="admin-policy-list">
+                <p><i class="fas fa-check-circle"></i> El bloqueo impide iniciar sesion.</p>
+                <p><i class="fas fa-check-circle"></i> Cada cambio queda registrado en auditoria.</p>
+                <p><i class="fas fa-check-circle"></i> Los roles conectan con admin, veterinaria, recepcion, ventas y farmacia.</p>
+            </div>
+        </article>
     </div>
 
     <div class="card mb-4">
@@ -24,25 +70,63 @@
                         <tr>
                             <th>ID</th>
                             <th>Usuario</th>
-                            <th>Nombre</th>
-                            <th>Email</th>
+                            <th>Datos</th>
                             <th>Rol</th>
                             <th>Estado</th>
-                            <th>Fecha Creacion</th>
+                            <th>Auditoria</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="usuario : ${usuarios}">
                             <td th:text="${usuario.id}">1</td>
                             <td class="fw-bold" th:text="${usuario.username}">admin</td>
-                            <td th:text="${usuario.nombre}">Administrador</td>
-                            <td th:text="${usuario.email != null ? usuario.email : '-'}">admin@veterinaria.com</td>
+                            <td>
+                                <form class="admin-inline-form" th:action="@{/admin/usuarios/{id}/actualizar(id=${usuario.id})}" method="post">
+                                    <input name="nombre" th:value="${usuario.nombre}" required>
+                                    <input name="email" type="email" th:value="${usuario.email}" placeholder="email">
+                                    <select name="rol" required>
+                                        <option th:each="rol : ${roles}" th:value="${rol}" th:text="${rol}"
+                                                th:selected="${rol == usuario.rol}">ROL</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary" type="submit" title="Guardar cambios">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </form>
+                            </td>
                             <td><span class="badge bg-info" th:text="${usuario.rol}">ADMIN</span></td>
                             <td>
-                                <span class="badge" th:classappend="${usuario.activo == true} ? 'bg-success' : 'bg-danger'"
-                                      th:text="${usuario.activo == true} ? 'Activo' : 'Inactivo'">Activo</span>
+                                <span class="badge"
+                                      th:classappend="${usuario.activo == true and usuario.bloqueado != true} ? 'bg-success' : 'bg-danger'"
+                                      th:text="${usuario.activo == true and usuario.bloqueado != true} ? 'Activo' : 'Bloqueado'">Activo</span>
                             </td>
-                            <td th:text="${usuario.fechaCreacion != null ? #temporals.format(usuario.fechaCreacion, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                            <td class="small text-muted">
+                                <div>Creado: <span th:text="${usuario.creadoPor != null ? usuario.creadoPor : 'sistema'}">sistema</span></div>
+                                <div th:text="${usuario.fechaCreacion != null ? #temporals.format(usuario.fechaCreacion, 'dd/MM/yyyy HH:mm') : '-'}">-</div>
+                                <div>Editado: <span th:text="${usuario.editadoPor != null ? usuario.editadoPor : '-'}">-</span></div>
+                            </td>
+                            <td>
+                                <div class="admin-action-stack">
+                                    <form th:action="@{/admin/usuarios/{id}/password(id=${usuario.id})}" method="post" class="admin-password-form">
+                                        <input name="nuevaPassword" type="password" minlength="6" required placeholder="Nueva clave">
+                                        <button class="btn btn-sm btn-warning" type="submit">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/admin/usuarios/{id}/bloqueo(id=${usuario.id})}" method="post">
+                                        <button class="btn btn-sm" th:classappend="${usuario.bloqueado == true} ? 'btn-success' : 'btn-outline-danger'" type="submit">
+                                            <i th:class="${usuario.bloqueado == true ? 'fas fa-unlock' : 'fas fa-lock'}"></i>
+                                            <span th:text="${usuario.bloqueado == true ? 'Desbloquear' : 'Bloquear'}">Bloquear</span>
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/admin/usuarios/{id}/eliminar(id=${usuario.id})}" method="post"
+                                          onsubmit="return confirm('Confirmar eliminacion o bloqueo si tiene registros asociados');">
+                                        <button class="btn btn-sm btn-outline-secondary" type="submit">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(usuarios)}">
                             <td colspan="7" class="text-center text-muted py-4">No hay usuarios registrados.</td>

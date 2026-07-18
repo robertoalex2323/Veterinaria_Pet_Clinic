@@ -36,6 +36,7 @@
                     <th>Presentación</th>
                     <th>Precio Venta</th>
                     <th class="text-center">Stock</th>
+                    <th>Vencimiento</th>
                     <th>Proveedor</th>
                     <th class="text-center">Acciones</th>
                 </tr>
@@ -62,10 +63,11 @@
                         <span th:if="${med.stockMinimo != null and med.stock > med.stockMinimo and med.stock <= med.stockMinimo * 1.5}" class="badge bg-warning-soft text-warning">Por Agotarse</span>
                         <span th:if="${med.stockMinimo == null or (med.stock > med.stockMinimo * 1.5)}" class="badge bg-success-soft text-success">En Stock</span>
                     </td>
+                    <td th:text="${med.fechaVencimiento != null ? #temporals.format(med.fechaVencimiento, 'dd/MM/yyyy') : '-'}">-</td>
                     <td th:text="${med.proveedor != null ? med.proveedor.nombre : 'N/A'}">Genérico SAC</td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-outline-primary"
-                                th:attr="data-id=${med.id}, data-nombre=${med.nombre}, data-presentacion=${med.presentacion}, data-precio=${med.precio}, data-stock=${med.stock}, data-stockminimo=${med.stockMinimo}, data-proveedorid=${med.proveedor?.id}, data-imagenurl=${med.imagenUrl}"
+                                th:attr="data-id=${med.id}, data-nombre=${med.nombre}, data-presentacion=${med.presentacion}, data-precio=${med.precio}, data-stock=${med.stock}, data-stockminimo=${med.stockMinimo}, data-proveedorid=${med.proveedor?.id}, data-imagenurl=${med.imagenUrl}, data-fechavencimiento=${med.fechaVencimiento}"
                                 data-bs-toggle="modal" data-bs-target="#medicamentoModal" onclick="prepareEditForm(this)">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -111,6 +113,10 @@
                                 <label class="form-label">Stock Mínimo</label>
                                 <input type="number" id="stockMinimo" name="stockMinimo" class="form-control" required>
                             </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Fecha de Vencimiento</label>
+                                <input type="date" id="fechaVencimiento" name="fechaVencimiento" class="form-control">
+                            </div>
                             <div class="col-12">
                                 <label class="form-label">Proveedor</label>
                                 <select id="proveedor" name="proveedor.id" class="form-select">
@@ -147,8 +153,7 @@
         </div>
     </div>
 
-    <!-- Script específico para la página de inventario -->
-    <script th:src="@{/js/inventario.js}"></script>
+    <script th:src="@{/Js/inventario.js}"></script>
 </div>
 </body>
 </html>

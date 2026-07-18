@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content, currentPage)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" th:href="@{/css/veterinario.css}">
+</head>
+<body>
+<div class="vet-shell">
+    <aside class="vet-sidebar">
+        <div class="vet-brand">
+            <img th:src="@{/Imagen/Iconos/logo.png}" alt="Pet Clinic">
+            <div>
+                <strong>Pet Clinic</strong>
+                <span>Veterinario</span>
+            </div>
+        </div>
+        <nav class="vet-nav">
+            <a th:classappend="${currentPage == 'dashboard'} ? 'active' : ''" href="/veterinario/dashboard">
+                <i class="fas fa-chart-line"></i><span>Dashboard</span>
+            </a>
+            <a th:classappend="${currentPage == 'consultas'} ? 'active' : ''" href="/veterinario/consultas">
+                <i class="fas fa-stethoscope"></i><span>Consultas</span>
+            </a>
+            <a th:classappend="${currentPage == 'historiales'} ? 'active' : ''" href="/veterinario/historiales">
+                <i class="fas fa-file-medical"></i><span>Historial Clinico</span>
+            </a>
+            <a th:classappend="${currentPage == 'diagnosticos'} ? 'active' : ''" href="/veterinario/diagnosticos">
+                <i class="fas fa-notes-medical"></i><span>Diagnosticos</span>
+            </a>
+            <a th:classappend="${currentPage == 'tratamientos'} ? 'active' : ''" href="/veterinario/tratamientos">
+                <i class="fas fa-prescription-bottle-medical"></i><span>Tratamientos</span>
+            </a>
+            <a th:classappend="${currentPage == 'mascotas'} ? 'active' : ''" href="/veterinario/mascotas">
+                <i class="fas fa-paw"></i><span>Mascotas</span>
+            </a>
+        </nav>
+        <div class="vet-user">
+            <span th:text="${nombreUsuario != null ? nombreUsuario : 'Veterinario'}">Veterinario</span>
+            <small th:text="${rolUsuario != null ? rolUsuario : 'Veterinario'}">Veterinario</small>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar sesion</a>
+        </div>
+    </aside>
+
+    <main class="vet-main">
+        <header class="vet-topbar">
+            <div>
+                <span class="vet-eyebrow">Modulo clinico</span>
+                <h1>Veterinaria Pet Clinic</h1>
+            </div>
+            <div class="vet-system">
+                <i class="fas fa-circle-check"></i>
+                <span th:text="${estadoSistema != null ? estadoSistema : 'Operativo'}">Operativo</span>
+            </div>
+        </header>
+        <section class="vet-content">
+            <div th:replace="${content}"></div>
+        </section>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

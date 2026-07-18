@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sildebar_admin::layout(~{::content}, 'roles')}">
+<head>
+    <title>Roles - Administrador</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="admin-header">
+        <div>
+            <h2><i class="fas fa-user-lock text-primary"></i> Gestion de Roles</h2>
+            <p>Los roles controlan el acceso a los modulos integrados del sistema.</p>
+        </div>
+        <a class="btn btn-primary" href="/admin/usuarios"><i class="fas fa-users-cog"></i> Asignar roles</a>
+    </div>
+
+    <section class="admin-role-grid">
+        <article class="admin-panel" th:each="rol : ${roles}">
+            <div class="admin-panel-header">
+                <h3 th:text="${rol}">ROL</h3>
+                <span th:text="${usuariosPorRol[rol] != null ? usuariosPorRol[rol] + ' usuarios' : '0 usuarios'}">0 usuarios</span>
+            </div>
+            <p class="text-muted" th:switch="${rol}">
+                <span th:case="'ADMIN'">Gestiona seguridad, usuarios, auditoria y supervision global.</span>
+                <span th:case="'VETERINARIO'">Accede a dashboard veterinaria, pacientes, historial, agenda, alertas y solicitudes.</span>
+                <span th:case="'RECEPCIONISTA'">Gestiona clientes, mascotas, citas, pagos y agenda.</span>
+                <span th:case="'VENDEDOR'">Opera ventas y productos.</span>
+                <span th:case="'FARMACEUTICO'">Gestiona farmacia, recetas, inventario, medicamentos y ventas.</span>
+            </p>
+        </article>
+    </section>
+</div>
+</body>
+</html>

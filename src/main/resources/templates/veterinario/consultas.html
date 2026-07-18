@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_veterinario::layout(~{::content}, 'consultas')}">
+<body>
+<div th:fragment="content">
+    <div class="vet-page-head">
+        <div>
+            <h2>Consultas</h2>
+            <p>Agenda clinica del dia seleccionada.</p>
+        </div>
+        <form class="d-flex gap-2" method="get">
+            <input class="form-control" type="date" name="fecha" th:value="${fecha}">
+            <button class="btn btn-primary" type="submit"><i class="fas fa-filter"></i></button>
+        </form>
+    </div>
+
+    <section class="vet-panel">
+        <table class="vet-table" th:if="${!citas.empty}">
+            <thead><tr><th>Fecha</th><th>Paciente</th><th>Cliente</th><th>Motivo</th><th>Estado</th></tr></thead>
+            <tbody>
+            <tr th:each="cita : ${citas}">
+                <td th:text="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'dd/MM/yyyy HH:mm') : '-'}">Fecha</td>
+                <td th:text="${cita.mascota != null ? cita.mascota.nombre : '-'}">Paciente</td>
+                <td th:text="${cita.mascota != null and cita.mascota.cliente != null ? cita.mascota.cliente.nombre : '-'}">Cliente</td>
+                <td th:text="${cita.motivo != null ? cita.motivo : 'Consulta general'}">Motivo</td>
+                <td><span class="vet-badge" th:text="${cita.estado}">Estado</span></td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="vet-empty" th:if="${citas.empty}">No hay consultas programadas para esta fecha.</div>
+    </section>
+</div>
+</body>
+</html>

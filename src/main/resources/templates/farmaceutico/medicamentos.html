@@ -77,6 +77,10 @@
                             <span class="detalle-label"><i class="fas fa-cubes text-secondary me-1"></i> Stock Mínimo</span>
                             <span class="detalle-valor" th:text="${med.stockMinimo != null ? med.stockMinimo : 'No definido'}">10</span>
                         </div>
+                        <div class="med-detalle">
+                            <span class="detalle-label"><i class="fas fa-calendar-day text-danger me-1"></i> Vencimiento</span>
+                            <span class="detalle-valor" th:text="${med.fechaVencimiento != null ? #temporals.format(med.fechaVencimiento, 'dd/MM/yyyy') : 'Sin fecha'}">Sin fecha</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -89,18 +93,18 @@
         <h5 class="text-muted">No hay medicamentos registrados</h5>
         <a th:href="@{/farmaceutico/inventario}" class="btn btn-primary mt-2">Ir a Inventario</a>
     </div>
-</div>
 
-<script>
-function filtrarMedicamentos() {
-    const input = document.getElementById('searchMedicamento');
-    const filter = input.value.toLowerCase();
-    const cards = document.querySelectorAll('[data-nombre]');
-    cards.forEach(card => {
-        const nombre = card.getAttribute('data-nombre').toLowerCase();
-        card.style.display = nombre.includes(filter) ? '' : 'none';
-    });
-}
-</script>
+    <script>
+    function filtrarMedicamentos() {
+        const input = document.getElementById('searchMedicamento');
+        const filter = input.value.toLowerCase();
+        const cards = document.querySelectorAll('[data-nombre]');
+        cards.forEach(card => {
+            const nombre = card.getAttribute('data-nombre').toLowerCase();
+            card.style.display = nombre.includes(filter) ? '' : 'none';
+        });
+    }
+    </script>
+</div>
 </body>
 </html>

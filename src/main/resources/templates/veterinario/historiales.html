@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_veterinario::layout(~{::content}, 'historiales')}">
+<body>
+<div th:fragment="content">
+    <div class="vet-page-head">
+        <div>
+            <h2>Historial Clinico</h2>
+            <p>Vista consolidada de pacientes registrados y datos disponibles.</p>
+        </div>
+    </div>
+
+    <section class="vet-panel">
+        <table class="vet-table" th:if="${!mascotas.empty}">
+            <thead><tr><th>Mascota</th><th>Especie</th><th>Edad</th><th>Peso</th><th>Cliente</th><th>Alergias</th></tr></thead>
+            <tbody>
+            <tr th:each="mascota : ${mascotas}">
+                <td th:text="${mascota.nombre}">Mascota</td>
+                <td th:text="${mascota.especie}">Especie</td>
+                <td th:text="${mascota.edad != null ? mascota.edad + ' años' : '-'}">Edad</td>
+                <td th:text="${mascota.peso != null ? mascota.peso + ' kg' : '-'}">Peso</td>
+                <td th:text="${mascota.cliente != null ? mascota.cliente.nombre : '-'}">Cliente</td>
+                <td th:text="${mascota.alergias != null and !mascota.alergias.isBlank() ? mascota.alergias : 'Sin registro'}">Alergias</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="vet-empty" th:if="${mascotas.empty}">No hay historiales disponibles porque no hay mascotas registradas.</div>
+    </section>
+</div>
+</body>
+</html>

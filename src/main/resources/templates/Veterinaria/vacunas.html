@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vacunas - Panel Veterinario</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+</head>
+
+<body>
+    <div class="app">
+        <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+        <main class="main simple-page">
+            <header class="header">
+                <div class="status-pill">Control preventivo</div>
+                <a class="btn blue" href="/veterinaria/historial">
+                    <i class="fas fa-file-medical"></i> Historial
+                </a>
+            </header>
+
+            <section class="hero">
+                <h1>Vacunas</h1>
+                <p>Modulo preparado para consultar vacunas y controles preventivos desde el historial clinico.</p>
+            </section>
+
+            <section class="panel">
+                <div class="empty-state">
+                    <i class="fas fa-syringe"></i>
+                    <p>Las vacunas apareceran cuando se registren en el modulo clinico.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

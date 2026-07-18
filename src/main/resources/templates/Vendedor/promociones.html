@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'promociones')}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Promociones - Vendedor</title>
+    <link rel="stylesheet" th:href="@{/css/promociones-vendedor.css}" />
+</head>
+
+<body>
+<div id="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-tags text-primary me-2"></i>Promociones
+            </h2>
+            <p class="text-muted mb-0">Crea, modifica y elimina ofertas de productos</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a class="btn btn-primary shadow-sm" th:href="@{/vendedor/promociones/nuevo}">
+                <i class="fas fa-plus me-2"></i>Nueva Promoción
+            </a>
+        </div>
+    </div>
+
+
+    <!-- Alertas -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="fas fa-percent me-2"></i> Ofertas</span>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th>Promoción</th>
+                        <th>Tipo</th>
+                        <th>Aplica a</th>
+                        <th>Descuento</th>
+                        <th>Precio oferta</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${promociones == null or #lists.isEmpty(promociones)}">
+                        <td colspan="7" class="text-center text-muted py-4">No hay promociones para mostrar.</td>
+                    </tr>
+                    <tr th:each="p : ${promociones}">
+                        <td>
+                            <div class="fw-semibold" th:text="${p.nombre}"></div>
+                            <div class="text-muted small" th:text="${p.descripcion}"></div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary" th:text="${p.tipo}"></span>
+                        </td>
+                        <td>
+                            <div th:text="${p.productoNombre}"></div>
+                            <div class="text-muted small" th:text="${p.productoCategoria}"></div>
+                        </td>
+                        <td>
+                            <span class="badge bg-success"
+                                  th:text="${p.tipo == 'FIJO' ? ('S/ ' + p.descuento) : (p.descuento + '%')}"></span>
+                        </td>
+                        <td th:text="${p.precioOferta != null ? ('S/ ' + p.precioOferta) : '-'}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${p.estadoVigencia == 'ACTIVA'} ? 'bg-success' : (${p.estadoVigencia == 'PROGRAMADA'} ? 'bg-info' : (${p.estadoVigencia == 'VENCIDA'} ? 'bg-warning text-dark' : 'bg-secondary'))"
+                                  th:text="${p.estadoVigencia == 'ACTIVA'} ? 'Activa' : (${p.estadoVigencia == 'PROGRAMADA'} ? 'Programada' : (${p.estadoVigencia == 'VENCIDA'} ? 'Vencida' : 'Inactiva'))"></span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a class="btn btn-outline-secondary btn-sm"
+                                   th:href="@{/vendedor/promociones/editar/{id}(id=${p.id})}">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                <a class="btn btn-outline-danger btn-sm"
+                                   th:href="@{/vendedor/promociones/eliminar/{id}(id=${p.id})}"
+                                   th:attr="data-promo-nombre=${p.nombre}"
+                                   onclick="return confirm('¿Eliminar la promoción ' + this.dataset.promoNombre + '?');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-muted small mt-3">
+                Nota: El módulo de promociones usa descuentos guardados en el backend.
+            </div>
+        </div>
+    </div>
+    <script th:src="@{/js/promociones-vendedor.js}"></script>
+</div>
+</body>
+</html>

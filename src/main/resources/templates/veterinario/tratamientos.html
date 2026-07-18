@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_veterinario::layout(~{::content}, 'tratamientos')}">
+<body>
+<div th:fragment="content">
+    <div class="vet-page-head">
+        <div>
+            <h2>Tratamientos</h2>
+            <p>Seguimiento de citas en consulta o atendidas.</p>
+        </div>
+    </div>
+
+    <section class="vet-panel">
+        <table class="vet-table" th:if="${!citasAtendidas.empty}">
+            <thead><tr><th>Paciente</th><th>Cliente</th><th>Motivo</th><th>Notas</th><th>Estado</th></tr></thead>
+            <tbody>
+            <tr th:each="cita : ${citasAtendidas}">
+                <td th:text="${cita.mascota != null ? cita.mascota.nombre : '-'}">Paciente</td>
+                <td th:text="${cita.mascota != null and cita.mascota.cliente != null ? cita.mascota.cliente.nombre : '-'}">Cliente</td>
+                <td th:text="${cita.motivo != null ? cita.motivo : 'Consulta general'}">Motivo</td>
+                <td th:text="${cita.observaciones != null ? cita.observaciones : 'Pendiente de registrar'}">Notas</td>
+                <td><span class="vet-badge" th:text="${cita.estado}">Estado</span></td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="vet-empty" th:if="${citasAtendidas.empty}">No hay tratamientos en seguimiento por ahora.</div>
+    </section>
+</div>
+</body>
+</html>

@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,8 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.model.AlertaCritica;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Consulta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.RecetaEstado;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.RecetaMedica;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.SignosVitales;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
@@ -39,7 +42,10 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AlertaCriticaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ConsultaService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MedicamentoService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SeguimientoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SignosVitalesService;
 
@@ -59,6 +65,10 @@ public class VeterinariaController {
 
     private final SignosVitalesService signosVitalesService;
     private final UsuarioRepository usuarioRepository;
+    private final MedicamentoService medicamentoService;
+    private final FarmaceuticoService farmaceuticoService;
+    private final NotificacionService notificacionService;
+    private final PasswordEncoder passwordEncoder;
 
     public VeterinariaController(CitaRepository citaRepository,
                                   CitaService citaService,
@@ -66,7 +76,13 @@ public class VeterinariaController {
                                   ConsultaService consultaService,
                                   SeguimientoService seguimientoService,
                                   SignosVitalesService signosVitalesService,
-                                  UsuarioRepository usuarioRepository,AgendaService agendaService ,AlertaCriticaService alertaCriticaService) {
+                                  UsuarioRepository usuarioRepository,
+                                  AgendaService agendaService,
+                                  AlertaCriticaService alertaCriticaService,
+                                  MedicamentoService medicamentoService,
+                                  FarmaceuticoService farmaceuticoService,
+                                  NotificacionService notificacionService,
+                                  PasswordEncoder passwordEncoder) {
         this.citaRepository = citaRepository;
         this.citaService = citaService;
         this.mascotaService = mascotaService;
@@ -76,7 +92,10 @@ public class VeterinariaController {
         this.usuarioRepository = usuarioRepository;
         this.agendaService = agendaService;
         this.alertaCriticaService = alertaCriticaService;
-        
+        this.medicamentoService = medicamentoService;
+        this.farmaceuticoService = farmaceuticoService;
+        this.notificacionService = notificacionService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     private String getUsername() {
@@ -154,6 +173,7 @@ public class VeterinariaController {
 
         model.addAttribute("fecha", hoy);
         model.addAttribute("mascotas", mascotas);
+        model.addAttribute("medicamentos", medicamentoService.listarTodos());
         model.addAttribute("citaHoyPorMascota", citaHoyPorMascota);
         model.addAttribute("ultimoSignoPorMascota", ultimoSignoPorMascota);
         model.addAttribute("estadoPorMascota", estadoPorMascota);
@@ -163,7 +183,59 @@ public class VeterinariaController {
         model.addAttribute("pendientesHoy", pendientes);
         model.addAttribute("criticosHoy", criticos);
         model.addAttribute("totalMascotas", mascotas.size());
+        model.addAttribute("solicitudesPendientes", farmaceuticoService.contarRecetasPendientes());
+        model.addAttribute("solicitudesTotales", farmaceuticoService.obtenerTodasLasRecetas().size());
         return "Veterinaria/dashboard";
+    }
+
+    @PostMapping("/solicitud-medicamentos")
+    public String crearSolicitudMedicamentos(@RequestParam Long mascotaId,
+                                             @RequestParam(required = false) Long veterinarioId,
+                                             @RequestParam("medicamentoIds") List<Long> medicamentoIds,
+                                             @RequestParam("cantidades") List<Integer> cantidades,
+                                             @RequestParam("dosis") List<String> dosis,
+                                             @RequestParam(required = false, name = "frecuencias") List<String> frecuencias,
+                                             @RequestParam(required = false, name = "vias") List<String> vias,
+                                             @RequestParam(required = false, name = "unidades") List<String> unidades,
+                                             @RequestParam(required = false, name = "duraciones") List<String> duraciones,
+                                             @RequestParam(required = false, name = "notasItems") List<String> notasItems,
+                                             @RequestParam(required = false) String diagnostico,
+                                             @RequestParam(required = false) String prioridad,
+                                             @RequestParam(required = false) String observaciones,
+                                             RedirectAttributes redirectAttributes) {
+        try {
+            String observacionesClinicas = construirObservacionesReceta(diagnostico, prioridad, observaciones);
+            farmaceuticoService.crearSolicitudMedicamentos(
+                    mascotaId,
+                    veterinarioId,
+                    medicamentoIds,
+                    cantidades,
+                    dosis,
+                    frecuencias,
+                    vias,
+                    unidades,
+                    duraciones,
+                    notasItems,
+                    observacionesClinicas);
+            redirectAttributes.addFlashAttribute("success", "Solicitud de medicamentos enviada al módulo de farmacéutico.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "No se pudo crear la solicitud: " + e.getMessage());
+        }
+        return "redirect:/veterinaria/solicitudes";
+    }
+
+    private String construirObservacionesReceta(String diagnostico, String prioridad, String observaciones) {
+        List<String> partes = new ArrayList<>();
+        if (diagnostico != null && !diagnostico.isBlank()) {
+            partes.add("Dx: " + diagnostico.trim());
+        }
+        if (prioridad != null && !prioridad.isBlank()) {
+            partes.add("Prioridad: " + prioridad.trim());
+        }
+        if (observaciones != null && !observaciones.isBlank()) {
+            partes.add(observaciones.trim());
+        }
+        return String.join("\n", partes);
     }
 
     private boolean esTriajeCritico(SignosVitales signo) {
@@ -266,6 +338,39 @@ public class VeterinariaController {
         model.addAttribute("fecha", fecha);
 
         return "Veterinaria/pacientes";
+    }
+
+    @GetMapping("/solicitudes")
+    public String solicitudes(Model model) {
+        model.addAttribute("currentPage", "solicitudes");
+        usuarioRepository.findByUsername(getUsername()).ifPresent(u ->
+            model.addAttribute("nombreUsuario", u.getNombre()));
+
+        List<Mascota> mascotas = filtrarActivas(mascotaService.listarTodosConCliente());
+        model.addAttribute("mascotas", mascotas);
+        model.addAttribute("medicamentos", medicamentoService.listarTodos());
+        List<RecetaMedica> solicitudes = farmaceuticoService.obtenerTodasLasRecetas().stream()
+                .sorted((a, b) -> {
+                    LocalDate fechaA = a.getFecha() != null ? a.getFecha() : LocalDate.MIN;
+                    LocalDate fechaB = b.getFecha() != null ? b.getFecha() : LocalDate.MIN;
+                    return fechaB.compareTo(fechaA);
+                })
+                .toList();
+        model.addAttribute("solicitudes", solicitudes);
+        model.addAttribute("totalSolicitudes", solicitudes.size());
+        model.addAttribute("solicitudesPendientes", solicitudes.stream()
+                .filter(r -> r.getEstado() == RecetaEstado.PENDIENTE)
+                .count());
+        model.addAttribute("solicitudesDispensadas", solicitudes.stream()
+                .filter(r -> r.getEstado() == RecetaEstado.DISPENSADA)
+                .count());
+        return "Veterinaria/solicitudes";
+    }
+
+    @GetMapping("/solicitudes/detalle/{id}")
+    @ResponseBody
+    public FarmaceuticoService.ValidacionReceta detalleSolicitud(@PathVariable Long id) {
+        return farmaceuticoService.validarReceta(id);
     }
 
     @GetMapping("/reportes")
@@ -768,6 +873,8 @@ private void clasificarYGuardarSignos(SignosVitales signos, Mascota mascota, Con
                         + ", FR: " + signos.getFrecuenciaRespiratoria(),
                 "CRITICA"
         );
+        notificacionService.enviarNotificacionUI("critical", "Alerta crítica: " + mascota.getNombre()
+                + " presenta signos vitales fuera de rango.");
     }
 }
 
@@ -1091,6 +1198,47 @@ public String resolverAlerta(@PathVariable Long id, RedirectAttributes redirectA
     @GetMapping("/settings")
     public String settings(Model model) {
         model.addAttribute("currentPage", "settings");
+        Usuario usuario = getUsuarioActual();
+        if (usuario != null) {
+            model.addAttribute("nombreUsuario", usuario.getNombre());
+            model.addAttribute("usuario", usuario);
+            long consultasMes = consultaService.buscarPorVeterinario(usuario.getId()).stream()
+                    .filter(c -> c.getFechaConsulta() != null
+                            && c.getFechaConsulta().getYear() == LocalDate.now().getYear()
+                            && c.getFechaConsulta().getMonth() == LocalDate.now().getMonth())
+                    .count();
+            model.addAttribute("consultasMes", consultasMes);
+        } else {
+            model.addAttribute("consultasMes", 0L);
+        }
+        model.addAttribute("pacientesActivos", filtrarActivas(mascotaService.listarTodosConCliente()).size());
+        model.addAttribute("diagnosticosIa", 0L);
         return "Veterinaria/settings";
+    }
+
+    @PostMapping("/settings/password")
+    public String cambiarPassword(@RequestParam String passwordActual,
+                                  @RequestParam String passwordNueva,
+                                  @RequestParam String confirmacionPassword,
+                                  RedirectAttributes redirectAttributes) {
+        Usuario usuario = getUsuarioActual();
+        if (usuario == null || !passwordEncoder.matches(passwordActual, usuario.getPassword())) {
+            redirectAttributes.addFlashAttribute("error", "La contraseña actual no es correcta.");
+        } else if (passwordNueva == null || passwordNueva.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "La nueva contraseña debe tener al menos 8 caracteres.");
+        } else if (!passwordNueva.equals(confirmacionPassword)) {
+            redirectAttributes.addFlashAttribute("error", "La confirmación de contraseña no coincide.");
+        } else {
+            usuario.setPassword(passwordEncoder.encode(passwordNueva));
+            usuarioRepository.save(usuario);
+            redirectAttributes.addFlashAttribute("success", "Contraseña actualizada correctamente.");
+        }
+        return "redirect:/veterinaria/settings?tab=seguridad";
+    }
+
+    @GetMapping("/api/ui-notifications")
+    @ResponseBody
+    public List<NotificacionService.UINotification> notificacionesUi() {
+        return notificacionService.getAndClearUINotifications();
     }
 }

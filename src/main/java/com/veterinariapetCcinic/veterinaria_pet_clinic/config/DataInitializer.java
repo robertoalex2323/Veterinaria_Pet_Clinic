@@ -35,6 +35,8 @@ public class DataInitializer implements CommandLineRunner {
             admin.setEmail("admin@veterinaria.com");
             admin.setRol("ADMIN");
             admin.setActivo(true);
+            admin.setBloqueado(false);
+            admin.setCreadoPor("sistema");
             admin.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(admin);
             System.out.println("✅ Usuario ADMIN creado exitosamente");
@@ -49,10 +51,19 @@ public class DataInitializer implements CommandLineRunner {
             vet.setEmail("katyalb@petclinic.com");
             vet.setRol("VETERINARIO");
             vet.setActivo(true);
+            vet.setBloqueado(false);
+            vet.setCreadoPor("sistema");
             vet.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(vet);
             System.out.println("✅ Usuario VETERINARIO creado exitosamente");
         }
+
+        // Mantener los datos institucionales del veterinario aun cuando la base ya exista.
+        usuarioRepository.findByUsername("veterinario").ifPresent(vet -> {
+            vet.setNombre("Dra. Katherine Alberca");
+            vet.setEmail("kalberca29@gmail.com");
+            usuarioRepository.save(vet);
+        });
 
         // 3. RECEPCIONISTA
         if (!usuarioRepository.existsByUsername("recepcionista")) {
@@ -63,9 +74,11 @@ public class DataInitializer implements CommandLineRunner {
             recep.setEmail("robertoanton@petclinic.com");
             recep.setRol("RECEPCIONISTA");
             recep.setActivo(true);
+            recep.setBloqueado(false);
+            recep.setCreadoPor("sistema");
             recep.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(recep);
-            System.out.println("✅ Usuario RECEPCIONISTA creado exitosamente");
+            System.out.println(" Usuario RECEPCIONISTA creado exitosamente");
         }
 
         // 4. VENDEDOR
@@ -77,9 +90,11 @@ public class DataInitializer implements CommandLineRunner {
             vendedor.setEmail("Alessandro_Llacshuanga@veterinaria.com");
             vendedor.setRol("VENDEDOR");
             vendedor.setActivo(true);
+            vendedor.setBloqueado(false);
+            vendedor.setCreadoPor("sistema");
             vendedor.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(vendedor);
-            System.out.println("✅ Usuario VENDEDOR creado exitosamente");
+            System.out.println(" Usuario VENDEDOR creado exitosamente");
         }
 
         // 5. FARMACÉUTICO
@@ -91,9 +106,11 @@ public class DataInitializer implements CommandLineRunner {
             farmaceutico.setEmail("Dario.Arroyo@veterinaria.com");
             farmaceutico.setRol("FARMACEUTICO");
             farmaceutico.setActivo(true);
+            farmaceutico.setBloqueado(false);
+            farmaceutico.setCreadoPor("sistema");
             farmaceutico.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(farmaceutico);
-            System.out.println("✅ Usuario FARMACEUTICO creado exitosamente");
+            System.out.println(" Usuario FARMACEUTICO creado exitosamente");
         }
         // 6. Generar Agenda Base
         Usuario veterinarioObj = null;
@@ -106,9 +123,9 @@ public class DataInitializer implements CommandLineRunner {
         
         if (veterinarioObj != null) {
             agendaService.generarAgendaBaseSiVacia(veterinarioObj);
-            System.out.println("✅ Agenda base generada o verificada exitosamente");
+            System.out.println(" Agenda base generada o verificada exitosamente");
         }
         
-        System.out.println("🎉 Todos los usuarios iniciales han sido creados");
+        System.out.println(" Todos los usuarios iniciales han sido creados");
     }
 }

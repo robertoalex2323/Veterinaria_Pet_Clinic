@@ -1,0 +1,271 @@
+.vet-chatbot {
+    --chat-primary: #1D9E75;
+    --chat-primary-dark: #0F6E56;
+    --chat-text: #17212B;
+    --chat-border: #E5E7EB;
+    --chat-surface: #FFFFFF;
+    --chat-soft: #F4F7FA;
+    bottom: 24px;
+    position: fixed;
+    right: 24px;
+    z-index: 1050;
+}
+
+.vet-chatbot,
+.vet-chatbot * {
+    box-sizing: border-box;
+}
+
+.vet-chatbot__toggle {
+    align-items: center;
+    background: var(--chat-primary);
+    border: 0;
+    border-radius: 50%;
+    box-shadow: 0 14px 35px rgba(15, 110, 86, 0.28);
+    color: #FFFFFF;
+    cursor: pointer;
+    display: flex;
+    font-size: 1.25rem;
+    height: 58px;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    width: 58px;
+}
+
+.vet-chatbot__toggle:hover {
+    background: var(--chat-primary-dark);
+    box-shadow: 0 18px 40px rgba(15, 110, 86, 0.34);
+    transform: translateY(-2px);
+}
+
+.vet-chatbot__panel {
+    background: var(--chat-surface);
+    border: 1px solid rgba(229, 231, 235, 0.9);
+    border-radius: 18px;
+    bottom: 74px;
+    box-shadow: 0 24px 55px rgba(17, 24, 39, 0.18);
+    display: flex;
+    flex-direction: column;
+    max-height: min(620px, calc(100vh - 120px));
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    transform: translateY(10px) scale(0.98);
+    transform-origin: bottom right;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    width: 360px;
+}
+
+.vet-chatbot.is-open .vet-chatbot__panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+
+.vet-chatbot__header {
+    align-items: center;
+    background: linear-gradient(135deg, var(--chat-primary), var(--chat-primary-dark));
+    color: #FFFFFF;
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 18px;
+}
+
+.vet-chatbot__header strong,
+.vet-chatbot__header span {
+    display: block;
+    letter-spacing: 0;
+}
+
+.vet-chatbot__header strong {
+    font-size: 0.98rem;
+    font-weight: 700;
+}
+
+.vet-chatbot__header span {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.78rem;
+    margin-top: 2px;
+}
+
+.vet-chatbot__close {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.16);
+    border: 0;
+    border-radius: 50%;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: flex;
+    height: 34px;
+    justify-content: center;
+    transition: background 0.2s ease;
+    width: 34px;
+}
+
+.vet-chatbot__close:hover {
+    background: rgba(255, 255, 255, 0.24);
+}
+
+.vet-chatbot__messages {
+    background: var(--chat-soft);
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 260px;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.vet-chatbot__message {
+    animation: vetChatMessageIn 0.2s ease-out;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    max-width: 86%;
+    padding: 10px 12px;
+    white-space: pre-line;
+    word-break: break-word;
+}
+
+.vet-chatbot__message--bot {
+    align-self: flex-start;
+    background: #FFFFFF;
+    color: var(--chat-text);
+    box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
+}
+
+.vet-chatbot__message--user {
+    align-self: flex-end;
+    background: var(--chat-primary);
+    color: #FFFFFF;
+}
+
+.vet-chatbot__message--error {
+    background: #FEF2F2;
+    color: #B91C1C;
+}
+
+.vet-chatbot__typing {
+    align-items: center;
+    color: #6B7280;
+    display: inline-flex;
+    gap: 5px;
+}
+
+.vet-chatbot__typing span {
+    animation: vetChatTyping 1s infinite ease-in-out;
+    background: #9CA3AF;
+    border-radius: 50%;
+    display: inline-block;
+    height: 6px;
+    width: 6px;
+}
+
+.vet-chatbot__typing span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.vet-chatbot__typing span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.vet-chatbot__typing em {
+    font-style: normal;
+    margin-left: 4px;
+}
+
+.vet-chatbot__form {
+    align-items: center;
+    background: #FFFFFF;
+    border-top: 1px solid var(--chat-border);
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+}
+
+.vet-chatbot__input {
+    border: 1px solid var(--chat-border);
+    border-radius: 999px;
+    color: var(--chat-text);
+    flex: 1;
+    font-size: 0.9rem;
+    min-width: 0;
+    outline: none;
+    padding: 10px 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vet-chatbot__input:focus {
+    border-color: var(--chat-primary);
+    box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.12);
+}
+
+.vet-chatbot__send {
+    align-items: center;
+    background: var(--chat-primary);
+    border: 0;
+    border-radius: 50%;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: flex;
+    flex: 0 0 42px;
+    height: 42px;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease;
+    width: 42px;
+}
+
+.vet-chatbot__send:hover {
+    background: var(--chat-primary-dark);
+    transform: translateY(-1px);
+}
+
+.vet-chatbot__send:disabled,
+.vet-chatbot__input:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+@keyframes vetChatMessageIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes vetChatTyping {
+    0%,
+    80%,
+    100% {
+        opacity: 0.35;
+        transform: translateY(0);
+    }
+    40% {
+        opacity: 1;
+        transform: translateY(-2px);
+    }
+}
+
+@media (max-width: 576px) {
+    .vet-chatbot {
+        bottom: 16px;
+        right: 16px;
+    }
+
+    .vet-chatbot__panel {
+        bottom: 70px;
+        max-height: calc(100vh - 105px);
+        width: calc(100vw - 32px);
+    }
+
+    .vet-chatbot__messages {
+        min-height: 230px;
+    }
+}

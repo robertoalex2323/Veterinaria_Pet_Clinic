@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_veterinario::layout(~{::content}, 'mascotas')}">
+<body>
+<div th:fragment="content">
+    <div class="vet-page-head">
+        <div>
+            <h2>Mascotas</h2>
+            <p>Pacientes disponibles para atencion veterinaria.</p>
+        </div>
+        <form class="d-flex gap-2" method="get">
+            <input class="form-control" type="search" name="buscar" placeholder="Buscar paciente..." th:value="${buscar}">
+            <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+
+    <section class="vet-panel">
+        <div class="row g-3" th:if="${!mascotas.empty}">
+            <div class="col-12 col-md-6 col-xl-4" th:each="mascota : ${mascotas}">
+                <article class="vet-list-item h-100">
+                    <div>
+                        <strong th:text="${mascota.nombre}">Mascota</strong>
+                        <div class="text-muted small" th:text="${mascota.especie + (mascota.raza != null ? ' · ' + mascota.raza : '')}">Especie</div>
+                        <div class="small" th:text="${mascota.cliente != null ? 'Cliente: ' + mascota.cliente.nombre : 'Sin cliente'}">Cliente</div>
+                    </div>
+                    <span class="vet-badge" th:text="${mascota.peso != null ? mascota.peso + ' kg' : 'Sin peso'}">Peso</span>
+                </article>
+            </div>
+        </div>
+        <div class="vet-empty" th:if="${mascotas.empty}">No se encontraron mascotas con ese criterio.</div>
+    </section>
+</div>
+</body>
+</html>

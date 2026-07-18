@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="petClinicChatbot">
+    <link rel="stylesheet" th:href="@{/css/chatbot-widget.css}">
+
+    <section class="vet-chatbot" aria-label="Asistente veterinario">
+        <button class="vet-chatbot__toggle" type="button" aria-label="Abrir chat veterinario" aria-expanded="false">
+            <i class="fas fa-comment-medical" aria-hidden="true"></i>
+        </button>
+
+        <div class="vet-chatbot__panel" role="dialog" aria-label="Chat de asistencia veterinaria" aria-hidden="true">
+            <header class="vet-chatbot__header">
+                <div>
+                    <strong>Asistente Pet Clinic</strong>
+                    <span>En linea · Orientacion veterinaria</span>
+                </div>
+                <button class="vet-chatbot__close" type="button" aria-label="Cerrar chat">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="vet-chatbot__messages" aria-live="polite">
+                <div class="vet-chatbot__message vet-chatbot__message--bot">
+                    Hola, soy el asistente de Veterinaria Pet Clinic. Puedo ayudarte con citas, vacunas, banos, emergencias y cuidados basicos.
+                </div>
+            </div>
+
+            <form class="vet-chatbot__form">
+                <input class="vet-chatbot__input" type="text" name="message" placeholder="Escribe tu consulta..." autocomplete="off" aria-label="Mensaje para el asistente">
+                <button class="vet-chatbot__send" type="submit" aria-label="Enviar mensaje">
+                    <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <script th:src="@{/Js/chatbot-widget.js}"></script>
+</div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_veterinario::layout(~{::content}, 'diagnosticos')}">
+<body>
+<div th:fragment="content">
+    <div class="vet-page-head">
+        <div>
+            <h2>Diagnosticos</h2>
+            <p>Registros derivados de observaciones clinicas existentes.</p>
+        </div>
+    </div>
+
+    <section class="vet-panel">
+        <div class="vet-list" th:if="${!diagnosticos.empty}">
+            <article class="vet-list-item" th:each="cita : ${diagnosticos}">
+                <div>
+                    <strong th:text="${cita.mascota != null ? cita.mascota.nombre : 'Paciente'}">Paciente</strong>
+                    <p class="mb-0 text-muted" th:text="${cita.observaciones}">Observaciones</p>
+                </div>
+                <span class="vet-badge" th:text="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'dd/MM/yyyy') : 'Sin fecha'}">Fecha</span>
+            </article>
+        </div>
+        <div class="vet-empty" th:if="${diagnosticos.empty}">Aun no hay diagnosticos u observaciones clinicas registradas.</div>
+    </section>
+</div>
+</body>
+</html>

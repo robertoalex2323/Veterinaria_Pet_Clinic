@@ -46,6 +46,12 @@
         </a>
 
 
+        <a href="/veterinaria/solicitudes" class="nav-link"
+           th:classappend="${currentPage == 'solicitudes' ? ' active' : ''}"
+           title="Solicitudes de Medicamentos">
+            <i class="fas fa-pills"></i>
+        </a>
+
         <a href="/veterinaria/reportes" class="nav-link"
    th:classappend="${currentPage == 'reportes' ? ' active' : ''}"
    title="Reportes">
@@ -54,9 +60,17 @@
     </nav>
     <div style="flex-grow: 1"></div>
     <div class="sidebar-user">
-        <a href="/veterinaria/settings" class="nav-link" title="Configuración">
+        <a href="/veterinaria/settings" class="nav-link"
+           th:classappend="${currentPage == 'settings' ? ' active' : ''}"
+           title="Configuración">
             <i class="fas fa-cog"></i>
+        </a>
+        <a href="/logout" class="nav-link logout-nav-link" title="Cerrar sesion">
+            <i class="fas fa-sign-out-alt"></i>
         </a>
     </div>
 </aside>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script th:src="@{/Js/vet-notifications.js}"></script>
 </html>

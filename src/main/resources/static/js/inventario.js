@@ -35,6 +35,10 @@ function prepareEditForm(button) {
     document.getElementById('stock').value = button.dataset.stock;
     document.getElementById('stockMinimo').value = button.dataset.stockminimo;
     document.getElementById('proveedor').value = button.dataset.proveedorid;
+    const fechaVencimiento = document.getElementById('fechaVencimiento');
+    if (fechaVencimiento) {
+        fechaVencimiento.value = button.dataset.fechavencimiento || '';
+    }
 
     // Set imagenUrl and preview
     const imgUrl = button.dataset.imagenurl || '';

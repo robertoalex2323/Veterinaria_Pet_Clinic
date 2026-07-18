@@ -1,12 +1,14 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "clientes")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Cliente {
     
     @Id
@@ -29,16 +31,18 @@ public class Cliente {
     private LocalDateTime fechaRegistro;
     
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"cliente", "hibernateLazyInitializer", "handler"})
     private List<Mascota> mascotas = new ArrayList<>();
     
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"cliente", "hibernateLazyInitializer", "handler"})
     private List<Pago> pagos = new ArrayList<>();
     
     public Cliente() {
         this.fechaRegistro = LocalDateTime.now();
     }
     
-    // Getters y Setters
+    // ===== GETTERS Y SETTERS =====
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

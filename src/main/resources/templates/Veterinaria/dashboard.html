@@ -44,6 +44,10 @@
                     <div class="stat-label">Registrados</div>
                     <div class="stat-value" th:text="${totalMascotas}">0</div>
                 </article>
+                <article class="stat-card purple">
+                    <div class="stat-label">Solicitudes Farmacia</div>
+                    <div class="stat-value" th:text="${solicitudesPendientes}">0</div>
+                </article>
             </section>
 
             <section class="filter-bar">
@@ -120,7 +124,11 @@
                         <a class="btn blue" id="btnHistorialPaciente" href="/veterinaria/historial">
                             <i class="fas fa-file-medical"></i> Ver Historial Completo
                         </a>
+                        <a class="btn green" href="/veterinaria/solicitudes">
+                            <i class="fas fa-pills"></i> Solicitudes de Medicamentos
+                        </a>
                     </div>
+
                     <div class="quick-note">
                         <label>Nota Rapida</label>
                         <textarea placeholder="Observaciones de la consulta actual..."></textarea>
@@ -199,7 +207,7 @@
         </main>
     </div>
 
-    <script src="/js/dashboard-veterinaria.js"></script>
+    <script src="/Js/dashboard-veterinaria.js"></script>
 </body>
 
 </html>

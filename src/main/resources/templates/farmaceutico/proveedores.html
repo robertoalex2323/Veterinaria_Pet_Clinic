@@ -10,15 +10,23 @@
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
             <h2 class="fw-bold mb-0 text-dark"><i class="fas fa-truck me-2 text-primary"></i>Gestión de Proveedores</h2>
-            <p class="text-muted">Administra tus proveedores de medicamentos e insumos.</p>
+            <p class="text-muted mb-0">Administra tus proveedores de medicamentos e insumos.</p>
         </div>
         <a th:href="@{/farmaceutico/proveedores/nuevo}" class="btn btn-primary btn-lg shadow-sm">
             <i class="fas fa-plus-circle me-2"></i> Nuevo Proveedor
         </a>
     </div>
 
+    <!-- Barra de estadísticas -->
+    <div class="proveedores-stats-bar mb-4" th:if="${!#lists.isEmpty(proveedores)}">
+        <div class="stat-chip">
+            <i class="fas fa-building"></i>
+            <span>Proveedores: <strong id="totalProveedoresLabel" th:text="${#lists.size(proveedores)}">0</strong></span>
+        </div>
+    </div>
+
     <!-- Buscador -->
-    <div class="mb-4">
+    <div class="mb-4" th:if="${!#lists.isEmpty(proveedores)}">
         <div class="input-group shadow-sm">
             <span class="input-group-text bg-light border-0"><i class="fas fa-search text-muted"></i></span>
             <input type="text" id="searchProveedor" class="form-control border-0" placeholder="Buscar por nombre, RUC o contacto...">
@@ -72,14 +80,21 @@
                     <a th:href="@{/farmaceutico/proveedores/nuevo(id=${prov.id})}" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-edit"></i> Editar
                     </a>
-                    <a th:href="@{/farmaceutico/proveedores/eliminar/{id}(id=${prov.id})}" 
+                    <button type="button"
                        class="btn btn-sm btn-outline-danger"
-                       th:onclick="|return confirmDelete('${prov.nombre}', ${prov.id})|">
+                       th:onclick="|confirmDelete('${prov.nombre}', ${prov.id})|">
                         <i class="fas fa-trash-alt"></i> Eliminar
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Mensaje cuando la búsqueda no encuentra coincidencias -->
+    <div id="sinResultadosBusqueda" class="text-center py-5 d-none">
+        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Sin resultados</h5>
+        <p class="text-muted">Ningún proveedor coincide con tu búsqueda. Prueba con otro nombre, RUC o contacto.</p>
     </div>
 
     <!-- Mensaje si no hay proveedores -->
@@ -91,40 +106,7 @@
             <i class="fas fa-plus-circle me-2"></i> Nuevo Proveedor
         </a>
     </div>
+    <script th:src="@{/Js/proveedor-farmaceutico.js}"></script>
 </div>
-
-<script>
-function confirmDelete(nombre, id) {
-    Swal.fire({
-        title: '¿Eliminar proveedor?',
-        text: 'Se eliminará "' + nombre + '". Esta acción no se puede revertir.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = '/farmaceutico/proveedores/eliminar/' + id;
-        }
-    });
-    return false;
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('searchProveedor');
-    if (searchInput) {
-        searchInput.addEventListener('keyup', function () {
-            const filter = this.value.toLowerCase();
-            const cards = document.querySelectorAll('[data-search]');
-            cards.forEach(card => {
-                const searchData = card.getAttribute('data-search').toLowerCase();
-                card.style.display = searchData.includes(filter) ? '' : 'none';
-            });
-        });
-    }
-});
-</script>
 </body>
 </html>

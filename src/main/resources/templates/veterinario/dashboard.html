@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_veterinario::layout(~{::content}, 'dashboard')}">
+<body>
+<div th:fragment="content">
+    <div class="vet-page-head">
+        <div>
+            <h2>Dashboard Veterinario</h2>
+            <p th:text="${'Bienvenido, ' + nombreUsuario + ' · ' + #temporals.format(fecha, 'dd/MM/yyyy')}">Bienvenido</p>
+        </div>
+    </div>
+
+    <section class="vet-kpis">
+        <article class="vet-kpi"><div><span>Mascotas atendidas</span><strong th:text="${mascotasAtendidas}">0</strong></div><i class="fas fa-stethoscope"></i></article>
+        <article class="vet-kpi teal"><div><span>Consultas registradas</span><strong th:text="${consultasRegistradas}">0</strong></div><i class="fas fa-clipboard-check"></i></article>
+        <article class="vet-kpi amber"><div><span>Diagnosticos realizados</span><strong th:text="${diagnosticosRealizados}">0</strong></div><i class="fas fa-notes-medical"></i></article>
+        <article class="vet-kpi rose"><div><span>Citas pendientes</span><strong th:text="${citasPendientes}">0</strong></div><i class="fas fa-calendar-day"></i></article>
+        <article class="vet-kpi"><div><span>Pacientes del dia</span><strong th:text="${pacientesDelDia}">0</strong></div><i class="fas fa-paw"></i></article>
+    </section>
+
+    <div class="vet-grid">
+        <section class="vet-panel">
+            <h3>Proximas consultas de hoy</h3>
+            <table class="vet-table" th:if="${!proximasCitas.empty}">
+                <thead><tr><th>Hora</th><th>Mascota</th><th>Cliente</th><th>Motivo</th><th>Estado</th></tr></thead>
+                <tbody>
+                <tr th:each="cita : ${proximasCitas}">
+                    <td th:text="${cita.fechaHora != null ? #temporals.format(cita.fechaHora, 'HH:mm') : '-'}">09:00</td>
+                    <td th:text="${cita.mascota != null ? cita.mascota.nombre : '-'}">Mascota</td>
+                    <td th:text="${cita.mascota != null and cita.mascota.cliente != null ? cita.mascota.cliente.nombre : '-'}">Cliente</td>
+                    <td th:text="${cita.motivo != null ? cita.motivo : 'Consulta general'}">Motivo</td>
+                    <td><span class="vet-badge" th:text="${cita.estado}">AGENDADA</span></td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="vet-empty" th:if="${proximasCitas.empty}">No hay citas pendientes para hoy.</div>
+        </section>
+
+        <aside class="vet-panel">
+            <h3>Pacientes recientes</h3>
+            <div class="vet-list" th:if="${!ultimosPacientes.empty}">
+                <div class="vet-list-item" th:each="mascota : ${ultimosPacientes}">
+                    <div>
+                        <strong th:text="${mascota.nombre}">Mascota</strong>
+                        <div class="text-muted small" th:text="${mascota.especie + (mascota.raza != null ? ' · ' + mascota.raza : '')}">Especie</div>
+                    </div>
+                    <span class="vet-badge" th:text="${mascota.cliente != null ? mascota.cliente.nombre : 'Sin cliente'}">Cliente</span>
+                </div>
+            </div>
+            <div class="vet-empty" th:if="${ultimosPacientes.empty}">Todavia no hay mascotas registradas.</div>
+        </aside>
+    </div>
+
+    <div th:replace="~{fragments/chatbot_widget :: petClinicChatbot}"></div>
+</div>
+</body>
+</html>

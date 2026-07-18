@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - Panel Veterinario</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+</head>
+
+<body>
+    <div class="app">
+        <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+        <main class="main simple-page">
+            <header class="header">
+                <div class="status-pill">Cuenta veterinaria</div>
+                <a class="btn blue" href="/veterinaria/dashboard">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </header>
+
+            <section class="hero">
+                <h1>Perfil</h1>
+                <p>Informacion de sesion y accesos del modulo veterinario.</p>
+            </section>
+
+            <section class="simple-grid">
+                <article class="panel">
+                    <div class="panel-header">
+                        <h2>Usuario activo</h2>
+                        <span class="badge">Veterinario</span>
+                    </div>
+                    <div class="profile-summary">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user-doctor"></i>
+                        </div>
+                        <div>
+                            <strong th:text="${nombreUsuario != null ? nombreUsuario : 'Veterinario'}">Veterinario</strong>
+                            <p>Rol con acceso a pacientes, historial, agenda, alertas, solicitudes y reportes clinicos.</p>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <h2>Accesos rapidos</h2>
+                    </div>
+                    <div class="simple-actions">
+                        <a class="btn blue" href="/veterinaria/pacientes"><i class="fas fa-user-injured"></i> Pacientes</a>
+                        <a class="btn purple" href="/veterinaria/historial"><i class="fas fa-file-medical"></i> Historial</a>
+                        <a class="btn green" href="/veterinaria/solicitudes"><i class="fas fa-pills"></i> Solicitudes</a>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

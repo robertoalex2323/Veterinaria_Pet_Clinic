@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'recomendaciones')}">
+<head>
+    <meta charset="UTF-8" />
+    <title>Recomendaciones - Vendedor</title>
+    <link rel="stylesheet" th:href="@{/css/recomendaciones-vendedor.css}" />
+</head>
+<body>
+<div id="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-wand-magic-sparkles text-primary"></i> Recomendaciones IA
+            </h2>
+            <p class="text-muted mb-0">Sugerencias automáticas basadas en tu catálogo y promociones activas.</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm rc-card">
+        <div class="card-header">
+            <div class="rc-hero-icon"><i class="fas fa-robot"></i></div>
+            <div>
+                <strong>Recomendador</strong>
+                <small>Combina catálogo, promociones activas y preferencia del cliente</small>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <form id="rcForm" class="row g-3 align-items-end" onsubmit="return false;">
+                <div class="col-md-4">
+                    <label class="form-label" for="petQuery">Categoría (opcional)</label>
+                    <select id="petQuery" class="form-select">
+                        <option value="">Todas las categorías</option>
+                        <option th:each="cat : ${categorias}" th:value="${cat}" th:text="${cat}"></option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label" for="prefQuery">Preferencia</label>
+                    <select id="prefQuery" class="form-select">
+                        <option value="">Cualquiera</option>
+                        <option value="PORCENTAJE">Descuento por porcentaje (%)</option>
+                        <option value="2X1">2x1</option>
+                        <option value="FIJO">Descuento fijo (S/)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-grid">
+                    <button type="submit" class="btn btn-primary" id="btnRecommend" th:attr="data-api-url=@{/vendedor/recomendaciones/api}">
+                        <i class="fas fa-magic me-2"></i> Generar recomendaciones
+                    </button>
+                </div>
+
+                <div class="col-md-1 d-grid">
+                    <button type="button" class="btn btn-outline-secondary" id="btnReset" title="Limpiar filtros">
+                        <i class="fas fa-rotate-left"></i>
+                    </button>
+                </div>
+            </form>
+
+            <hr class="my-4" />
+
+            <div id="aiMessageContainer" class="alert alert-success d-none mb-4 d-flex align-items-center rc-ai-message" role="status" aria-live="polite">
+                <i class="fas fa-robot fa-2x me-3 text-success"></i>
+                <div id="aiMessageText" class="fw-medium"></div>
+            </div>
+
+            <div id="rcResultsInfo" class="text-muted small mb-2 d-none"></div>
+
+            <div id="recommendationsGrid" class="row g-3">
+                <div class="col-12">
+                    <div class="rc-empty-state text-center text-muted py-5">
+                        <i class="fas fa-wand-magic-sparkles fa-2x mb-3 d-block"></i>
+                        Elige una categoría o preferencia y presiona <strong>“Generar recomendaciones”</strong>
+                        para que la IA sugiera productos del catálogo.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script th:src="@{/Js/recomendaciones-vendedor.js}"></script>
+</div>
+
+</body>
+</html>
+
