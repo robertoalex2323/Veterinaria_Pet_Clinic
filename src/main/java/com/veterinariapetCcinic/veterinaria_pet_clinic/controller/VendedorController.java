@@ -79,7 +79,7 @@ private final ProductoService productoService;
     }   
 
 
-    @GetMapping({"", "/"})
+    @GetMapping({"", "/", "/dashboard"})
     public String dashboard(Authentication authentication, Model model, Principal principal) {
         model.addAttribute("nombreUsuario", principal != null ? principal.getName() : null);
         return "Vendedor/dashboard";
@@ -88,14 +88,6 @@ private final ProductoService productoService;
     @GetMapping("/historial")
     public String historialRedirect() {
         return "redirect:/vendedor/ventas/historial";
-    }
-
-
-    @GetMapping({"/dashboard"})
-
-    public String dashboard2(Authentication authentication, Model model, Principal principal) {
-        model.addAttribute("nombreUsuario", principal != null ? principal.getName() : null);
-        return "Vendedor/dashboard";
     }
 
     @GetMapping("/api/dashboard-metrics")
@@ -434,9 +426,6 @@ private final ProductoService productoService;
                                    RedirectAttributes redirectAttributes) {
 
         String redirectDestino = (id != null) ? "/vendedor/productos/editar/" + id : "/vendedor/productos/nuevo";
-
-        // Producto de trabajo: si es edición, partimos del existente en BD (para no perder
-        // campos que el form no maneja, como fechas). Si no existe, avisamos y salimos.
         Producto producto;
         if (id != null) {
             try {
@@ -498,18 +487,26 @@ private final ProductoService productoService;
         }
 
         boolean hayFotoNueva = foto != null && !foto.isEmpty();
+        byte[] fotoBytes = null;
+        String extensionDetectada = null;
         if (hayFotoNueva) {
-            String contentType = foto.getContentType();
-            if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
-                errores.add("El archivo de foto debe ser una imagen (jpg, png, webp o gif).");
-            }
             if (foto.getSize() > 2 * 1024 * 1024) {
                 errores.add("La imagen es demasiado grande (máx. 2MB).");
+            } else {
+                try {
+                    fotoBytes = foto.getBytes();
+                } catch (java.io.IOException ex) {
+                    fotoBytes = null;
+                }
+                extensionDetectada = detectarExtensionImagen(fotoBytes);
+                if (extensionDetectada == null) {
+                    errores.add("El archivo de foto no es una imagen válida (jpg, png, webp o gif). "
+                            + "Verifica que el contenido del archivo corresponda a su formato.");
+                }
             }
         }
 
         if (!errores.isEmpty()) {
-            // Reconstruimos el producto con lo que el vendedor tecleó para no perder su trabajo.
             producto.setId(id);
             producto.setNombre(nombreLimpio);
             producto.setCategoria(categoriaLimpia);
@@ -535,24 +532,23 @@ private final ProductoService productoService;
                 producto.setFoto(null);
             }
 
-            // Guardar foto si viene una nueva (tiene prioridad sobre "eliminar foto")
+            
             if (hayFotoNueva) {
+                if (fotoBytes == null || extensionDetectada == null) {
+                    throw new RuntimeException("No se pudo validar el contenido de la imagen.");
+                }
+
                 String uploadDir = "src/main/resources/static/Imagen/Productos/";
                 java.io.File dir = new java.io.File(uploadDir);
                 if (!dir.exists() && !dir.mkdirs()) {
                     throw new RuntimeException("No se pudo crear la carpeta de subida de imágenes.");
                 }
 
-                String original = foto.getOriginalFilename() != null ? foto.getOriginalFilename() : "foto";
-                String ext = original.contains(".") ? original.substring(original.lastIndexOf(".")) : "";
-                String safeExt = ext.toLowerCase();
-                if (!(safeExt.equals(".png") || safeExt.equals(".jpg") || safeExt.equals(".jpeg") || safeExt.equals(".webp") || safeExt.equals(".gif"))) {
-                    safeExt = ".png";
-                }
-
-                String fileName = "producto_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID() + safeExt;
+                // La extensión se determina por el contenido real del archivo (magic bytes),
+                // no por el nombre ni el content-type que envía el cliente (ambos falsificables).
+                String fileName = "producto_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID() + extensionDetectada;
                 java.nio.file.Path target = java.nio.file.Paths.get(uploadDir).resolve(fileName);
-                java.nio.file.Files.copy(foto.getInputStream(), target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                java.nio.file.Files.write(target, fotoBytes);
 
                 producto.setFoto("/Imagen/Productos/" + fileName);
             }
@@ -579,6 +575,44 @@ private final ProductoService productoService;
             redirectAttributes.addFlashAttribute("error", "Error al guardar el producto: " + (e.getMessage() != null ? e.getMessage() : ""));
             return "redirect:" + redirectDestino;
         }
+    }
+
+    /**
+     * Detecta la extensión real de una imagen inspeccionando su "magic number"
+     * (los primeros bytes del archivo), en vez de confiar en el nombre original
+     * o en el content-type declarado por el cliente, que pueden falsificarse
+     * fácilmente. Devuelve null si el contenido no corresponde a ninguno de los
+     * formatos de imagen permitidos.
+     */
+    private String detectarExtensionImagen(byte[] bytes) {
+        if (bytes == null || bytes.length < 12) {
+            return null;
+        }
+
+        // PNG: 89 50 4E 47 0D 0A 1A 0A
+        if ((bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47
+                && bytes[4] == 0x0D && bytes[5] == 0x0A && bytes[6] == 0x1A && bytes[7] == 0x0A) {
+            return ".png";
+        }
+
+        // JPEG: FF D8 FF
+        if ((bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8 && (bytes[2] & 0xFF) == 0xFF) {
+            return ".jpg";
+        }
+
+        // GIF: "GIF87a" o "GIF89a"
+        if (bytes[0] == 'G' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == '8'
+                && (bytes[4] == '7' || bytes[4] == '9') && bytes[5] == 'a') {
+            return ".gif";
+        }
+
+        // WEBP: "RIFF"[4 bytes tamaño]"WEBP"
+        if (bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F'
+                && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P') {
+            return ".webp";
+        }
+
+        return null;
     }
 
     private void eliminarArchivoFoto(String rutaFoto) {
