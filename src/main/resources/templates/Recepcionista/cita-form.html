@@ -143,11 +143,18 @@
                 const horaNueva = params.get('horaNueva');
                 const motivo = params.get('motivo');
                 const motivoReprogramacion = params.get('motivo') || '';
+                const mascotaIdIA = params.get('mascotaId');
 
                 const fechaCita = document.getElementById('fechaCita');
                 const horaCita = document.getElementById('horaCita');
                 const inpReprogramarDesdeId = document.getElementById('reprogramarDesdeId');
                 const inpMotivoReprogramacion = document.getElementById('motivoReprogramacion');
+                const selectMascota = document.getElementById('mascotaId');
+
+                // Si venimos del Asistente de Diagnostico IA con una mascota elegida, la preseleccionamos
+                if (selectMascota && mascotaIdIA) {
+                    selectMascota.value = mascotaIdIA;
+                }
 
                 if (inpReprogramarDesdeId && reprogramarDesdeId) inpReprogramarDesdeId.value = reprogramarDesdeId;
                 if (inpMotivoReprogramacion && motivoReprogramacion) inpMotivoReprogramacion.value = motivoReprogramacion;
@@ -186,4 +193,3 @@
 </body>
 
 </html>
-

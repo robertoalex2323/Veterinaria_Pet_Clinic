@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (edad && edadInput) {
                 edadInput.value = edad;
             }
+
+            // Guardamos la mascota elegida para pre-cargarla al agendar la cita
+            window.mascotaIdSeleccionadaIA = mascotaSelect.value || '';
         });
     }
 
@@ -158,4 +161,20 @@ function pintarResultado(data) {
         li.innerHTML = '<i class="fas fa-angle-right text-info me-2"></i> ' + rec;
         ul.appendChild(li);
     });
+
+    // Prepara el motivo de consulta a partir del diagnostico de la IA
+    let motivoSugerido = 'Diagnostico IA: ' + titulo;
+    if (justificacion) {
+        motivoSugerido += '. ' + justificacion;
+    }
+
+    const btnAgendar = document.getElementById('btnAgendarCitaIA');
+    if (btnAgendar) {
+        const params = new URLSearchParams();
+        if (window.mascotaIdSeleccionadaIA) {
+            params.set('mascotaId', window.mascotaIdSeleccionadaIA);
+        }
+        params.set('motivo', motivoSugerido);
+        btnAgendar.href = '/recepcionista/citas/nueva?' + params.toString();
+    }
 }

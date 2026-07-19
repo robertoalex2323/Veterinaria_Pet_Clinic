@@ -811,6 +811,65 @@ def diagnosis_fallback(especie, sintomas):
     }
 
 
+COMMON_SYMPTOM_WORDS = {
+    "el", "la", "los", "las", "un", "una", "no", "si", "es", "esta", "esto",
+    "con", "sin", "de", "del", "en", "por", "para", "mas", "muy", "poco",
+    "come", "comer", "vomita", "vomito", "vomitos", "diarrea", "fiebre", "dolor",
+    "duele", "tos", "tose", "cojea", "rasca", "pata", "patas", "piel", "pelo",
+    "sangre", "heces", "orina", "agua", "apetito", "letargo", "decaido",
+    "decaida", "hinchado", "hinchada", "tiene", "presenta", "nota", "temblor",
+    "convulsion", "convulsiones", "herida", "mascota", "perro", "gato",
+    "desde", "hace", "dias", "dia", "horas", "hoy", "ayer", "come", "toma",
+    "respira", "camina", "juega", "duerme", "come", "picazon", "ojos", "oido",
+    "oidos", "nariz", "boca", "cola", "estomago", "barriga",
+}
+
+
+def has_repeating_pattern(word):
+    length = len(word)
+    for unit_len in range(1, length // 2 + 1):
+        if length % unit_len != 0:
+            continue
+        unit = word[:unit_len]
+        if unit * (length // unit_len) == word:
+            return True
+    return False
+
+
+def looks_like_gibberish(text):
+    normalized = normalize_text(text)
+    words = re.findall(r"[a-z]+", normalized)
+    letters_only = "".join(words)
+
+    if len(letters_only) < 3:
+        return True
+
+    if any(word in COMMON_SYMPTOM_WORDS for word in words):
+        return False
+
+    most_common_count = max(letters_only.count(ch) for ch in set(letters_only))
+    if most_common_count / len(letters_only) > 0.7:
+        return True
+
+    if any(len(word) >= 4 and has_repeating_pattern(word) for word in words):
+        return True
+
+    keyboard_patterns = ("asdf", "qwer", "zxcv", "wasd", "jkl;")
+    if any(pattern in normalized for pattern in keyboard_patterns):
+        return True
+
+    vowels = sum(1 for ch in letters_only if ch in "aeiou")
+    vowel_ratio = vowels / len(letters_only)
+    has_long_consonant_run = re.search(r"[bcdfghjklmnpqrstvwxyz]{4,}", normalized) is not None
+
+    if vowel_ratio < 0.2:
+        return True
+    if has_long_consonant_run and len(words) <= 2:
+        return True
+
+    return False
+
+
 @app.post("/diagnostico")
 def diagnostico():
     payload = request.get_json(silent=True) or {}
@@ -821,6 +880,23 @@ def diagnostico():
 
     if not sintomas:
         return jsonify({"error": "El campo 'sintomas' es obligatorio."}), 400
+
+    if looks_like_gibberish(sintomas):
+        return jsonify({
+            "titulo": "Descripcion no reconocida",
+            "confianza": 0,
+            "justificacion": (
+                "El texto ingresado en 'Sintomas observados' no parece describir signos "
+                "clinicos reales. Vuelve a describir lo que observas en la mascota, por "
+                "ejemplo: vomitos, decaimiento, perdida de apetito, cojera, etc."
+            ),
+            "recomendaciones": [
+                "Redacta los sintomas con tus propias palabras.",
+                "Evita textos al azar o pruebas de escritura en este campo.",
+            ],
+            "provider": "validation",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
 
     result = generate_diagnosis_with_gemini(especie, edad, temperatura, sintomas)
     provider = "gemini"
