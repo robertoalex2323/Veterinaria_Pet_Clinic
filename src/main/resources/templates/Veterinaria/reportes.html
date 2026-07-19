@@ -100,15 +100,21 @@
             <div class="report-preview-card">
                 <div class="preview-head">
                     <h3>Vista Previa</h3>
-                    <button type="button" onclick="window.print()" th:if="${mascotaSeleccionada != null}">
-                        <i class="fas fa-print"></i> Imprimir
-                    </button>
+                    <div class="preview-actions" th:if="${mascotaSeleccionada != null}">
+                        <a class="btn-descargar-pdf"
+                           th:href="@{/veterinaria/reportes/pdf(mascotaId=${mascotaSeleccionada.id}, tipo=${tipoReporte})}">
+                            <i class="fas fa-file-pdf"></i> Descargar PDF
+                        </a>
+                        <button type="button" onclick="window.print()">
+                            <i class="fas fa-print"></i> Imprimir
+                        </button>
+                    </div>
                 </div>
 
                 <div class="report-document" th:if="${mascotaSeleccionada != null}">
                     <div class="doc-header">
                         <h2>Veterinaria Pet Clinic</h2>
-                        <p>Reporte Clinico Veterinario</p>
+                        <p th:text="${tipoReporte == 'consulta' ? 'Reporte de Consulta' : (tipoReporte == 'tratamiento' ? 'Plan de Tratamiento' : 'Reporte Clinico Completo')}">Reporte Clinico Veterinario</p>
                     </div>
 
                     <div class="doc-section">
@@ -123,7 +129,7 @@
                         </div>
                     </div>
 
-                    <div class="doc-section" th:if="${ultimoSigno != null}">
+                    <div class="doc-section" th:if="${tipoReporte == 'completo' and ultimoSigno != null}">
                         <h3>Signos Vitales Actuales</h3>
                         <div class="doc-grid">
                             <p><b>Temperatura:</b> <span th:text="${ultimoSigno.temperatura != null ? ultimoSigno.temperatura + ' C - ' + estadoTempTexto : '-'}">-</span></p>
@@ -134,12 +140,12 @@
                         </div>
                     </div>
 
-                    <div class="doc-section" th:if="${ultimoSigno != null and ultimoSigno.advertencia != null and !ultimoSigno.advertencia.empty}">
+                    <div class="doc-section" th:if="${tipoReporte == 'completo' and ultimoSigno != null and ultimoSigno.advertencia != null and !ultimoSigno.advertencia.empty}">
                         <h3>Advertencia Clinica</h3>
                         <p th:text="${ultimoSigno.advertencia}">Advertencia</p>
                     </div>
 
-                    <div class="doc-section" th:if="${!#lists.isEmpty(alertas)}">
+                    <div class="doc-section" th:if="${tipoReporte == 'completo' and !#lists.isEmpty(alertas)}">
                         <h3>Alertas Activas</h3>
                         <div th:each="alerta : ${alertas}" class="doc-alert">
                             <b th:text="${alerta.prioridad}">Prioridad</b>
@@ -161,7 +167,11 @@
 
                     <div class="doc-section" th:if="${tipoReporte == 'tratamiento' or tipoReporte == 'completo'}">
                         <h3>Plan e Indicaciones</h3>
-                        <p>Seguir las indicaciones registradas en consulta. Mantener observacion clinica y acudir a control si aparecen signos de alarma.</p>
+                        <p th:if="${#lists.isEmpty(consultas)}">No hay plan o indicaciones registrados para este paciente.</p>
+                        <p th:if="${!#lists.isEmpty(consultas)}"
+                           th:text="${consultas[0].observaciones != null ? consultas[0].observaciones : 'No hay plan o indicaciones registrados para este paciente.'}">
+                            Plan de tratamiento
+                        </p>
                     </div>
                 </div>
 

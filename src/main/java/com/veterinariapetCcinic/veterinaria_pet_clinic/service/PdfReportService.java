@@ -29,7 +29,11 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.DetalleVenta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.AlertaCritica;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Consulta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Mascota;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Medicamento;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.SignosVitales;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 
 @Service
@@ -343,7 +347,123 @@ public class PdfReportService {
         return out.toByteArray();
     }
 
+    /**
+     * Genera un PDF clinico cuyo contenido depende del tipo solicitado:
+     * consulta, tratamiento o completo.
+     */
+    public byte[] generarReporteClinico(Mascota mascota, String tipo, List<Consulta> consultas,
+                                        SignosVitales ultimoSigno, List<AlertaCritica> alertas) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Document documento = new Document(PageSize.A4, 42, 42, 42, 42);
+        PdfWriter.getInstance(documento, out);
+        documento.open();
+
+        String titulo = switch (tipo) {
+            case "tratamiento" -> "Plan de Tratamiento";
+            case "completo" -> "Reporte Clinico Completo";
+            default -> "Reporte de Consulta";
+        };
+        DateTimeFormatter fecha = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        addLogo(documento, 70, 70);
+        Paragraph encabezado = new Paragraph("Veterinaria Pet Clinic", FONT_TITLE);
+        encabezado.setAlignment(Element.ALIGN_CENTER);
+        documento.add(encabezado);
+        Paragraph subtitulo = new Paragraph(titulo, FONT_SUBTITLE);
+        subtitulo.setAlignment(Element.ALIGN_CENTER);
+        documento.add(subtitulo);
+        Paragraph generado = new Paragraph("Generado el: " + LocalDateTime.now().format(fecha), FONT_SMALL);
+        generado.setAlignment(Element.ALIGN_CENTER);
+        documento.add(generado);
+        documento.add(Chunk.NEWLINE);
+
+        agregarTituloSeccion(documento, "Datos del paciente");
+        PdfPTable paciente = new PdfPTable(2);
+        paciente.setWidthPercentage(100);
+        addField(paciente, "Paciente:", texto(mascota.getNombre()));
+        addField(paciente, "Especie:", texto(mascota.getEspecie()));
+        addField(paciente, "Raza:", texto(mascota.getRaza()));
+        addField(paciente, "Edad:", mascota.getEdad() != null ? mascota.getEdad() + " anos" : "-");
+        addField(paciente, "Dueno:", mascota.getCliente() != null ? texto(mascota.getCliente().getNombre()) : "-");
+        documento.add(paciente);
+        documento.add(Chunk.NEWLINE);
+
+        if ("consulta".equals(tipo) || "completo".equals(tipo)) {
+            agregarTituloSeccion(documento, "Consultas registradas");
+            if (consultas.isEmpty()) {
+                documento.add(new Paragraph("No hay consultas registradas.", FONT_NORMAL));
+            } else {
+                for (Consulta consulta : consultas) {
+                    String fechaConsulta = consulta.getFechaConsulta() != null
+                            ? consulta.getFechaConsulta().format(fecha) : "Sin fecha";
+                    Paragraph detalle = new Paragraph(
+                            "Fecha: " + fechaConsulta + "\nMotivo: " + texto(consulta.getMotivoConsulta())
+                                    + "\nObservaciones / diagnostico y tratamiento: " + texto(consulta.getObservaciones()),
+                            FONT_NORMAL);
+                    detalle.setSpacingAfter(10f);
+                    documento.add(detalle);
+                }
+            }
+            documento.add(Chunk.NEWLINE);
+        }
+
+        if ("tratamiento".equals(tipo) || "completo".equals(tipo)) {
+            agregarTituloSeccion(documento, "Plan e indicaciones");
+            Consulta ultimaConsulta = consultas.stream()
+                    .filter(consulta -> consulta.getFechaConsulta() != null)
+                    .max(java.util.Comparator.comparing(Consulta::getFechaConsulta))
+                    .orElse(consultas.isEmpty() ? null : consultas.get(0));
+            if (ultimaConsulta == null || ultimaConsulta.getObservaciones() == null
+                    || ultimaConsulta.getObservaciones().isBlank()) {
+                documento.add(new Paragraph("No hay plan o indicaciones registrados para este paciente.", FONT_NORMAL));
+            } else {
+                documento.add(new Paragraph(ultimaConsulta.getObservaciones(), FONT_NORMAL));
+            }
+            documento.add(Chunk.NEWLINE);
+        }
+
+        if ("completo".equals(tipo)) {
+            if (ultimoSigno != null) {
+                agregarTituloSeccion(documento, "Signos vitales actuales");
+                PdfPTable signos = new PdfPTable(2);
+                signos.setWidthPercentage(100);
+                addField(signos, "Temperatura:", ultimoSigno.getTemperatura() != null ? ultimoSigno.getTemperatura() + " C" : "-");
+                addField(signos, "Peso:", ultimoSigno.getPeso() != null ? ultimoSigno.getPeso() + " kg" : "-");
+                addField(signos, "Frecuencia cardiaca:", ultimoSigno.getFrecuenciaCardiaca() != null ? ultimoSigno.getFrecuenciaCardiaca() + " bpm" : "-");
+                addField(signos, "Frecuencia respiratoria:", ultimoSigno.getFrecuenciaRespiratoria() != null ? ultimoSigno.getFrecuenciaRespiratoria() + " rpm" : "-");
+                addField(signos, "Estado general:", texto(ultimoSigno.getEstadoGeneral()));
+                addField(signos, "Advertencia clinica:", texto(ultimoSigno.getAdvertencia()));
+                documento.add(signos);
+                documento.add(Chunk.NEWLINE);
+            }
+
+            agregarTituloSeccion(documento, "Alertas activas");
+            if (alertas.isEmpty()) {
+                documento.add(new Paragraph("No hay alertas activas.", FONT_NORMAL));
+            } else {
+                for (AlertaCritica alerta : alertas) {
+                    documento.add(new Paragraph(
+                            "[" + texto(alerta.getPrioridad()) + "] " + texto(alerta.getDescripcion()), FONT_NORMAL));
+                }
+            }
+        }
+
+        documento.close();
+        return out.toByteArray();
+    }
+
     // --- HELPERS ---
+
+    private void agregarTituloSeccion(Document documento, String titulo) {
+        Paragraph seccion = new Paragraph(titulo, FONT_SUBTITLE);
+        seccion.setSpacingBefore(4f);
+        seccion.setSpacingAfter(7f);
+        documento.add(seccion);
+    }
+
+    private String texto(String valor) {
+        return valor == null || valor.isBlank() ? "-" : valor;
+    }
 
     /**
      * Agrega el logo de la veterinaria al documento PDF (centrado).
