@@ -16,6 +16,8 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
 
+import java.time.ZoneId;
+
 @Service
 public class CitaService {
     
@@ -166,7 +168,7 @@ public class CitaService {
     
     private void validarDisponibilidad(LocalDateTime fechaHora) {
         // 1. Validar horarios lógicos (no pasado)
-        if (fechaHora.isBefore(LocalDateTime.now())) {
+        if (fechaHora.isBefore(LocalDateTime.now(ZoneId.of("America/Lima")))) {
             log.error("Intento de agendamiento fallido: Fecha pasada {}", fechaHora);
             throw new RuntimeException("No se pueden agendar citas en fechas u horas del pasado.");
         }

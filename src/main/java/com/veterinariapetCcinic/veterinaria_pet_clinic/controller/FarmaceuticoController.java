@@ -90,6 +90,14 @@ public class FarmaceuticoController {
         return auth != null ? auth.getName() : "Farmaceutico";
     }
 
+    private Usuario getUsuarioAutenticado() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        return usuarioRepository.findByUsername(auth.getName()).orElse(null);
+    }
+
     private boolean isValidEmail(String email) {
         if (email == null || email.trim().isEmpty()) {
             return false;
@@ -438,11 +446,10 @@ public class FarmaceuticoController {
     @PostMapping("/api/ventas/crear-desde-receta")
     @ResponseBody
     public Map<String, Object> crearVentaDesdeReceta(@RequestParam Long recetaId,
-                                                      @RequestParam String metodoPago,
-                                                      HttpSession session) {
+                                                      @RequestParam String metodoPago) {
         Map<String, Object> result = new HashMap<>();
         try {
-            Usuario usuario = (Usuario) session.getAttribute("usuario");
+            Usuario usuario = getUsuarioAutenticado();
             if (usuario == null) {
                 result.put("success", false);
                 result.put("message", "Usuario no autenticado");
@@ -471,11 +478,10 @@ public class FarmaceuticoController {
     @ResponseBody
     public Map<String, Object> procesarVentaApi(@RequestParam(required = false) String metodoPago,
                                                  @RequestParam(required = false) String clienteNombre,
-                                                 @RequestParam(required = false) String itemsJson,
-                                                 HttpSession session) {
+                                                 @RequestParam(required = false) String itemsJson) {
         Map<String, Object> result = new HashMap<>();
         try {
-            Usuario usuario = (Usuario) session.getAttribute("usuario");
+            Usuario usuario = getUsuarioAutenticado();
             if (usuario == null) {
                 result.put("success", false);
                 result.put("message", "Usuario no autenticado");

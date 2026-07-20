@@ -388,7 +388,7 @@
     </div>
 </div>
 
-<script src="/js/dashboard-veterinaria.js"></script>
+<script src="/Js/dashboard-veterinaria.js"></script>
 <script>
 function abrirModalTriaje(btn) {
     document.getElementById('modal-cita-id').value = btn.dataset.citaId;
@@ -399,9 +399,11 @@ function abrirModalTriaje(btn) {
     const avatarMap = { perro: '🐶', gato: '🐱', ave: '🐦' };
     document.getElementById('modal-avatar').textContent = avatarMap[especie] || '🐾';
 
-    const clinical = window.vetClinicalSettings.get();
-    const pesoLabel = document.querySelector('[name="peso"]').previousElementSibling;
-    const tempLabel = document.querySelector('[name="temperatura"]').previousElementSibling;
+    const clinical = window.vetClinicalSettings ? window.vetClinicalSettings.get() : {};
+    const pesoInput = document.querySelector('[name="peso"]');
+    const tempInput = document.querySelector('[name="temperatura"]');
+    const pesoLabel = pesoInput?.previousElementSibling;
+    const tempLabel = tempInput?.previousElementSibling;
     if (pesoLabel) pesoLabel.textContent = clinical.weightUnit === 'lb' ? 'Peso (lb)' : 'Peso (kg)';
     if (tempLabel) tempLabel.textContent = clinical.temperatureUnit === 'fahrenheit' ? 'Temperatura (°F)' : 'Temperatura (°C)';
     document.getElementById('modalTriaje').style.display = 'flex';
