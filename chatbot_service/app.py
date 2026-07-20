@@ -158,8 +158,8 @@ RESPONSE_BANK = {
         "Puedo revisar el resumen del sistema si Spring Boot esta encendido. Dame un momento y te comparto solo los datos disponibles.",
     ],
     "hours": [
-        f"Con gusto {SMILE}. Nuestro horario habitual es de lunes a sabado de 8:00 a.m. a 7:00 p.m.",
-        "Atendemos normalmente de lunes a sabado de 8:00 a.m. a 7:00 p.m. Si es una urgencia, conviene comunicarse directamente con la clinica.",
+        f"Con gusto {SMILE}. Nuestro horario habitual es de lunes a sabado de 8:00 a.m. a 22:00 p.m.",
+        "Atendemos normalmente de lunes a sabado de 8:00 a.m. a 22:00 p.m. Si es una urgencia, conviene comunicarse directamente con la clinica veterinaria.",
     ],
     "feeding": [
         "La alimentacion depende de especie, edad, peso y salud. En general, evita chocolate, cebolla, uvas, huesos cocidos y comida muy condimentada.",

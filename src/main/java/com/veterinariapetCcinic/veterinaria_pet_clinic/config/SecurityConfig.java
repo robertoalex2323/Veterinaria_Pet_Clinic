@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/usuarios/**", "/configuracion/**").hasAnyRole("ADMIN", "ADMINISTRADOR")
 
                         // Recursos públicos
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
+                        .requestMatchers("/Css/**", "/Js/**", "/images/**", "/Imagen/**").permitAll()
                         .requestMatchers("/api/chatbot/**").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/veterinario/**").hasAnyRole("VETERINARIO", "ADMIN", "ADMINISTRADOR")

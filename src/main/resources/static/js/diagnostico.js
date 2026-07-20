@@ -162,7 +162,6 @@ function pintarResultado(data) {
         ul.appendChild(li);
     });
 
-    // Prepara el motivo de consulta a partir del diagnostico de la IA
     let motivoSugerido = 'Diagnostico IA: ' + titulo;
     if (justificacion) {
         motivoSugerido += '. ' + justificacion;
