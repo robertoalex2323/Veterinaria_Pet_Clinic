@@ -30,7 +30,7 @@ services:
       DB_PASSWORD: 12345
       SERVER_PORT: 8080
       MAIL_USERNAME: betodokij15@gmail.com
-      MAIL_PASSWORD: "tvap gldd fbfe silv"
+      MAIL_PASSWORD: "pmrg kaid zxcz elmz"
     ports:
       - "8080:8080"
 
