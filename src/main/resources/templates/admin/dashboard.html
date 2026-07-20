@@ -144,8 +144,12 @@
                 <span>Usuarios y citas</span>
             </div>
             <div class="admin-charts">
-                <canvas id="rolesChart" height="190"></canvas>
-                <canvas id="citasChart" height="190"></canvas>
+                <div class="admin-chart-box">
+                    <canvas id="rolesChart"></canvas>
+                </div>
+                <div class="admin-chart-box">
+                    <canvas id="citasChart"></canvas>
+                </div>
             </div>
         </article>
     </section>
@@ -181,7 +185,18 @@
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { position: 'bottom' } }
+                    maintainAspectRatio: false,
+                    cutout: '62%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 14,
+                                padding: 12,
+                                font: { size: 11 }
+                            }
+                        }
+                    }
                 }
             });
         }

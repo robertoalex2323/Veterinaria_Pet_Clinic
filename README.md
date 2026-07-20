@@ -33,7 +33,54 @@ El proyecto sigue el patron MVC:
 ## Ejecucion local
 
 1. Clonar el repositorio.
-2. Configurar `src/main/resources/application.properties` con las credenciales locales de PostgreSQL.
+2. Verificar que Java este instalado. El proyecto esta configurado para Java 21.
+3. Para correr rapido sin configurar PostgreSQL, usar el perfil `local` con H2 en memoria:
+
+```powershell
+.\run-local.ps1
+```
+
+Si PowerShell bloquea scripts, usar:
+
+```bat
+run-local.bat
+```
+
+Tambien se puede ejecutar directamente:
+
+```powershell
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
+```
+
+Abrir la aplicacion en:
+
+```text
+http://localhost:8080
+```
+
+Usuarios iniciales:
+
+| Rol | Usuario | Password |
+| --- | --- | --- |
+| Admin | `admin` | `admin_pet_clinic` |
+| Recepcionista | `recepcionista` | `recep_pet_clinic` |
+| Veterinario | `veterinario` | `veterinaria_pet_clinic` |
+| Vendedor | `vendedor` | `vendedor_pet_clinic` |
+| Farmaceutico | `farmaceutico` | `farmaceutico_pet_clinic` |
+
+Nota: con el perfil `local` la base es en memoria; los datos creados manualmente se pierden al detener la app.
+
+## Ejecucion con PostgreSQL
+
+1. Crear una base de datos local llamada `veterinaria_pet_clinic`.
+2. Configurar `src/main/resources/application.properties` con las credenciales locales de PostgreSQL. Por defecto viene asi:
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/veterinaria_pet_clinic
+spring.datasource.username=postgres
+spring.datasource.password=12345
+```
+
 3. Ejecutar:
 
 ```bash
