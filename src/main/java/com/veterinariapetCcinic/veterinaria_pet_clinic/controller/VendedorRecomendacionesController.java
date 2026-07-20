@@ -154,10 +154,7 @@ public class VendedorRecomendacionesController {
         return "🤖 IA · " + confianza + "% de coincidencia — " + base + extra + ".";
     }
 
-    /**
-     * Endpoint relacionado con el módulo real del sistema:
-     * devuelve productos que tienen PROMOCIÓN ACTIVA.
-     */
+
     @GetMapping(value = "/recomendaciones/api", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public Map<String, Object> recomendacionesApi(

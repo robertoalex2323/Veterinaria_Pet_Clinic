@@ -182,10 +182,13 @@ public class FarmaceuticoController {
         long recetasDispensadas = todasLasRecetas.stream()
                 .filter(r -> r.getEstado() == RecetaEstado.DISPENSADA)
                 .count();
-        int totalRecetas = todasLasRecetas.size();
-        int eficienciaPorc = (totalRecetas > 0)
-                ? Math.round(recetasDispensadas * 100f / totalRecetas)
+        int totalRecetasConEstado = (int) todasLasRecetas.stream()
+                .filter(r -> r.getEstado() != null)
+                .count();
+        int eficienciaPorc = (totalRecetasConEstado > 0)
+                ? Math.round(recetasDispensadas * 100f / totalRecetasConEstado)
                 : 0;
+
 
         model.addAttribute("totalMedicamentos", totalMedicamentos);
         model.addAttribute("recetasCompletadas", (int) recetasDispensadas);
@@ -215,8 +218,13 @@ public class FarmaceuticoController {
             long dispensadas = todasLasRecetas.stream()
                     .filter(r -> r.getEstado() == RecetaEstado.DISPENSADA)
                     .count();
-            int totalRecetas = todasLasRecetas.size();
-            int eficiencia = (totalRecetas > 0) ? Math.round(dispensadas * 100f / totalRecetas) : 0;
+            int totalRecetasConEstado = (int) todasLasRecetas.stream()
+                    .filter(r -> r.getEstado() != null)
+                    .count();
+            int eficiencia = (totalRecetasConEstado > 0)
+                    ? Math.round(dispensadas * 100f / totalRecetasConEstado)
+                    : 0;
+
 
             stats.put("success", true);
             stats.put("ventasHoy", ventaService.calcularVentasHoy());

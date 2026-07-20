@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Crear/Editar Producto - Vendedor</title>
-    <link rel="stylesheet" th:href="@{/css/producto-vendedor.css}" />
+    <link rel="stylesheet" th:href="@{/Css/producto-vendedor.css}" />
 </head>
 
 <body>
@@ -34,7 +34,7 @@
 
     <div class="card shadow-sm producto-card">
         <div class="card-body p-4">
-            <form th:action="@{/vendedor/productos/guardar}" method="post" enctype="multipart/form-data" th:object="${producto}">
+            <form id="productoForm" th:action="@{/vendedor/productos/guardar}" method="post" enctype="multipart/form-data" th:object="${producto}" novalidate>
                 <input type="hidden" name="id" th:value="${producto != null ? producto.id : ''}" />
                 <div class="row g-4 producto-form-grid">
 
@@ -46,6 +46,7 @@
                             <span class="input-group-text"><i class="fas fa-tag"></i></span>
                             <input type="text" class="form-control" name="nombre" th:value="*{nombre}" required>
                         </div>
+                        <div class="invalid-feedback d-none" data-error-for="nombre">El nombre es obligatorio.</div>
                     </div>
 
                     <div class="col-md-6">
@@ -54,6 +55,7 @@
                             <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
                             <input type="text" class="form-control" name="categoria" th:value="*{categoria}" required>
                         </div>
+                        <div class="invalid-feedback d-none" data-error-for="categoria">La categoría es obligatoria.</div>
                     </div>
 
                     <div class="col-md-6">
@@ -62,6 +64,7 @@
                             <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
                             <input type="number" step="0.01" class="form-control" name="precio" th:value="*{precio}" required>
                         </div>
+                        <div class="invalid-feedback d-none" data-error-for="precio">Ingresa un precio válido mayor a 0.</div>
                     </div>
 
                     <div class="col-md-6">
@@ -70,20 +73,26 @@
                             <span class="input-group-text"><i class="fas fa-cubes"></i></span>
                             <input type="number" step="1" class="form-control" name="stock" th:value="*{stock}" required>
                         </div>
+                        <div class="invalid-feedback d-none" data-error-for="stock">Ingresa un stock válido (0 o más).</div>
                     </div>
 
                     <div class="col-md-12">
                         <label class="form-label fw-bold text-dark">Descripción</label>
-                        <textarea class="form-control" name="descripcion" rows="4" th:text="*{descripcion}"></textarea>
+                        <textarea id="descripcionInput" class="form-control" name="descripcion" rows="4" maxlength="500" th:text="*{descripcion}"></textarea>
+                        <div class="d-flex justify-content-end mt-1">
+                            <small id="descripcionCounter" class="text-muted">0 / 500</small>
+                        </div>
                     </div>
 
 <div class="col-md-12">
                         <label class="form-label fw-bold text-dark">Foto del producto</label>
                         <div class="pf-foto-row mb-2">
-                            <div class="pf-foto-preview">
+                            <div class="pf-foto-preview" id="fotoPreviewWrap">
                                 <img th:if="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                     id="fotoPreviewImg"
                                      th:src="${producto.foto}" class="pf-foto-img" alt="Foto actual" />
                                 <i th:unless="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
+                                   id="fotoPreviewPlaceholder"
                                    class="fas fa-image pf-foto-placeholder"></i>
                             </div>
                             <div class="flex-grow-1">
@@ -93,13 +102,14 @@
                                 </div>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-image"></i></span>
-                                    <input type="file" class="form-control" name="foto" accept="image/*">
+                                    <input type="file" id="fotoInput" class="form-control" name="foto" accept="image/*">
                                 </div>
-                                <div class="text-muted small mt-1">Sube una imagen para reemplazar la actual.</div>
+                                <div id="fotoError" class="invalid-feedback d-none"></div>
+                                <div class="text-muted small mt-1">Sube una imagen para reemplazar la actual. Máx. 2MB (JPG, PNG, WEBP o GIF).</div>
                                 <div th:if="${producto != null and producto.foto != null and !#strings.isEmpty(producto.foto)}"
                                      class="form-check mt-2">
-                                    <input class="form-check-input" type="checkbox" name="eliminarFoto" value="true" id="eliminarFoto">
-                                    <label class="form-check-label small" for="eliminarFoto">Eliminar foto actual</label>
+                                    <input class="form-check-input" type="checkbox" name="eliminarFoto" value="true" id="eliminarFotoCheck">
+                                    <label class="form-check-label small" for="eliminarFotoCheck">Eliminar foto actual</label>
                                 </div>
                             </div>
                         </div>
@@ -112,7 +122,7 @@
 
                 <div class="d-flex justify-content-between">
                     <a class="btn btn-outline-secondary" th:href="@{/vendedor/productos}">Cancelar</a>
-                    <button type="submit" class="btn btn-primary shadow-sm">
+                    <button type="submit" id="btnGuardarProducto" class="btn btn-primary shadow-sm">
                         <i class="fas fa-save me-2"></i> Guardar
                     </button>
                 </div>
@@ -120,7 +130,8 @@
             </form>
         </div>
     </div>
+
+    <script th:src="@{/Js/producto-form.vendedor.js}"></script>
 </div>
 </body>
 </html>
-

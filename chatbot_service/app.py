@@ -81,7 +81,7 @@ MAX_HISTORY_MESSAGES = parse_history_limit(os.getenv("CHATBOT_HISTORY_LIMIT", "1
 
 chat_histories = defaultdict(lambda: deque(maxlen=MAX_HISTORY_MESSAGES))
 session_memory = defaultdict(dict)
-APP_VERSION = "2026-05-31-chatbot-natural-v4"
+APP_VERSION = "2026-07-19-chatbot-diagnostico-v5"
 
 
 INTENT_KEYWORDS = {
@@ -158,8 +158,8 @@ RESPONSE_BANK = {
         "Puedo revisar el resumen del sistema si Spring Boot esta encendido. Dame un momento y te comparto solo los datos disponibles.",
     ],
     "hours": [
-        f"Con gusto {SMILE}. Nuestro horario habitual es de lunes a sabado de 8:00 a.m. a 7:00 p.m.",
-        "Atendemos normalmente de lunes a sabado de 8:00 a.m. a 7:00 p.m. Si es una urgencia, conviene comunicarse directamente con la clinica.",
+        f"Con gusto {SMILE}. Nuestro horario habitual es de lunes a sabado de 8:00 a.m. a 22:00 p.m.",
+        "Atendemos normalmente de lunes a sabado de 8:00 a.m. a 22:00 p.m. Si es una urgencia, conviene comunicarse directamente con la clinica veterinaria.",
     ],
     "feeding": [
         "La alimentacion depende de especie, edad, peso y salud. En general, evita chocolate, cebolla, uvas, huesos cocidos y comida muy condimentada.",
@@ -592,6 +592,321 @@ def chat():
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         )
+
+
+DIAGNOSTIC_SYSTEM_PROMPT = """
+Eres un sistema de apoyo a triaje veterinario para Veterinaria Pet Clinic.
+A partir de datos clinicos basicos (especie, edad, temperatura, sintomas) generas una orientacion
+preliminar para el personal de recepcion, NUNCA un diagnostico medico definitivo.
+
+Reglas clinicas:
+- Usa siempre lenguaje de probabilidad ("posible", "sugiere", "podria tratarse de").
+- No indiques medicamentos, dosis ni tratamientos especificos.
+- Si los sintomas son compatibles con una emergencia (convulsiones, sangrado, dificultad
+  respiratoria, intoxicacion, colapso, no puede levantarse), la confianza debe ser alta (85-98)
+  y las recomendaciones deben priorizar atencion veterinaria inmediata.
+- Si los datos son insuficientes o muy genericos, usa una confianza baja (40-60) y recomienda
+  examen fisico presencial.
+
+Formato de salida:
+Responde EXCLUSIVAMENTE con un objeto JSON valido, sin texto adicional, sin backticks ni
+comentarios, con exactamente esta forma:
+{"titulo": "string corto", "confianza": numero_entre_0_y_100, "justificacion": "string breve", "recomendaciones": ["string", "string", "string"]}
+""".strip()
+
+
+def build_diagnostic_prompt(especie, edad, temperatura, sintomas):
+    return f"""
+Especie: {especie or "no especificada"}
+Edad aproximada (anios): {edad or "no especificada"}
+Temperatura corporal (C): {temperatura or "no registrada"}
+Sintomas observados: {sintomas}
+
+Genera la orientacion preliminar en el formato JSON indicado.
+""".strip()
+
+
+def normalize_diagnosis(data):
+    if not isinstance(data, dict):
+        return None
+
+    titulo = str(data.get("titulo") or "").strip()
+    justificacion = str(data.get("justificacion") or "").strip()
+    recomendaciones_raw = data.get("recomendaciones")
+
+    if not titulo or not justificacion or not isinstance(recomendaciones_raw, list):
+        return None
+
+    recomendaciones = [str(item).strip() for item in recomendaciones_raw if str(item).strip()][:4]
+    if not recomendaciones:
+        return None
+
+    try:
+        confianza = int(round(float(data.get("confianza", 65))))
+    except (TypeError, ValueError):
+        confianza = 65
+    confianza = max(30, min(confianza, 98))
+
+    return {
+        "titulo": titulo,
+        "confianza": confianza,
+        "justificacion": justificacion,
+        "recomendaciones": recomendaciones,
+    }
+
+
+def generate_diagnosis_with_gemini(especie, edad, temperatura, sintomas):
+    if not GEMINI_API_KEY:
+        return None
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+    )
+    payload = {
+        "systemInstruction": {"parts": [{"text": DIAGNOSTIC_SYSTEM_PROMPT}]},
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": build_diagnostic_prompt(especie, edad, temperatura, sintomas)}],
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.4,
+            "maxOutputTokens": 400,
+            "responseMimeType": "application/json",
+        },
+    }
+    request_data = json.dumps(payload).encode("utf-8")
+    gemini_request = urllib.request.Request(
+        url,
+        data=request_data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(gemini_request, timeout=GEMINI_TIMEOUT) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as error:
+        app.logger.warning("Gemini no respondio correctamente en diagnostico. HTTP %s", error.code)
+        return None
+    except (urllib.error.URLError, TimeoutError, ValueError) as error:
+        app.logger.warning("Gemini no disponible para diagnostico: %s", error)
+        return None
+
+    candidates = data.get("candidates", [])
+    if not candidates:
+        return None
+
+    parts = candidates[0].get("content", {}).get("parts", [])
+    text = "\n".join(part.get("text", "") for part in parts).strip()
+    if not text:
+        return None
+
+    if text.startswith("```"):
+        text = re.sub(r"^```(json)?", "", text).strip()
+        text = re.sub(r"```$", "", text).strip()
+
+    try:
+        parsed = json.loads(text)
+    except ValueError:
+        app.logger.warning("Gemini devolvio un JSON invalido en diagnostico.")
+        return None
+
+    return normalize_diagnosis(parsed)
+
+
+def diagnosis_fallback(especie, sintomas):
+    normalized = normalize_text(sintomas)
+    especie_normalizada = normalize_text(especie or "")
+
+    if has_intent_keyword(normalized, "emergency"):
+        return {
+            "titulo": "Posible cuadro de emergencia",
+            "confianza": 92,
+            "justificacion": (
+                "Los sintomas descritos son compatibles con una urgencia veterinaria y requieren "
+                "evaluacion presencial inmediata."
+            ),
+            "recomendaciones": [
+                "Trasladar a la mascota de inmediato a la clinica.",
+                "No administrar medicamentos sin indicacion veterinaria.",
+                "Avisar al area de emergencias para priorizar la atencion.",
+            ],
+        }
+
+    if has_any_keyword(normalized, ("vomito", "vomita", "vomitos", "diarrea")):
+        es_perro = "perro" in especie_normalizada or "canino" in especie_normalizada
+        return {
+            "titulo": "Posible Gastroenteritis" + (" (descartar Parvovirus)" if es_perro else ""),
+            "confianza": 82 if es_perro else 76,
+            "justificacion": (
+                "Los sintomas gastrointestinales descritos sugieren inflamacion del tracto "
+                "digestivo; en cachorros no vacunados conviene descartar causas infecciosas."
+            ),
+            "recomendaciones": [
+                "Agendar consulta lo antes posible.",
+                "Suspender alimento solido por unas horas y mantener hidratacion.",
+                "Observar si aparece sangre, fiebre o decaimiento marcado.",
+            ],
+        }
+
+    if has_any_keyword(normalized, ("cojea", "pata", "hueso", "fractura")):
+        return {
+            "titulo": "Posible Traumatismo Musculoesqueletico",
+            "confianza": 78,
+            "justificacion": (
+                "La dificultad para apoyar o mover una extremidad sugiere una lesion articular, "
+                "muscular u osea."
+            ),
+            "recomendaciones": [
+                "Mantener a la mascota en reposo y evitar que salte o corra.",
+                "Agendar evaluacion con radiografia si el signo persiste.",
+                "Evitar manipular la zona afectada.",
+            ],
+        }
+
+    if has_any_keyword(normalized, ("rasca", "picazon", "picor", "pulga", "garrapata")):
+        return {
+            "titulo": "Posible Dermatitis Alergica o Parasitaria",
+            "confianza": 74,
+            "justificacion": (
+                "El rascado frecuente y las alteraciones en piel suelen asociarse a parasitos "
+                "externos o alergias."
+            ),
+            "recomendaciones": [
+                "Revisar el pelaje en busca de pulgas o garrapatas.",
+                "Agendar consulta de dermatologia.",
+                "Evitar banarlo hasta la evaluacion.",
+            ],
+        }
+
+    if has_any_keyword(normalized, ("fiebre", "decaido", "decaimiento", "letargo")):
+        return {
+            "titulo": "Posible Cuadro Infeccioso o Inflamatorio",
+            "confianza": 68,
+            "justificacion": (
+                "La combinacion de fiebre y decaimiento indica una respuesta inmunologica activa "
+                "que conviene investigar."
+            ),
+            "recomendaciones": [
+                "Agendar consulta general en las proximas horas.",
+                "Controlar la temperatura periodicamente.",
+                "Mantener a la mascota hidratada y en reposo.",
+            ],
+        }
+
+    return {
+        "titulo": "Cuadro clinico no concluyente",
+        "confianza": 55,
+        "justificacion": (
+            "Los sintomas descritos son generales; se requiere examen fisico para orientar el "
+            "diagnostico."
+        ),
+        "recomendaciones": [
+            "Agendar cita de revision general.",
+            "Observar la evolucion durante las proximas horas.",
+        ],
+    }
+
+
+COMMON_SYMPTOM_WORDS = {
+    "el", "la", "los", "las", "un", "una", "no", "si", "es", "esta", "esto",
+    "con", "sin", "de", "del", "en", "por", "para", "mas", "muy", "poco",
+    "come", "comer", "vomita", "vomito", "vomitos", "diarrea", "fiebre", "dolor",
+    "duele", "tos", "tose", "cojea", "rasca", "pata", "patas", "piel", "pelo",
+    "sangre", "heces", "orina", "agua", "apetito", "letargo", "decaido",
+    "decaida", "hinchado", "hinchada", "tiene", "presenta", "nota", "temblor",
+    "convulsion", "convulsiones", "herida", "mascota", "perro", "gato",
+    "desde", "hace", "dias", "dia", "horas", "hoy", "ayer", "come", "toma",
+    "respira", "camina", "juega", "duerme", "come", "picazon", "ojos", "oido",
+    "oidos", "nariz", "boca", "cola", "estomago", "barriga",
+}
+
+
+def has_repeating_pattern(word):
+    length = len(word)
+    for unit_len in range(1, length // 2 + 1):
+        if length % unit_len != 0:
+            continue
+        unit = word[:unit_len]
+        if unit * (length // unit_len) == word:
+            return True
+    return False
+
+
+def looks_like_gibberish(text):
+    normalized = normalize_text(text)
+    words = re.findall(r"[a-z]+", normalized)
+    letters_only = "".join(words)
+
+    if len(letters_only) < 3:
+        return True
+
+    if any(word in COMMON_SYMPTOM_WORDS for word in words):
+        return False
+
+    most_common_count = max(letters_only.count(ch) for ch in set(letters_only))
+    if most_common_count / len(letters_only) > 0.7:
+        return True
+
+    if any(len(word) >= 4 and has_repeating_pattern(word) for word in words):
+        return True
+
+    keyboard_patterns = ("asdf", "qwer", "zxcv", "wasd", "jkl;")
+    if any(pattern in normalized for pattern in keyboard_patterns):
+        return True
+
+    vowels = sum(1 for ch in letters_only if ch in "aeiou")
+    vowel_ratio = vowels / len(letters_only)
+    has_long_consonant_run = re.search(r"[bcdfghjklmnpqrstvwxyz]{4,}", normalized) is not None
+
+    if vowel_ratio < 0.2:
+        return True
+    if has_long_consonant_run and len(words) <= 2:
+        return True
+
+    return False
+
+
+@app.post("/diagnostico")
+def diagnostico():
+    payload = request.get_json(silent=True) or {}
+    especie = str(payload.get("especie", "")).strip()
+    edad = str(payload.get("edad", "")).strip()
+    temperatura = str(payload.get("temperatura", "")).strip()
+    sintomas = str(payload.get("sintomas", "")).strip()
+
+    if not sintomas:
+        return jsonify({"error": "El campo 'sintomas' es obligatorio."}), 400
+
+    if looks_like_gibberish(sintomas):
+        return jsonify({
+            "titulo": "Descripcion no reconocida",
+            "confianza": 0,
+            "justificacion": (
+                "El texto ingresado en 'Sintomas observados' no parece describir signos "
+                "clinicos reales. Vuelve a describir lo que observas en la mascota, por "
+                "ejemplo: vomitos, decaimiento, perdida de apetito, cojera, etc."
+            ),
+            "recomendaciones": [
+                "Redacta los sintomas con tus propias palabras.",
+                "Evita textos al azar o pruebas de escritura en este campo.",
+            ],
+            "provider": "validation",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+
+    result = generate_diagnosis_with_gemini(especie, edad, temperatura, sintomas)
+    provider = "gemini"
+    if not result:
+        result = diagnosis_fallback(especie, sintomas)
+        provider = "local-fallback"
+
+    result["provider"] = provider
+    result["timestamp"] = datetime.now(timezone.utc).isoformat()
+    return jsonify(result)
 
 
 @app.post("/reset")

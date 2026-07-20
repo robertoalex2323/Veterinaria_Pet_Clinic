@@ -1,3 +1,4 @@
+
 .admin-sidebar {
     background: linear-gradient(180deg, #123C69 0%, #0B2545 100%);
 }
@@ -180,8 +181,21 @@
 
 .admin-charts {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 16px;
+    align-items: start;
+}
+
+.admin-chart-box {
+    position: relative;
+    width: min(100%, 420px);
+    height: 280px;
+    margin: 0 auto;
+}
+
+.admin-chart-box canvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .stat-users {
@@ -344,5 +358,10 @@
     .admin-form-grid,
     .admin-inline-form {
         grid-template-columns: 1fr;
+    }
+
+    .admin-chart-box {
+        height: 240px;
+        max-width: 320px;
     }
 }

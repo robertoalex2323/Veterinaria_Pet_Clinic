@@ -1,4 +1,3 @@
-
 :root{
   --pc-border: rgba(226,232,240,0.85);
   --pc-bg: rgba(255,255,255,0.70);
@@ -298,8 +297,23 @@
   margin-top: 0.35rem;
 }
 
+/* Nuestro JS controla la visibilidad con la clase d-none (el input no es
+   hermano directo por el input-group, así que la regla nativa de Bootstrap
+   ".is-invalid ~ .invalid-feedback" no aplica aquí). */
+.producto-card .invalid-feedback:not(.d-none){
+  display: block;
+}
+
 .producto-card .form-control.is-invalid{
   border-color: rgba(220,38,38,0.55) !important;
+}
+
+/* Contador de caracteres de la descripción */
+.producto-card #descripcionCounter{
+  font-size: 0.78rem;
+}
+.producto-card #descripcionCounter.text-danger{
+  font-weight: 600;
 }
 
 @media (max-width: 480px){
@@ -368,5 +382,3 @@
 .producto-actions .btn-outline-secondary{
   background: rgba(255,255,255,0.45);
 }
-
-

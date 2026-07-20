@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,6 +49,7 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.FarmaceuticoServi
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MedicamentoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.PdfReportService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SeguimientoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SignosVitalesService;
 
@@ -68,6 +72,7 @@ public class VeterinariaController {
     private final MedicamentoService medicamentoService;
     private final FarmaceuticoService farmaceuticoService;
     private final NotificacionService notificacionService;
+    private final PdfReportService pdfReportService;
     private final PasswordEncoder passwordEncoder;
 
     public VeterinariaController(CitaRepository citaRepository,
@@ -82,6 +87,7 @@ public class VeterinariaController {
                                   MedicamentoService medicamentoService,
                                   FarmaceuticoService farmaceuticoService,
                                   NotificacionService notificacionService,
+                                  PdfReportService pdfReportService,
                                   PasswordEncoder passwordEncoder) {
         this.citaRepository = citaRepository;
         this.citaService = citaService;
@@ -95,6 +101,7 @@ public class VeterinariaController {
         this.medicamentoService = medicamentoService;
         this.farmaceuticoService = farmaceuticoService;
         this.notificacionService = notificacionService;
+        this.pdfReportService = pdfReportService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -398,7 +405,9 @@ public String reportes(
     if (mascotaSeleccionada != null) {
         Long id = mascotaSeleccionada.getId();
 
-        List<Consulta> consultas = consultaService.buscarPorMascota(id);
+        List<Consulta> consultas = new ArrayList<>(consultaService.buscarPorMascota(id));
+        consultas.sort(Comparator.comparing(Consulta::getFechaConsulta,
+                Comparator.nullsLast(Comparator.reverseOrder())));
         List<SignosVitales> signos = signosVitalesService.ultimosRegistrosDeMascota(id, 10);
         List<AlertaCritica> alertas = alertaCriticaService.buscarPorMascota(id).stream()
                 .filter(a -> !"RESUELTA".equalsIgnoreCase(a.getEstado()))
@@ -429,6 +438,39 @@ public String reportes(
 
     return "Veterinaria/reportes";
 }
+
+    @GetMapping("/reportes/pdf")
+    public ResponseEntity<byte[]> descargarReportePdf(@RequestParam Long mascotaId,
+                                                      @RequestParam(defaultValue = "consulta") String tipo) {
+        if (!List.of("consulta", "tratamiento", "completo").contains(tipo)) {
+            tipo = "consulta";
+        }
+
+        Mascota mascota = mascotaService.buscarPorIdConCliente(mascotaId);
+        List<Consulta> consultas = new ArrayList<>(consultaService.buscarPorMascota(mascotaId));
+        consultas.sort(Comparator.comparing(Consulta::getFechaConsulta,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+        List<SignosVitales> signos = signosVitalesService.ultimosRegistrosDeMascota(mascotaId, 10);
+        List<AlertaCritica> alertas = alertaCriticaService.buscarPorMascota(mascotaId).stream()
+                .filter(alerta -> !"RESUELTA".equalsIgnoreCase(alerta.getEstado()))
+                .toList();
+
+        SignosVitales ultimoSigno = signos == null || signos.isEmpty() ? null : signos.get(0);
+        byte[] pdf = pdfReportService.generarReporteClinico(
+                mascota,
+                tipo,
+                consultas != null ? consultas : List.of(),
+                ultimoSigno,
+                alertas
+        );
+
+        String nombreArchivo = "reporte-" + tipo + "-" + mascota.getId() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.attachment().filename(nombreArchivo).build());
+        headers.setContentLength(pdf.length);
+        return ResponseEntity.ok().headers(headers).body(pdf);
+    }
 
     // ============ INICIAR TRIAJE ============
     @PostMapping("/pacientes/triaje")

@@ -10,7 +10,7 @@
   const descripcionCounter = document.getElementById('descripcionCounter');
   const fotoInput = document.getElementById('fotoInput');
   const fotoError = document.getElementById('fotoError');
-  const fotoPreviewImg = document.getElementById('fotoPreviewImg');
+  let fotoPreviewImg = document.getElementById('fotoPreviewImg');
   const fotoPreviewPlaceholder = document.getElementById('fotoPreviewPlaceholder');
   const eliminarFotoCheck = document.getElementById('eliminarFotoCheck');
   const btnGuardar = document.getElementById('btnGuardarProducto');
@@ -34,6 +34,7 @@
     img.id = 'fotoPreviewImg';
     img.className = 'pf-foto-img';
     wrap.prepend(img);
+    fotoPreviewImg = img;
     return img;
   }
 

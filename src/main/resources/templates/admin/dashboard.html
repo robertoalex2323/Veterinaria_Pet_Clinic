@@ -144,8 +144,12 @@
                 <span>Usuarios y citas</span>
             </div>
             <div class="admin-charts">
-                <canvas id="rolesChart" height="190"></canvas>
-                <canvas id="citasChart" height="190"></canvas>
+                <div class="admin-chart-box">
+                    <canvas id="rolesChart"></canvas>
+                </div>
+                <div class="admin-chart-box">
+                    <canvas id="citasChart"></canvas>
+                </div>
             </div>
         </article>
     </section>
@@ -153,42 +157,64 @@
     <div th:replace="~{fragments/chatbot_widget :: petClinicChatbot}"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script th:inline="javascript">
-        const usuariosPorRol = /*[[${usuariosPorRol}]]*/ {};
-        const citasPorEstado = /*[[${citasPorEstado}]]*/ {};
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+    const usuariosPorRol = /*[[${usuariosPorRol}]]*/ {};
+    const citasPorEstado = /*[[${citasPorEstado}]]*/ {};
 
-        function refreshClock() {
-            const now = new Date();
-            document.getElementById('adminClock').textContent = now.toLocaleTimeString('es-PE', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+    function refreshClock() {
+        const now = new Date();
+        document.getElementById('adminClock').textContent = now.toLocaleTimeString('es-PE', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+    refreshClock();
+    setInterval(refreshClock, 30000);
+
+    function renderDoughnut(id, data, label, colors) {
+        const canvas = document.getElementById(id);
+        const labels = Object.keys(data || {});
+        if (!canvas || labels.length === 0) {
+            return;
         }
-        refreshClock();
-        setInterval(refreshClock, 30000);
-
-        function renderDoughnut(id, data, label, colors) {
-            const canvas = document.getElementById(id);
-            const labels = Object.keys(data || {});
-            if (!canvas || labels.length === 0) {
-                return;
-            }
-            new Chart(canvas, {
-                type: 'doughnut',
-                data: {
-                    labels,
-                    datasets: [{ label, data: labels.map(key => data[key]), backgroundColor: colors }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { position: 'bottom' } }
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{ label, data: labels.map(key => data[key]), backgroundColor: colors }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '62%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 14,
+                            padding: 12,
+                            font: { size: 11 }
+                        }
+                    }
                 }
-            });
-        }
+            }
+        });
+    }
 
-        renderDoughnut('rolesChart', usuariosPorRol, 'Usuarios por rol', ['#2563eb', '#0f766e', '#b45309', '#be123c', '#7c3aed']);
-        renderDoughnut('citasChart', citasPorEstado, 'Citas por estado', ['#0ea5e9', '#22c55e', '#f59e0b', '#ef4444', '#64748b']);
-    </script>
-</div>
-</body>
-</html>
+    // Se llama al cargar el DOM: esto es lo que faltaba
+    document.addEventListener('DOMContentLoaded', function () {
+        renderDoughnut(
+            'rolesChart',
+            usuariosPorRol,
+            'Usuarios por rol',
+            ['#1e3a5f', '#f4c430', '#4CAF50', '#e74c3c', '#3498db', '#9b59b6']
+        );
+        renderDoughnut(
+            'citasChart',
+            citasPorEstado,
+            'Citas por estado',
+            ['#f4c430', '#4CAF50', '#e74c3c', '#3498db', '#9b59b6', '#1e3a5f']
+        );
+    });
+</script> 
