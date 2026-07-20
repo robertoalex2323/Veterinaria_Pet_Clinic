@@ -241,7 +241,7 @@ public class NotificacionService {
     }
 
 
-    public void enviarEmailConAdjunto(String email, String asunto, String mensaje, byte[] adjunto, String nombreArchivo) {
+    public boolean enviarEmailConAdjunto(String email, String asunto, String mensaje, byte[] adjunto, String nombreArchivo) {
         if (email != null && !email.trim().isEmpty() && mailSender != null) {
             try {
                 MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -254,23 +254,32 @@ public class NotificacionService {
 
                 mailSender.send(mimeMessage);
                 log.info("✅ Correo con PDF enviado a: {}", email);
+                return true;
             } catch (Exception e) {
                 log.error("❌ Error al enviar correo con adjunto a {}: {}", email, e.getMessage());
+                return false;
             }
         } else {
             log.warn("⚠️ No se pudo enviar el correo con adjunto. Email: {}, MailSender configurado: {}", 
                 email, (mailSender != null));
+            return false;
         }
     }
 
-    public void enviarVentaConComprobante(Venta venta, byte[] pdf) {
+    /**
+     * Envía el comprobante de una venta al correo del cliente.
+     * @return true si el correo realmente se entregó al servidor SMTP, false si falló
+     *         (sin email registrado, correo no configurado, o error al enviar).
+     */
+    public boolean enviarVentaConComprobante(Venta venta, byte[] pdf) {
         if (venta.getCliente() == null || venta.getCliente().getEmail() == null || venta.getCliente().getEmail().isBlank()) {
             log.warn("⚠️ No se puede enviar comprobante: El cliente no tiene un email registrado.");
             addUINotification("warning", "Venta registrada, pero el cliente no tiene email para el comprobante.");
-            return;
+            return false;
         }
 
         String nombreCliente = venta.getCliente().getNombre();
+        String emailCliente = venta.getCliente().getEmail();
         String asunto = "Su comprobante de compra - Pet Clinic";
         String mensaje = String.format("""
                 Estimado(a) %s,
@@ -283,8 +292,14 @@ public class NotificacionService {
 
         String nombreArchivo = "Comprobante_PetClinic_" + venta.getId() + ".pdf";
 
-        enviarEmailConAdjunto(venta.getCliente().getEmail(), asunto, mensaje, pdf, nombreArchivo);
-        addUINotification("success", "Comprobante enviado con éxito a: " + nombreCliente);
+        boolean enviado = enviarEmailConAdjunto(emailCliente, asunto, mensaje, pdf, nombreArchivo);
+
+        if (enviado) {
+            addUINotification("success", "Comprobante enviado y entregado al correo de " + nombreCliente + " (" + emailCliente + ")");
+        } else {
+            addUINotification("error", "No se pudo enviar el comprobante al correo de " + nombreCliente + ". Verifica la configuración de correo e inténtalo nuevamente.");
+        }
+        return enviado;
     }
 
     @Scheduled(cron = "0 0 8 * * ?")

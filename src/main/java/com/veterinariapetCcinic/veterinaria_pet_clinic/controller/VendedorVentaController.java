@@ -161,9 +161,18 @@ public class VendedorVentaController {
             Venta ventaGuardada = ventaService.procesarVenta(venta);
 
             byte[] pdf = ventaService.generarBoletaPDFReal(ventaGuardada.getId());
-            notificacionService.enviarVentaConComprobante(ventaGuardada, pdf);
+            boolean tieneEmail = ventaGuardada.getCliente() != null
+                    && ventaGuardada.getCliente().getEmail() != null
+                    && !ventaGuardada.getCliente().getEmail().isBlank();
+            boolean correoEnviado = notificacionService.enviarVentaConComprobante(ventaGuardada, pdf);
 
-            redirectAttributes.addFlashAttribute("success", "Venta registrada correctamente. Se envió el comprobante al correo del cliente (si existe)." );
+            if (!tieneEmail) {
+                redirectAttributes.addFlashAttribute("success", "Venta registrada correctamente. El cliente no tiene correo registrado, no se envió comprobante por email.");
+            } else if (correoEnviado) {
+                redirectAttributes.addFlashAttribute("success", "Venta registrada correctamente. El comprobante fue enviado y entregado al correo del cliente.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Venta registrada, pero no se pudo enviar el comprobante al correo del cliente.");
+            }
             return "redirect:/vendedor/ventas/historial";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage() != null ? e.getMessage() : "Error al registrar la venta");
@@ -276,10 +285,20 @@ public class VendedorVentaController {
 
             byte[] pdf = ventaService.generarBoletaPDFReal(ventaId);
 
-            notificacionService.enviarVentaConComprobante(venta, pdf);
+            boolean tieneEmail = venta.getCliente() != null
+                    && venta.getCliente().getEmail() != null
+                    && !venta.getCliente().getEmail().isBlank();
+            boolean correoEnviado = notificacionService.enviarVentaConComprobante(venta, pdf);
 
-            redirectAttributes.addFlashAttribute("success",
-                    "Comprobante generado y enviado al correo del cliente (si existe).");
+            if (!tieneEmail) {
+                redirectAttributes.addFlashAttribute("error", "El cliente de esta venta no tiene correo registrado, no se pudo enviar el comprobante.");
+            } else if (correoEnviado) {
+                redirectAttributes.addFlashAttribute("success",
+                        "Comprobante generado y entregado al correo del cliente: " + venta.getCliente().getEmail());
+            } else {
+                redirectAttributes.addFlashAttribute("error",
+                        "El comprobante se generó, pero no se pudo enviar al correo del cliente. Inténtalo nuevamente.");
+            }
             return "redirect:/vendedor/ventas/emitir";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error",

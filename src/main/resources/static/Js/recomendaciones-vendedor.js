@@ -78,7 +78,7 @@
       return;
     }
     resultsInfo.classList.remove('d-none');
-    resultsInfo.textContent = `${count} producto${count === 1 ? '' : 's'} recomendado${count === 1 ? '' : 's'}`;
+    resultsInfo.innerHTML = `<span class="rc-count-pill">${count}</span> producto${count === 1 ? '' : 's'} recomendado${count === 1 ? '' : 's'}`;
   }
 
   function render(items) {
@@ -96,27 +96,43 @@
     for (const p of items) {
       const card = document.createElement('div');
       card.className = 'col-md-4 mb-3';
+      const confianzaPct = typeof p.confianza === 'number' ? p.confianza : null;
       card.innerHTML = `
         <div class="card rc-product-card">
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
+            <div class="rc-product-header">
               <div>
-                <h5 class="mb-1 text-dark fw-bold">${escapeHtml(p.nombre)}</h5>
-                <span class="badge rc-category-badge mb-2">${escapeHtml(p.categoria || 'Sin categoría')}</span>
+                <p class="rc-product-name">${escapeHtml(p.nombre)}</p>
+                <span class="rc-category-badge">
+                  <i class="fas fa-tag" style="font-size:0.6rem;"></i>
+                  ${escapeHtml(p.categoria || 'Sin categoría')}
+                </span>
               </div>
-              <div class="text-end">
-                <div class="rc-price fs-5">S/ ${escapeHtml(p.precioFormateado)}</div>
+              <div class="rc-price-block">
+                <span class="rc-price-label">Precio</span>
+                <div class="rc-price">S/ ${escapeHtml(p.precioFormateado)}</div>
               </div>
             </div>
-            
-            ${typeof p.confianza === 'number' ? `
-              <div class="mt-2 rc-confianza-bar">
-                <div class="rc-confianza-fill" style="width:${p.confianza}%"></div>
+
+            ${confianzaPct !== null ? `
+              <div class="rc-confianza-wrap">
+                <div class="rc-confianza-label">
+                  <span><i class="fas fa-brain me-1"></i> Coincidencia IA</span>
+                  <span class="rc-confianza-pct">${confianzaPct}%</span>
+                </div>
+                <div class="rc-confianza-bar">
+                  <div class="rc-confianza-fill" style="width:${confianzaPct}%"></div>
+                </div>
               </div>` : ''}
-            ${p.razon ? `<div class="mt-2 small px-3 py-2 rc-reason"><i class="fas fa-robot me-2"></i>${escapeHtml(p.razon)}</div>` : ''}
+
+            ${p.razon ? `
+              <div class="rc-reason">
+                <i class="fas fa-robot"></i>
+                <span>${escapeHtml(p.razon)}</span>
+              </div>` : ''}
 
             <div class="mt-3 d-grid">
-              <button type="button" class="btn btn-success btn-sm rc-mark-exitosa"
+              <button type="button" class="btn rc-mark-exitosa"
                 data-producto-id="${escapeHtml(p.id)}"
                 data-categoria="${escapeHtml(p.categoria || '')}"
                 data-razon="${escapeHtml(p.razon || '')}">
@@ -238,10 +254,16 @@
       updateResultsInfo(0);
       grid.innerHTML = `
         <div class="col-12">
-          <div class="rc-empty-state text-center text-muted py-5">
-            <i class="fas fa-wand-magic-sparkles fa-2x mb-3 d-block"></i>
-            Elige una categoría o preferencia y presiona <strong>&ldquo;Generar recomendaciones&rdquo;</strong>
-            para que la IA sugiera productos del catálogo.
+          <div class="rc-empty-state">
+            <div class="rc-empty-icon">
+              <i class="fas fa-wand-magic-sparkles"></i>
+            </div>
+            <p class="mb-1 fw-bold text-dark">¿Qué producto recomiendas hoy?</p>
+            <p class="text-muted small mb-0">
+              Elige una categoría o preferencia y presiona
+              <strong>"Generar recomendaciones"</strong>
+              para que la IA sugiera productos del catálogo.
+            </p>
           </div>
         </div>`;
     });
