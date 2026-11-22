@@ -4,103 +4,204 @@
 
 <head>
     <title>Gestión de Clientes - Recepcionista</title>
-    <link rel="stylesheet" th:href="@{/css/clientes.css}">
 </head>
 
 <body>
-    <div th:fragment="content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <div th:fragment="content" class="clientes-page">
+        <!-- Encabezado -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <div>
-                <h2 class="mb-0"><i class="fas fa-users text-primary"></i> Clientes</h2>
-                <p class="text-muted mb-0">Gestión de clientes de la veterinaria</p>
+                <h2 class="mb-1"><i class="fas fa-users text-primary me-2"></i>Clientes</h2>
+                <p class="text-muted mb-0">Dueños de mascotas registrados en la veterinaria</p>
             </div>
-            <div>
-                <a href="/recepcionista/clientes/nuevo" class="btn btn-primary shadow-sm">
-                    <i class="fas fa-plus fa-sm text-white-50"></i> Nuevo Cliente
-                </a>
-            </div>
+            <a href="/recepcionista/clientes/nuevo" class="btn btn-primary btn-lg shadow-sm px-4">
+                <i class="fas fa-user-plus me-2"></i>Nuevo cliente
+            </a>
         </div>
 
-        <!-- Mensajes de alerta -->
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <!-- Error (los mensajes de éxito se muestran como notificación) -->
         <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
 
-        <div class="card mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Lista de Clientes</h6>
-                <form class="d-flex" th:action="@{/recepcionista/clientes}" method="get">
-                    <div class="input-group">
-                        <input type="text" class="form-control bg-light border-0 small"
-                            placeholder="Buscar por nombre..." aria-label="Search" name="buscar" th:value="${buscar}">
-                        <button class="btn btn-primary" type="submit">
-                            <i class="fas fa-search fa-sm"></i>
-                        </button>
-                        <a th:if="${buscar != null and !buscar.empty}" th:href="@{/recepcionista/clientes}"
-                            class="btn btn-secondary">
-                            <i class="fas fa-times"></i>
-                        </a>
+        <!-- Indicadores -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="cl-kpi">
+                    <span class="cl-kpi-icon kpi-blue"><i class="fas fa-users"></i></span>
+                    <div>
+                        <div class="cl-kpi-label">Clientes registrados</div>
+                        <div class="cl-kpi-value" th:text="${#lists.size(clientes)}">0</div>
                     </div>
-                </form>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Teléfono</th>
-                                <th>Email</th>
-                                <th>Fecha Registro</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="cliente : ${clientes}">
-                                <td th:text="${cliente.id}">1</td>
-                                <td class="fw-bold text-dark" th:text="${cliente.nombre}">Juan Perez</td>
-                                <td th:text="${cliente.telefono}">987654321</td>
-                                <td th:text="${cliente.email != null ? cliente.email : '-'}">juan@gmail.com</td>
-                                <td th:text="${#temporals.format(cliente.fechaRegistro, 'dd/MM/yyyy')}">01/01/2026</td>
-                                <td class="text-center">
-                                    <a th:href="@{/recepcionista/clientes/ver/{id}(id=${cliente.id})}"
-                                        class="btn btn-info btn-sm text-white" title="Ver Detalles">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a th:href="@{/recepcionista/clientes/editar/{id}(id=${cliente.id})}"
-                                        class="btn btn-warning btn-sm text-white" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="javascript:void(0)" class="btn btn-danger btn-sm" title="Eliminar"
-                                        th:onclick="'confirmarEliminacion(' + ${cliente.id} + ')'">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr th:if="${clientes.empty}">
-                                <td colspan="6" class="text-center py-4 text-muted">
-                                    <i class="fas fa-users-slash fa-3x mb-3 d-block opacity-50"></i>
-                                    No se encontraron clientes registrados.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="col-sm-6 col-xl-3">
+                <div class="cl-kpi">
+                    <span class="cl-kpi-icon kpi-green"><i class="fas fa-envelope-open-text"></i></span>
+                    <div>
+                        <div class="cl-kpi-label">Con correo</div>
+                        <div class="cl-kpi-value" th:text="${#lists.size(clientes.?[email != null and email != ''])}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="cl-kpi">
+                    <span class="cl-kpi-icon kpi-orange"><i class="fas fa-map-marked-alt"></i></span>
+                    <div>
+                        <div class="cl-kpi-label">Con dirección</div>
+                        <div class="cl-kpi-value" th:text="${#lists.size(clientes.?[direccion != null and direccion != ''])}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="cl-kpi">
+                    <span class="cl-kpi-icon kpi-purple"><i class="fas fa-user-check"></i></span>
+                    <div>
+                        <div class="cl-kpi-label">Sin correo</div>
+                        <div class="cl-kpi-value" th:text="${#lists.size(clientes.?[email == null or email == ''])}">0</div>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- Lista -->
+        <div class="cl-card">
+            <div class="cl-toolbar">
+                <div>
+                    <h5 class="mb-0 fw-bold">Lista de clientes</h5>
+                    <small class="text-muted"><span id="clContador" th:text="${#lists.size(clientes)}">0</span> resultados</small>
+                </div>
+                <form class="cl-search" th:action="@{/recepcionista/clientes}" method="get">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="clBuscar" name="buscar" th:value="${buscar}" autocomplete="off"
+                        placeholder="Buscar por nombre, teléfono o correo...">
+                    <a th:if="${buscar != null and !buscar.empty}" th:href="@{/recepcionista/clientes}"
+                        class="cl-search-clear" title="Limpiar búsqueda"><i class="fas fa-times"></i></a>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table cl-table align-middle mb-0" id="clTabla">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Contacto</th>
+                            <th>Dirección</th>
+                            <th>Registro</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cliente : ${clientes}" class="cl-row">
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="cl-avatar"
+                                        th:text="${cliente.nombre != null and !#strings.isEmpty(cliente.nombre) ? #strings.toUpperCase(#strings.substring(cliente.nombre, 0, 1)) : '?'}">J</span>
+                                    <div>
+                                        <a class="cl-name" th:href="@{/recepcionista/clientes/ver/{id}(id=${cliente.id})}"
+                                            th:text="${cliente.nombre}">Juan Perez</a>
+                                        <div class="small text-muted" th:text="|ID #${cliente.id}|">ID #1</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="cl-contact">
+                                    <a th:href="|https://wa.me/51${cliente.telefono}|" target="_blank" rel="noopener"
+                                        title="Escribir por WhatsApp">
+                                        <i class="fab fa-whatsapp text-success"></i>
+                                        <span th:text="${cliente.telefono}">987654321</span>
+                                    </a>
+                                    <a th:if="${cliente.email != null and cliente.email != ''}"
+                                        th:href="|mailto:${cliente.email}|">
+                                        <i class="fas fa-envelope text-primary"></i>
+                                        <span th:text="${cliente.email}">correo</span>
+                                    </a>
+                                    <span th:unless="${cliente.email != null and cliente.email != ''}" class="cl-missing">
+                                        <i class="fas fa-envelope"></i> Sin correo
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="cl-address">
+                                <a th:if="${cliente.direccion != null and cliente.latitud != null}"
+                                    th:href="|https://www.google.com/maps?q=${cliente.latitud},${cliente.longitud}|"
+                                    target="_blank" rel="noopener" title="Ver en el mapa">
+                                    <i class="fas fa-map-marker-alt text-danger"></i>
+                                    <span th:text="${cliente.direccion}">Av. Grau</span>
+                                </a>
+                                <span th:if="${cliente.direccion != null and cliente.latitud == null}">
+                                    <i class="fas fa-map-marker-alt text-muted"></i>
+                                    <span th:text="${cliente.direccion}">Av. Grau</span>
+                                </span>
+                                <span th:if="${cliente.direccion == null}" class="cl-missing">Sin dirección</span>
+                            </td>
+                            <td>
+                                <div th:text="${cliente.fechaRegistro != null ? #temporals.format(cliente.fechaRegistro, 'dd/MM/yyyy') : '-'}">01/01/2026</div>
+                                <small class="text-muted" th:text="${cliente.fechaRegistro != null ? #temporals.format(cliente.fechaRegistro, 'HH:mm') : ''}">10:00</small>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a th:href="@{/recepcionista/clientes/ver/{id}(id=${cliente.id})}"
+                                    class="cl-action act-view" title="Ver detalle"><i class="fas fa-eye"></i></a>
+                                <a th:href="@{/recepcionista/clientes/editar/{id}(id=${cliente.id})}"
+                                    class="cl-action act-edit" title="Editar"><i class="fas fa-pen"></i></a>
+                                <button type="button" class="cl-action act-delete" title="Eliminar"
+                                    th:attr="data-id=${cliente.id},data-nombre=${cliente.nombre}">
+                                    <i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                        <tr th:if="${clientes.empty}">
+                            <td colspan="5" class="text-center py-5">
+                                <div class="cl-empty-icon"><i class="fas fa-users-slash"></i></div>
+                                <h6 class="fw-bold mt-3 mb-1">No se encontraron clientes</h6>
+                                <p class="text-muted small mb-3" th:text="${buscar != null and !buscar.empty ? 'Pruebe con otra búsqueda.' : 'Registre el primer cliente de la veterinaria.'}"></p>
+                                <a href="/recepcionista/clientes/nuevo" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-user-plus me-1"></i> Nuevo cliente</a>
+                            </td>
+                        </tr>
+                        <tr id="clSinResultados" class="d-none">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="fas fa-search me-1"></i> Ningún cliente coincide con la búsqueda.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <script>
-            function confirmarEliminacion(id) {
-                if (confirm('¿Está seguro de eliminar este cliente? Esta acción no se puede deshacer.')) {
-                    window.location.href = '/recepcionista/clientes/eliminar/' + id;
-                }
-            }
+            document.addEventListener('DOMContentLoaded', function () {
+                // Filtro instantáneo mientras se escribe (Enter busca en el servidor)
+                const input = document.getElementById('clBuscar');
+                const filas = Array.from(document.querySelectorAll('#clTabla .cl-row'));
+                input.addEventListener('input', function () {
+                    const q = this.value.toLowerCase().trim();
+                    let n = 0;
+                    filas.forEach(tr => {
+                        const ok = !q || tr.textContent.toLowerCase().includes(q);
+                        tr.classList.toggle('d-none', !ok);
+                        if (ok) n++;
+                    });
+                    document.getElementById('clContador').textContent = n;
+                    document.getElementById('clSinResultados').classList.toggle('d-none', n > 0 || filas.length === 0);
+                });
+
+                // Eliminación con confirmación
+                document.querySelectorAll('.act-delete').forEach(btn => btn.addEventListener('click', function () {
+                    const id = this.dataset.id, nombre = this.dataset.nombre;
+                    const ir = () => window.location.href = '/recepcionista/clientes/eliminar/' + id;
+                    if (!window.Swal) { if (confirm('¿Eliminar al cliente ' + nombre + '?')) ir(); return; }
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '¿Eliminar cliente?',
+                        html: 'Se eliminará a <b></b> junto con sus mascotas. Esta acción no se puede deshacer.',
+                        didOpen: (el) => { el.querySelector('b').textContent = nombre; },
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#dc3545'
+                    }).then(r => r.isConfirmed && ir());
+                }));
+            });
         </script>
     </div>
 </body>

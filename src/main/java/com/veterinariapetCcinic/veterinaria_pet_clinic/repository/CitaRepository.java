@@ -51,4 +51,6 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
                                         @Param("fin") LocalDateTime fin);
 
        boolean existsByMascotaIdAndFechaHoraAndEstadoNot(Long mascotaId, LocalDateTime fechaHora, String estado);
+
+    long countByVeterinarioIdAndFechaHoraBetweenAndEstadoIn(Long veterinarioId, LocalDateTime inicio, LocalDateTime fin, List<String> estados);
 }

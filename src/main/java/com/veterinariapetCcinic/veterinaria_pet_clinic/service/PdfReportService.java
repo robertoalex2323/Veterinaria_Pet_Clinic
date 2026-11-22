@@ -338,7 +338,7 @@ public class PdfReportService {
         documento.add(thanks);
 
         Paragraph footer = new Paragraph("Este comprobante es válido como respaldo de su compra.\n" +
-                "Veterinaria Pet Clinic - Av. Principal 123 - Lima", FONT_NORMAL);
+                "Veterinaria Pet Clinic - Urb. Ignacio Merino, Mz. J, Lt. 38, II Etapa - Piura", FONT_NORMAL);
         footer.setAlignment(Element.ALIGN_CENTER);
         documento.add(footer);
 

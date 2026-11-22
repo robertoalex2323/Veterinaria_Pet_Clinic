@@ -107,6 +107,12 @@
     border: 1px solid #ffeeba;
 }
 
+.estado-espera {
+    background-color: #cfe2ff;
+    color: #084298;
+    border: 1px solid #b6d4fe;
+}
+
 .estado-cancelada {
     background-color: #f8d7da;
     color: #721c24;
@@ -120,7 +126,7 @@
 }
 
 .cita-actions {
-    width: 100px;
+    width: 190px;
     text-align: right;
 }
 

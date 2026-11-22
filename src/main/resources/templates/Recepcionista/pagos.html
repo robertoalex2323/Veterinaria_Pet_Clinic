@@ -7,262 +7,344 @@
 </head>
 
 <body>
-    <div id="content">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <div id="content" class="pagos-page">
+        <!-- Encabezado -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <div>
-                <h2 class="mb-0"><i class="fas fa-money-bill-wave text-success"></i> Control de Pagos</h2>
-                <p class="text-muted mb-0">Gestión de ingresos y facturación de la clínica</p>
+                <h2 class="mb-1"><i class="fas fa-wallet text-success me-2"></i>Control de Pagos</h2>
+                <p class="text-muted mb-0">Ingresos, comprobantes y cobros de la clínica</p>
             </div>
-            <div>
-                <!-- Ahora abre un Modal -->
-                <button type="button" class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#modalPago">
-                    <i class="fas fa-plus fa-sm text-white-50"></i> Registrar Pago
-                </button>
-            </div>
+            <button type="button" class="btn btn-success btn-lg shadow-sm px-4" data-bs-toggle="modal"
+                data-bs-target="#modalPago">
+                <i class="fas fa-plus me-2"></i>Registrar pago
+            </button>
         </div>
 
-        <!-- Alertas seguras -->
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-            <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-            <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-
-        <!-- Tabla de Pagos -->
-        <div class="pagos-card">
-            <div class="pagos-header d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold"><i class="fas fa-list me-2"></i> Historial de Pagos</h6>
-                <span class="badge bg-white text-success rounded-pill" th:text="|${#lists.size(pagos)} registros|">0
-                    registros</span>
+        <!-- KPIs -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="kpi-card">
+                    <span class="kpi-icon bg-success-soft"><i class="fas fa-coins"></i></span>
+                    <div>
+                        <div class="kpi-label">Ingresos de hoy</div>
+                        <div class="kpi-value">S/ <span
+                                th:text="${#numbers.formatDecimal(totalHoy != null ? totalHoy : 0, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+                    </div>
+                </div>
             </div>
-
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-pagos align-middle">
-                        <thead>
-                            <tr>
-                                <th>Recibo #</th>
-                                <th>Fecha y Hora</th>
-                                <th>Cliente</th>
-                                <th>Monto</th>
-                                <th>Método</th>
-                                <th>Estado</th>
-                                <th class="text-center">Cita Ref.</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="pago : ${pagos}">
-                                <td>
-                                    <span class="fw-bold text-muted"
-                                        th:text="|#${#numbers.formatInteger(pago.id, 6)}|">#000001</span>
-                                </td>
-                                <td>
-                                    <i class="far fa-calendar-alt text-muted me-1"></i>
-                                    <span
-                                        th:text="${pago.fechaPago != null ? #temporals.format(pago.fechaPago, 'dd/MM/yyyy HH:mm') : '-'}">01/01/2026</span>
-                                </td>
-                                <td>
-                                    <div class="fw-bold text-dark" th:text="${pago.cliente?.nombre}">Juan Perez</div>
-                                    <small class="text-muted" th:text="${pago.cliente?.telefono}">987654321</small>
-                                </td>
-                                <td class="monto-text">
-                                    S/ <span
-                                        th:text="${#numbers.formatDecimal(pago.monto, 1, 'COMMA', 2, 'POINT')}">150.00</span>
-                                </td>
-                                <td>
-                                    <span class="badge-metodo"
-                                        th:classappend="${pago.metodoPago == 'Efectivo' ? 'metodo-efectivo' : (pago.metodoPago == 'Tarjeta' ? 'metodo-tarjeta' : (pago.metodoPago == 'Transferencia' ? 'metodo-transferencia' : 'metodo-yape'))}"
-                                        th:text="${pago.metodoPago}">Efectivo</span>
-                                </td>
-                                <td>
-                                    <span class="badge-estado"
-                                        th:classappend="${pago.estado == 'PAGADO' ? 'estado-pagado' : (pago.estado == 'PENDIENTE' ? 'estado-pendiente' : 'estado-anulado')}"
-                                        th:text="${pago.estado}">PAGADO</span>
-                                </td>
-                                <td class="text-center">
-                                    <span th:if="${pago.cita != null}" class="badge bg-light text-dark border">
-                                        <i class="fas fa-calendar-check text-primary"></i> ID: <span
-                                            th:text="${pago.cita?.id}">1</span>
-                                    </span>
-                                    <span th:unless="${pago.cita != null}" class="text-muted small">-</span>
-                                </td>
-                                <td class="text-end">
-                                    <a th:href="@{/recepcionista/pagos/ver/{id}(id=${pago.id})}" class="btn btn-sm btn-outline-primary" title="Ver Recibo">
-                                        <i class="fas fa-file-invoice"></i>
-                                    </a>
-                                </td>
-                            </tr>
-
-                            <!-- Empty State -->
-                            <tr th:if="${#lists.isEmpty(pagos)}">
-                                <td colspan="8" class="text-center py-5">
-                                    <div class="d-inline-block bg-light rounded-circle p-4 mb-3">
-                                        <i class="fas fa-file-invoice-dollar fa-3x text-muted opacity-50"></i>
-                                    </div>
-                                    <h5 class="text-muted fw-bold">No hay pagos registrados</h5>
-                                    <p class="text-muted mb-4">Aún no se ha realizado ninguna transacción.</p>
-                                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalPago">
-                                        Registrar Primer Pago
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="col-sm-6 col-xl-3">
+                <div class="kpi-card">
+                    <span class="kpi-icon bg-primary-soft"><i class="fas fa-chart-line"></i></span>
+                    <div>
+                        <div class="kpi-label">Total recaudado</div>
+                        <div class="kpi-value">S/ <span
+                                th:text="${#numbers.formatDecimal(totalPagos != null ? totalPagos : 0, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="kpi-card">
+                    <span class="kpi-icon bg-info-soft"><i class="fas fa-receipt"></i></span>
+                    <div>
+                        <div class="kpi-label">Comprobantes emitidos</div>
+                        <div class="kpi-value" th:text="${#lists.size(pagos)}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="kpi-card">
+                    <span class="kpi-icon bg-warning-soft"><i class="fas fa-hourglass-half"></i></span>
+                    <div>
+                        <div class="kpi-label">Pagos pendientes</div>
+                        <div class="kpi-value" th:text="${pendientes != null ? pendientes : 0}">0</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- MODAL DE PAGO (Professional) -->
-        <div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg">
-                    <div class="modal-header modal-pagos-header text-white">
-                        <h5 class="modal-title fw-bold" id="modalPagoLabel">
-                            <i class="fas fa-cash-register me-2"></i> Registrar Nuevo Pago
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Historial -->
+        <div class="pagos-card">
+            <div class="pagos-toolbar">
+                <div>
+                    <h5 class="mb-0 fw-bold">Historial de pagos</h5>
+                    <small class="text-muted"><span id="contadorPagos" th:text="${#lists.size(pagos)}">0</span> registros</small>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <div class="input-group input-group-sm search-box">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" id="buscarPago" class="form-control" placeholder="Buscar cliente, comprobante...">
+                    </div>
+                    <select id="filtroMetodo" class="form-select form-select-sm" style="width:auto">
+                        <option value="">Todos los métodos</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta">Tarjeta</option>
+                        <option value="Yape/Plin">Yape / Plin</option>
+                        <option value="Transferencia">Transferencia</option>
+                    </select>
+                    <select id="filtroEstado" class="form-select form-select-sm" style="width:auto">
+                        <option value="">Todos los estados</option>
+                        <option value="PAGADO">Pagado</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="ANULADO">Anulado</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-pagos align-middle mb-0" id="tablaPagos">
+                    <thead>
+                        <tr>
+                            <th>Comprobante</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Método</th>
+                            <th>Estado</th>
+                            <th class="text-end">Monto</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="pago : ${pagos}" th:attr="data-metodo=${pago.metodoPago},data-estado=${pago.estado}">
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${pago.comprobante != null ? pago.comprobante : '#' + #numbers.formatInteger(pago.id, 6)}">PET2026-00001</div>
+                                <small class="text-muted" th:if="${pago.cita != null}">
+                                    <i class="fas fa-calendar-check text-primary"></i>
+                                    Cita #<span th:text="${pago.cita.id}">1</span>
+                                </small>
+                                <small class="text-muted" th:unless="${pago.cita != null}">Cobro directo</small>
+                            </td>
+                            <td>
+                                <div th:text="${pago.fechaPago != null ? #temporals.format(pago.fechaPago, 'dd/MM/yyyy') : '-'}">01/01/2026</div>
+                                <small class="text-muted" th:text="${pago.fechaPago != null ? #temporals.format(pago.fechaPago, 'HH:mm') : ''}">10:00</small>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="cliente-avatar"
+                                        th:text="${pago.cliente != null and pago.cliente.nombre != null and !#strings.isEmpty(pago.cliente.nombre) ? #strings.toUpperCase(#strings.substring(pago.cliente.nombre, 0, 1)) : '?'}">J</span>
+                                    <div>
+                                        <div class="fw-semibold text-dark" th:text="${pago.cliente?.nombre}">Juan Perez</div>
+                                        <small class="text-muted" th:text="${pago.cliente?.telefono}">987654321</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge-metodo"
+                                    th:classappend="${pago.metodoPago == 'Efectivo' ? 'metodo-efectivo' : (pago.metodoPago == 'Tarjeta' ? 'metodo-tarjeta' : (pago.metodoPago == 'Transferencia' ? 'metodo-transferencia' : 'metodo-yape'))}">
+                                    <i class="fas"
+                                        th:classappend="${pago.metodoPago == 'Efectivo' ? 'fa-money-bill-wave' : (pago.metodoPago == 'Tarjeta' ? 'fa-credit-card' : (pago.metodoPago == 'Transferencia' ? 'fa-university' : 'fa-mobile-alt'))}"></i>
+                                    <span th:text="${pago.metodoPago}">Efectivo</span>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-estado"
+                                    th:classappend="${pago.estado == 'PAGADO' ? 'estado-pagado' : (pago.estado == 'PENDIENTE' ? 'estado-pendiente' : 'estado-anulado')}"
+                                    th:text="${pago.estado}">PAGADO</span>
+                            </td>
+                            <td class="text-end monto-text">
+                                S/ <span th:text="${#numbers.formatDecimal(pago.monto, 1, 'COMMA', 2, 'POINT')}">150.00</span>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a th:href="@{/recepcionista/pagos/ver/{id}(id=${pago.id})}"
+                                    class="btn btn-sm btn-light border" title="Ver comprobante">
+                                    <i class="fas fa-eye text-primary"></i>
+                                </a>
+                                <a th:href="@{/recepcionista/pagos/ver/{id}(id=${pago.id}, imprimir=1)}"
+                                    class="btn btn-sm btn-light border" title="Imprimir">
+                                    <i class="fas fa-print text-secondary"></i>
+                                </a>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(pagos)}">
+                            <td colspan="7" class="text-center py-5">
+                                <div class="empty-icon mb-3"><i class="fas fa-file-invoice-dollar"></i></div>
+                                <h5 class="text-muted fw-bold">Aún no hay pagos registrados</h5>
+                                <p class="text-muted mb-4">Registre el primer cobro de la clínica.</p>
+                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalPago">
+                                    <i class="fas fa-plus me-1"></i> Registrar primer pago
+                                </button>
+                            </td>
+                        </tr>
+                        <tr id="sinResultados" class="d-none">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-search me-1"></i> No hay pagos que coincidan con la búsqueda.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===================== MODAL REGISTRAR PAGO ===================== -->
+        <div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true"
+            th:attr="data-auto-open=${abrirModalPago}">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content pago-modal">
+                    <div class="modal-header pago-modal-header">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="pago-modal-icon"><i class="fas fa-cash-register"></i></span>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0" id="modalPagoLabel">Registrar pago</h5>
+                                <small class="opacity-75">Se emitirá un comprobante y se enviará al correo del cliente</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
 
-                    <form id="pagoForm" th:action="@{/recepcionista/pagos/guardar}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                        <div class="modal-body p-4">
-                            <div class="row g-3">
-                                <div class="col-12 d-print-none">
-                                    <div class="alert alert-info pagos-form-alert mb-3" role="alert">
-                                        <i class="fas fa-shield-alt me-2"></i>
-                                        Completa los datos del recibo. El formulario valida el monto y el voucher según el método.
+                    <form id="pagoForm" th:action="@{/recepcionista/pagos/guardar}" method="post" novalidate>
+                        <input type="hidden" name="numeroComprobanteYape" id="numeroComprobanteYape" value="">
+                        <div class="modal-body p-0">
+                            <div class="row g-0">
+                                <!-- Columna izquierda: datos -->
+                                <div class="col-lg-7 p-4">
+                                    <div class="pago-step"><span>1</span> Cliente y cita</div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Cliente <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                            <select name="clienteId" id="clienteId" class="form-select" required>
+                                                <option value="">Seleccione un cliente...</option>
+                                                <option th:each="cliente : ${clientes}" th:value="${cliente.id}"
+                                                    th:selected="${citaPreCliente != null and citaPreCliente == cliente.id}"
+                                                    th:attr="data-email=${cliente.email}"
+                                                    th:text="${cliente.nombre + ' · ' + (cliente.telefono != null ? cliente.telefono : 'sin teléfono')}">
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="form-text" id="clienteEmailInfo"></div>
                                     </div>
-                                </div>
-                                <!-- Monto Destacado -->
-                                <div class="col-12">
-                                    <div class="pago-monto-highlight mx-auto" style="max-width: 420px;">
-                                        <label class="form-label fw-bold text-success text-uppercase mb-2" style="letter-spacing: 0.08em;">
-                                            Importe a Cobrar <span class="text-danger">*</span>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Cita de referencia <span class="text-muted fw-normal">(opcional)</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">#</span>
+                                            <input type="number" name="citaId" id="citaIdInput" class="form-control"
+                                                placeholder="ID de la cita" min="1" th:value="${citaPreId}">
+                                        </div>
+                                    </div>
+
+                                    <div class="cita-preview mb-4" id="citaPreview"
+                                        th:classappend="${citaPreId == null} ? 'd-none' : ''">
+                                        <i class="fas fa-paw"></i>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold" id="citaMascota" th:text="${citaPreMascota}">-</div>
+                                            <small class="text-muted" id="citaFechaHora" th:text="${citaPreFecha}">-</small>
+                                        </div>
+                                        <span id="citaEstadoBadge" class="badge bg-primary-subtle text-primary-emphasis">Cita</span>
+                                    </div>
+
+                                    <div class="pago-step"><span>2</span> Importe</div>
+                                    <div class="monto-box mb-2">
+                                        <span class="monto-currency">S/</span>
+                                        <input type="number" name="monto" id="monto" class="monto-input" step="0.01"
+                                            min="0.10" placeholder="0.00" required>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2 mb-4" id="montosRapidos">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-monto="30">S/ 30</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-monto="50">S/ 50</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-monto="80">S/ 80</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-monto="100">S/ 100</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-monto="150">S/ 150</button>
+                                    </div>
+
+                                    <div class="pago-step"><span>3</span> Método de pago</div>
+                                    <div class="metodo-grid mb-3">
+                                        <label class="metodo-tile">
+                                            <input type="radio" name="metodoPago" value="Efectivo" checked>
+                                            <span><i class="fas fa-money-bill-wave"></i>Efectivo</span>
                                         </label>
-                                        <div class="input-group input-monto-group">
-                                            <span class="input-group-text">S/</span>
-                                            <input type="number" name="monto" id="monto" class="form-control form-control-lg text-center fs-3" step="0.01" min="0.10" placeholder="0.00" required>
-                                        </div>
+                                        <label class="metodo-tile">
+                                            <input type="radio" name="metodoPago" value="Tarjeta">
+                                            <span><i class="fas fa-credit-card"></i>Tarjeta</span>
+                                        </label>
+                                        <label class="metodo-tile">
+                                            <input type="radio" name="metodoPago" value="Yape/Plin">
+                                            <span><i class="fas fa-mobile-alt"></i>Yape / Plin</span>
+                                        </label>
+                                        <label class="metodo-tile">
+                                            <input type="radio" name="metodoPago" value="Transferencia">
+                                            <span><i class="fas fa-university"></i>Transferencia</span>
+                                        </label>
                                     </div>
-                                </div>
 
-                                <!-- Cliente -->
-                                <div class="col-md-12">
-                                    <label class="form-label fw-bold text-dark">Cliente <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-white">
-                                            <i class="fas fa-user text-muted"></i>
-                                        </span>
-                                        <select name="clienteId" id="clienteId" class="form-select" required>
-                                            <option value="">Seleccione un cliente...</option>
-                                            <option th:each="cliente : ${clientes}" th:value="${cliente.id}"
-                                                th:text="${cliente.nombre + ' - DNI/Tel: ' + (cliente.telefono != null ? cliente.telefono : 'N/A')}">
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <!-- Método + Referencia -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold text-dark">Método de Pago <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-white">
-                                            <i class="fas fa-credit-card text-muted"></i>
-                                        </span>
-                                        <select name="metodoPago" id="metodoPago" class="form-select" required>
-                                            <option value="Efectivo">💵 Efectivo</option>
-                                            <option value="Tarjeta">💳 Tarjeta (Crédito/Débito)</option>
-                                            <option value="Yape/Plin">📱 Yape / Plin</option>
-                                            <option value="Transferencia">🏦 Transferencia Bancaria</option>
-                                        </select>
-
-                                        <input type="hidden" name="numeroComprobanteYape" id="numeroComprobanteYape" value="">
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold text-dark">ID Cita Referencia <span class="text-muted fw-normal">(Opcional)</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-white">
-                                            <i class="fas fa-hashtag text-muted"></i>
-                                        </span>
-                                        <input type="number" name="citaId" id="citaIdInput" class="form-control" placeholder="Ej. 12" min="1">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Campos Dinámicos -->
-                            <div class="mt-4">
-                                <!-- Info de Cita (se autocompleta desde la agenda) -->
-                                <div class="pago-cita-info mb-3 p-3 rounded-3 bg-white border shadow-sm d-print-none">
-                                    <div class="d-flex align-items-start gap-2">
-                                        <div class="cita-info-icon">
-                                            <i class="fas fa-calendar-check text-success"></i>
-                                        </div>
-                                        <div style="flex:1;">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <h6 class="m-0 fw-bold text-dark">
-                                                    <i class="fas fa-id-card me-2 text-muted"></i>
-                                                    Info de Cita
-                                                </h6>
-                                                <span id="citaEstadoBadge" class="badge bg-light text-muted border">Sin asignar</span>
+                                    <!-- Paneles por método -->
+                                    <div id="efectivoFields" class="payment-method-fields">
+                                        <div class="row g-2 align-items-end">
+                                            <div class="col-6">
+                                                <label class="form-label small fw-semibold">Monto recibido</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">S/</span>
+                                                    <input type="number" id="montoRecibido" class="form-control" step="0.10" min="0" placeholder="0.00">
+                                                </div>
                                             </div>
-                                            <div class="mt-2 small text-muted">
-                                                <div><b>Mascota:</b> <span id="citaMascota">-</span></div>
-                                                <div><b>Fecha/Hora:</b> <span id="citaFechaHora">-</span></div>
-                                                <div><b>ID Referencia:</b> <span id="citaIdLabel">-</span></div>
+                                            <div class="col-6">
+                                                <div class="vuelto-box">
+                                                    <small>Vuelto</small>
+                                                    <div id="vuelto">S/ 0.00</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div id="tarjetaFields" class="payment-method-fields d-none">
+                                        <label class="form-label small fw-semibold">Número de tarjeta <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text" id="cardIcon"><i class="fas fa-credit-card"></i></span>
+                                            <input type="text" id="numeroTarjeta" class="form-control" placeholder="0000 0000 0000 0000"
+                                                maxlength="19" inputmode="numeric" autocomplete="off">
+                                        </div>
+                                        <div class="form-text">Solo se valida el formato; el número no se guarda. Visa, Mastercard y Amex se detectan automáticamente.</div>
+                                    </div>
+
+                                    <div id="yapeFields" class="payment-method-fields d-none">
+                                        <div class="d-flex gap-3 align-items-center">
+                                            <div class="qr-container">
+                                                <img th:src="@{/Imagen/Iconos/qr-yape.png}" alt="QR Yape/Plin">
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <p class="small text-muted mb-2">El cliente escanea el QR y paga. Luego ingrese el número de operación.</p>
+                                                <label class="form-label small fw-semibold">N° de operación <span class="text-danger">*</span></label>
+                                                <input type="text" id="numeroComprobanteYapeVisible" class="form-control"
+                                                    placeholder="Ej. 123456789" maxlength="30">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="transferenciaFields" class="payment-method-fields d-none">
+                                        <label class="form-label small fw-semibold">Voucher de transferencia <span class="text-danger">*</span></label>
+                                        <input type="file" id="comprobante" class="form-control" accept="image/*,application/pdf">
+                                        <div class="form-text">Adjunte la captura o PDF como respaldo de la operación.</div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div id="dynamicPaymentFields" class="mt-0">
-                                <!-- Tarjeta -->
-                                <div id="tarjetaFields" class="payment-method-fields d-none">
-
-                                    <label class="form-label fw-bold text-dark">Número de Tarjeta <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light" id="cardIcon"><i class="fas fa-credit-card"></i></span>
-                                        <input type="text" id="numeroTarjeta" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19">
-                                    </div>
-                                    <div class="form-text mt-2 text-muted">
-                                        <i class="fas fa-magic text-warning"></i> Visa, Mastercard, Amex detectado automáticamente.
-                                    </div>
-                                </div>
-
-                                <!-- Transferencia -->
-                                <div id="transferenciaFields" class="payment-method-fields d-none">
-                                    <label class="form-label fw-bold text-dark">Voucher de Transferencia <span class="text-danger">*</span></label>
-                                    <input type="file" id="comprobante" class="form-control" accept="image/*">
-                                </div>
-
-                                <!-- Yape / Plin -->
-                                <div id="yapeFields" class="payment-method-fields d-none">
-                                    <label class="form-label fw-bold text-dark mb-3">Escanea el código QR para pagar <span class="text-danger">*</span></label>
-                                    <div class="qr-container mx-auto mb-2">
-                                        <img th:src="@{/Imagen/Iconos/qr-yape.png}" alt="QR Yape/Plin" class="img-fluid" style="max-width: 190px;">
-                                    </div>
-                                    <div class="form-text text-muted mb-3">
-                                        <i class="fas fa-info-circle"></i> Una vez escaneado y pagado, ingresa el <b>Número de operación / comprobante</b> y haz clic en <b>Procesar Pago</b>.
-                                    </div>
-
-                                    <div class="mb-2">
-                                        <label class="form-label fw-bold text-dark">Número de operación / comprobante Yape/Plin <span class="text-danger">*</span></label>
-                                        <input type="text" id="numeroComprobanteYapeVisible" class="form-control" placeholder="Ej. 123456789" maxlength="30">
+                                <!-- Columna derecha: resumen -->
+                                <div class="col-lg-5 resumen-col p-4">
+                                    <div class="resumen-ticket">
+                                        <div class="text-center mb-3">
+                                            <img th:src="@{/Imagen/Iconos/logo.png}" alt="Pet Clinic" class="resumen-logo">
+                                            <div class="fw-bold mt-2">Resumen del cobro</div>
+                                            <small class="text-muted" id="resumenFecha"></small>
+                                        </div>
+                                        <div class="resumen-row"><span>Cliente</span><b id="resCliente">—</b></div>
+                                        <div class="resumen-row"><span>Cita</span><b id="resCita">—</b></div>
+                                        <div class="resumen-row"><span>Método</span><b id="resMetodo">Efectivo</b></div>
+                                        <hr class="resumen-hr">
+                                        <div class="resumen-row text-muted"><span>Op. gravada</span><span id="resSubtotal">S/ 0.00</span></div>
+                                        <div class="resumen-row text-muted"><span>IGV (18%)</span><span id="resIgv">S/ 0.00</span></div>
+                                        <div class="resumen-total"><span>Total</span><span id="resTotal">S/ 0.00</span></div>
+                                        <div class="resumen-nota">
+                                            <i class="fas fa-envelope-open-text me-1"></i>
+                                            <span id="resEmail">El comprobante PDF se enviará al correo del cliente si está registrado.</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="modal-footer modal-pagos-footer">
-                            <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-success fw-bold px-4">
-                                <i class="fas fa-check-circle me-1"></i> Procesar Pago
+                        <div class="modal-footer pago-modal-footer">
+                            <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success px-4 fw-semibold" id="btnProcesarPago">
+                                <i class="fas fa-check-circle me-1"></i> Cobrar <span id="btnMonto">S/ 0.00</span>
                             </button>
                         </div>
                     </form>
@@ -270,16 +352,8 @@
             </div>
         </div>
 
-
-
         <script th:src="@{/Js/pagos.js}"></script>
-        <style th:inline="css">
-            /* Estilos impresos cuando se use Imprimir */
-            @media print {
-                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                .modal, .d-print-none { display: none !important; }
-            }
-        </style>
     </div>
 </body>
+
 </html>

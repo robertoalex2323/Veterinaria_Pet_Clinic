@@ -171,7 +171,8 @@ public class VeterinariaController {
         }
 
         long pendientes = citasHoy.stream()
-                .filter(c -> "AGENDADA".equalsIgnoreCase(c.getEstado()))
+                .filter(c -> "AGENDADA".equalsIgnoreCase(c.getEstado())
+                          || "EN_ESPERA".equalsIgnoreCase(c.getEstado()))
                 .count();
         long atendidos = citasHoy.stream()
                 .filter(c -> "EN_CONSULTA".equalsIgnoreCase(c.getEstado())
@@ -317,7 +318,8 @@ public class VeterinariaController {
        List<Cita> todasHoy = eliminarCitasDuplicadas(citaRepository.findCitasDelDiaConDatos(inicio, fin));
 
         List<Cita> esperandoTriaje = todasHoy.stream()
-                .filter(c -> "AGENDADA".equalsIgnoreCase(c.getEstado()))
+                .filter(c -> "AGENDADA".equalsIgnoreCase(c.getEstado())
+                          || "EN_ESPERA".equalsIgnoreCase(c.getEstado()))
                 .filter(c -> c.getMascota() != null && c.getMascota().estaActivo())
                 .collect(Collectors.toList());
 

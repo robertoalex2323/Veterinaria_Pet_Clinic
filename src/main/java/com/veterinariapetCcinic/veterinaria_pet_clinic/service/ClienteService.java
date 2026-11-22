@@ -43,10 +43,16 @@ public class ClienteService {
     @Transactional
     public Cliente actualizar(Cliente cliente) {
         Cliente existente = buscarPorId(cliente.getId());
+        if (cliente.getTelefono() != null && !cliente.getTelefono().equals(existente.getTelefono())
+                && clienteRepository.existsByTelefono(cliente.getTelefono())) {
+            throw new RuntimeException("Ya existe otro cliente con el teléfono " + cliente.getTelefono());
+        }
         existente.setNombre(cliente.getNombre());
         existente.setTelefono(cliente.getTelefono());
         existente.setEmail(cliente.getEmail());
         existente.setDireccion(cliente.getDireccion());
+        existente.setLatitud(cliente.getLatitud());
+        existente.setLongitud(cliente.getLongitud());
         return clienteRepository.save(existente);
     }
     

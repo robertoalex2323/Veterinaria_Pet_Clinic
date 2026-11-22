@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/usuarios/**", "/configuracion/**").hasAnyRole("ADMIN", "ADMINISTRADOR")
 
                         // Recursos públicos
-                        .requestMatchers("/Css/**", "/Js/**", "/images/**", "/Imagen/**").permitAll()
+                        .requestMatchers("/Css/**", "/Js/**", "/css/**", "/js/**", "/images/**", "/Imagen/**", "/audio/**").permitAll()
                         .requestMatchers("/api/chatbot/**").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/veterinario/**").hasAnyRole("VETERINARIO", "ADMIN", "ADMINISTRADOR")
@@ -68,7 +68,7 @@ public class SecurityConfig {
                         .requestMatchers("/citas/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
                         .requestMatchers("/agenda/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
                         .requestMatchers("/pagos/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
-                        .requestMatchers("/diagnostico/**").hasAnyRole("RECEPCIONISTA", "ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/diagnostico/**").hasAnyRole("VETERINARIO", "ADMIN", "ADMINISTRADOR")
                         .requestMatchers("/dashboard").authenticated()
 
                         // Cualquier otra ruta requiere autenticación

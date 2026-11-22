@@ -22,7 +22,7 @@
                 <div class="text-white-50 small" th:text="${#temporals.format(fecha, 'EEEE, d MMMM yyyy')}">Lunes, 15 Octubre 2023</div>
             </div>
 
-            <form id="filtroCitasForm" th:action="@{/recepcionista/citas}" method="get"
+            <form id="filtroCitasForm" th:action="${colaEspera} ? @{/recepcionista/cola-espera} : @{/recepcionista/citas}" method="get"
                 class="date-selector-form d-flex align-items-center mt-3 mt-md-0">
                 <label class="me-2 text-white fw-bold">Seleccionar Fecha:</label>
                 <div class="input-group">
@@ -65,11 +65,19 @@
 
                     <div class="cita-estado">
                         <span class="estado-badge"
-                            th:classappend="${cita.estado == 'AGENDADA' ? 'estado-agendada' : (cita.estado == 'CANCELADA' ? 'estado-cancelada' : 'estado-completada')}"
+                            th:classappend="${cita.estado == 'AGENDADA' ? 'estado-agendada' : (cita.estado == 'EN_ESPERA' ? 'estado-espera' : (cita.estado == 'CANCELADA' ? 'estado-cancelada' : 'estado-completada'))}"
                             th:text="${cita.estado}">AGENDADA</span>
                     </div>
 
-                        <div class="cita-actions">
+                    <div class="cita-actions">
+                        <form th:if="${cita.estado == 'AGENDADA' or cita.estado == 'CONFIRMADA'}"
+                            th:action="@{/recepcionista/citas/{id}/espera(id=${cita.id})}" method="post" class="d-inline">
+                            <input type="hidden" name="fecha" th:value="${fecha}">
+                            <button class="btn btn-success btn-sm" title="Marcar paciente en sala de espera">
+                                <i class="fas fa-user-clock"></i> Sala
+                            </button>
+                        </form>
+
                         <button th:if="${cita.estado == 'AGENDADA'}" class="btn btn-outline-danger btn-sm"
                             title="Cancelar" th:attr="onclick='confirmarCancelacion(' + ${cita.id} + ')'">
                             <i class="fas fa-times"></i>
@@ -78,10 +86,6 @@
                         <button th:if="${cita.estado == 'AGENDADA'}" class="btn btn-outline-warning btn-sm ms-2"
                             title="Reprogramar" th:attr="onclick='abrirModalReprogramarCita(' + ${cita.id} + ')'">
                             <i class="fas fa-rotate-right"></i>
-                        </button>
-
-                        <button th:unless="${cita.estado == 'AGENDADA'}" class="btn btn-light btn-sm text-muted border" disabled>
-                            <i class="fas fa-ban"></i>
                         </button>
                     </div>
 

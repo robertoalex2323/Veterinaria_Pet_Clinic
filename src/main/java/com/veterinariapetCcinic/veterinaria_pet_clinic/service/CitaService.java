@@ -49,10 +49,14 @@ public class CitaService {
 
         Objects.requireNonNull(cita, "La cita no puede ser nula");
 
-        validarDisponibilidad(cita.getFechaHora());
-        
+        Long vetId = cita.getVeterinario() != null ? cita.getVeterinario().getId() : null;
+        com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agenda = validarDisponibilidad(cita.getFechaHora(), vetId);
+        if (cita.getVeterinario() == null && agenda != null && agenda.getVeterinario() != null) {
+            // Si no se eligió veterinario, se asigna el del turno de la agenda
+            cita.setVeterinario(agenda.getVeterinario());
+        }
+
         // Bloquear horario en la agenda automáticamente
-        com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agenda = agendaService.buscarAgendaDisponible(cita.getFechaHora().toLocalDate(), cita.getFechaHora().toLocalTime());
         if (agenda != null) {
             agendaService.bloquearHorario(agenda.getId());
         }
@@ -80,6 +84,18 @@ public class CitaService {
         notificacionService.enviarNotificacionVeterinario(cita);
         return Objects.requireNonNull(citaRepository.save(cita));
     }
+
+    @Transactional
+    public Cita marcarEnSalaDeEspera(Long id) {
+        Cita cita = buscarPorId(id);
+        if (!"AGENDADA".equalsIgnoreCase(cita.getEstado())
+                && !"CONFIRMADA".equalsIgnoreCase(cita.getEstado())) {
+            throw new IllegalStateException("Solo se pueden registrar en sala citas agendadas o confirmadas.");
+        }
+        cita.setEstado("EN_ESPERA");
+        log.info("Cita ID {} registrada en sala de espera", id);
+        return Objects.requireNonNull(citaRepository.save(cita));
+    }
     
     @Transactional
     public void cancelarCita(Long id, String motivo) {
@@ -90,7 +106,8 @@ public class CitaService {
         log.warn("Cita ID {} cancelada. Motivo: {}", id, motivo);
         
         // Liberar horario en la agenda automáticamente
-        com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agenda = agendaService.buscarAgendaPorFechaYHora(cita.getFechaHora().toLocalDate(), cita.getFechaHora().toLocalTime());
+        com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agenda = agendaService.buscarAgendaPorFechaYHora(cita.getFechaHora().toLocalDate(), cita.getFechaHora().toLocalTime(),
+                cita.getVeterinario() != null ? cita.getVeterinario().getId() : null);
         if (agenda != null) {
             agendaService.liberarHorario(agenda.getId());
         }
@@ -166,7 +183,7 @@ public class CitaService {
         return citaRepository.findByEstado("ATENDIDA");
     }
     
-    private void validarDisponibilidad(LocalDateTime fechaHora) {
+    private com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda validarDisponibilidad(LocalDateTime fechaHora, Long vetId) {
         // 1. Validar horarios lógicos (no pasado)
         if (fechaHora.isBefore(LocalDateTime.now(ZoneId.of("America/Lima")))) {
             log.error("Intento de agendamiento fallido: Fecha pasada {}", fechaHora);
@@ -184,11 +201,12 @@ public class CitaService {
         }
         
         // 3. Vincular con Agenda 
-        com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agenda = agendaService.buscarAgendaDisponible(fechaHora.toLocalDate(), hora);
+        com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agenda = agendaService.buscarAgendaDisponible(fechaHora.toLocalDate(), hora, vetId);
         if (agenda == null) {
-            log.warn("Horario no disponible en agenda para: {}", fechaHora);
-            throw new RuntimeException("El horario seleccionado no existe en la agenda o ya no está disponible.");
+            log.warn("Horario no disponible en agenda para: {} (vet {})", fechaHora, vetId);
+            throw new RuntimeException("El horario seleccionado no existe en la agenda del veterinario o ya no está disponible.");
         }
+        Long vetAgenda = agenda.getVeterinario() != null ? agenda.getVeterinario().getId() : null;
 
         // Inteligencia: Validar cruces usando la duración REAL del turno definido en la agenda
         long duracion = ChronoUnit.MINUTES.between(agenda.getHoraInicio(), agenda.getHoraFin());
@@ -197,12 +215,16 @@ public class CitaService {
         
         // Mejorar: Validar contra AGENDADA y CONFIRMADA
         List<String> estadosOcupados = List.of("AGENDADA", "CONFIRMADA");
-        long cantidad = citaRepository.countByFechaHoraBetweenAndEstadoIn(inicio, fin, estadosOcupados);
+        // El cruce se valida por veterinario: dos veterinarios pueden atender a la misma hora
+        long cantidad = vetAgenda != null
+                ? citaRepository.countByVeterinarioIdAndFechaHoraBetweenAndEstadoIn(vetAgenda, inicio, fin, estadosOcupados)
+                : citaRepository.countByFechaHoraBetweenAndEstadoIn(inicio, fin, estadosOcupados);
 
         if (cantidad > 0) {
             log.warn("Intento de agendamiento fallido: Cruce en {} para una consulta de {} min", fechaHora, duracion);
             throw new RuntimeException("Horario ocupado por otra cita confirmada o agendada (" + duracion + " min).");
         }
+        return agenda;
     }
     
     public long contarCitasHoy() {

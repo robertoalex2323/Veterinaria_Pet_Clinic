@@ -1,0 +1,238 @@
+/* ============ HORARIOS DE VETERINARIOS ============ */
+.horarios-page {
+    --h-primary: #0d6efd;
+    --h-green: #198754;
+    --h-border: #e6e9f0;
+    --h-muted: #6c757d;
+}
+
+.h-card {
+    background: #fff;
+    border: 1px solid var(--h-border);
+    border-radius: 14px;
+    box-shadow: 0 4px 18px rgba(31, 45, 61, 0.06);
+    overflow: hidden;
+}
+
+.h-card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--h-border);
+    background: #fbfcfe;
+}
+
+.h-card-header h5 {
+    font-weight: 700;
+    color: #1f2d3d;
+    font-size: 1.05rem;
+}
+
+/* ---- Tabla semanal ---- */
+.semana-table th,
+.semana-table td {
+    vertical-align: middle;
+    border-color: var(--h-border);
+    padding: .65rem .5rem;
+    min-width: 110px;
+}
+
+.semana-table thead th {
+    background: #f6f8fb;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--h-muted);
+}
+
+.semana-table thead th a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.semana-table .vet-col {
+    min-width: 210px;
+    text-align: left;
+    padding-left: 1.25rem;
+}
+
+.semana-table .is-today {
+    color: var(--h-primary) !important;
+}
+
+.semana-table .is-selected {
+    background: rgba(13, 110, 253, .06) !important;
+}
+
+.vet-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(13, 110, 253, .1);
+    color: var(--h-primary);
+    flex-shrink: 0;
+}
+
+.semana-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: .4rem;
+    border-radius: 10px;
+    background: rgba(25, 135, 84, .08);
+    border: 1px solid rgba(25, 135, 84, .18);
+    text-decoration: none;
+    transition: transform .15s, box-shadow .15s;
+}
+
+.semana-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(25, 135, 84, .15);
+}
+
+.semana-cell .rango {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #14532d;
+    line-height: 1.2;
+}
+
+.semana-cell .libres {
+    font-size: .7rem;
+    color: var(--h-green);
+}
+
+.semana-cell .libres.full {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.semana-empty {
+    color: #c3c9d4;
+}
+
+/* ---- Formulario ---- */
+.dias-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.dias-chips .btn {
+    min-width: 48px;
+    border-radius: 20px;
+}
+
+.dias-disabled {
+    opacity: .5;
+}
+
+.duracion-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.duracion-presets .btn {
+    border-radius: 20px;
+    min-width: 46px;
+}
+
+.duracion-presets .btn.active {
+    background: var(--h-primary);
+    color: #fff;
+    border-color: var(--h-primary) !important;
+}
+
+.resumen-gen {
+    background: rgba(13, 110, 253, .05);
+    border: 1px dashed rgba(13, 110, 253, .35);
+    border-radius: 12px;
+    padding: .8rem 1rem;
+    font-size: .92rem;
+}
+
+.resumen-gen.is-invalid {
+    background: rgba(220, 53, 69, .05);
+    border-color: rgba(220, 53, 69, .45);
+}
+
+.resumen-gen.is-invalid #resDetalle {
+    color: #dc3545 !important;
+}
+
+/* ---- Turnos del día ---- */
+.vet-block {
+    border: 1px solid var(--h-border);
+    border-radius: 12px;
+    padding: .75rem;
+}
+
+.vet-block-title {
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    color: #1f2d3d;
+    margin-bottom: .6rem;
+}
+
+.slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: .5rem;
+}
+
+.slot {
+    position: relative;
+    border-radius: 10px;
+    padding: .55rem .6rem;
+    border: 1px solid;
+}
+
+.slot-free {
+    background: rgba(25, 135, 84, .07);
+    border-color: rgba(25, 135, 84, .25);
+}
+
+.slot-busy {
+    background: rgba(220, 53, 69, .06);
+    border-color: rgba(220, 53, 69, .25);
+}
+
+.slot-time span {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.slot-time small {
+    color: var(--h-muted);
+}
+
+.slot-state {
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.slot-free .slot-state { color: var(--h-green); }
+.slot-busy .slot-state { color: #dc3545; }
+
+.slot-actions {
+    position: absolute;
+    top: .45rem;
+    right: .5rem;
+    display: flex;
+    gap: .45rem;
+}
+
+.slot-actions form { margin: 0; }
+
+.empty-state i {
+    color: #c3c9d4;
+}

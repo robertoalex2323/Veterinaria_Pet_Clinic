@@ -1,136 +1,257 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-th:replace="~{fragments/sidebar_recepcionista::layout(~{::div#content}, 'horarios')}"
+    th:replace="~{fragments/sidebar_recepcionista::layout(~{::div#content}, 'horarios')}">
 
 <head>
     <title>Horarios de Agenda - Recepcionista</title>
-    <link rel="stylesheet" th:href="@{/Css/agenda.css}">
 </head>
 
 <body>
-    <div id="content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <div id="content" class="horarios-page">
+        <!-- Encabezado -->
+        <div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <div>
-                <h2 class="mb-0"><i class="fas fa-calendar-day text-primary"></i> Horarios de Agenda</h2>
-                <p class="text-muted mb-0">Generación y control de disponibilidad</p>
+                <h2 class="mb-1"><i class="fas fa-user-clock text-primary me-2"></i>Horarios de Veterinarios</h2>
+                <p class="text-muted mb-0">Defina en qué horario atiende cada veterinario para poder agendar citas</p>
             </div>
-            <div>
+            <div class="d-flex gap-2">
+                <a href="/recepcionista/citas/nueva" class="btn btn-primary shadow-sm">
+                    <i class="fas fa-calendar-plus me-1"></i> Agendar cita
+                </a>
                 <a href="/recepcionista/agenda" class="btn btn-outline-secondary shadow-sm">
-                    <i class="fas fa-arrow-left fa-sm"></i> Volver a Agenda
+                    <i class="fas fa-arrow-left me-1"></i> Agenda
                 </a>
             </div>
         </div>
 
-        <div class="card mb-4">
-            <div class="card-body">
-                <form method="get" action="/recepcionista/agenda/horarios" class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">Fecha</label>
-                        <input type="date" name="fecha" class="form-control"
-                            th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}">
-                    </div>
-                    <div class="col-md-4">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search"></i> Ver Horarios
-                        </button>
-                    </div>
-                </form>
+        <!-- ================= HORARIO SEMANAL POR VETERINARIO ================= -->
+        <div class="h-card mb-4">
+            <div class="h-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <h5 class="mb-0"><i class="fas fa-table me-2"></i>Horario semanal</h5>
+                    <small class="text-muted">Haga clic en un día para ver y gestionar sus turnos</small>
+                </div>
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-outline-secondary"
+                        th:href="@{/recepcionista/agenda/horarios(fecha=${semanaAnterior})}" title="Semana anterior">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a class="btn btn-sm btn-outline-secondary"
+                        th:href="@{/recepcionista/agenda/horarios(fecha=${hoy})}">Hoy</a>
+                    <a class="btn btn-sm btn-outline-secondary"
+                        th:href="@{/recepcionista/agenda/horarios(fecha=${semanaSiguiente})}" title="Semana siguiente">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table semana-table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="vet-col">Veterinario</th>
+                            <th th:each="d, st : ${diasSemana}" class="text-center"
+                                th:classappend="${d == fecha} ? 'is-selected' : (${d == hoy} ? 'is-today' : '')">
+                                <a th:href="@{/recepcionista/agenda/horarios(fecha=${d})}"
+                                    th:text="${nombresDias[st.index]}">Lun 01/01</a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="fila : ${semana}">
+                            <td class="vet-col">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="vet-avatar"><i class="fas fa-user-md"></i></span>
+                                    <div>
+                                        <div class="fw-semibold" th:text="${fila.veterinario.nombre}">Dr. X</div>
+                                        <small class="text-muted" th:text="|${fila.totalSemana} turnos esta semana|">0</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td th:each="c : ${fila.celdas}" class="text-center"
+                                th:classappend="${c.fecha == fecha} ? 'is-selected' : ''">
+                                <a th:href="@{/recepcionista/agenda/horarios(fecha=${c.fecha})}" class="semana-cell"
+                                    th:if="${c.total > 0}">
+                                    <span class="rango" th:text="${c.rango}">08:00–12:00</span>
+                                    <span class="libres"
+                                        th:classappend="${c.libres == 0} ? 'full' : ''"
+                                        th:text="|${c.libres}/${c.total} libres|">4/8 libres</span>
+                                </a>
+                                <span th:if="${c.total == 0}" class="semana-empty">—</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(semana)}">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                No hay veterinarios activos registrados.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="card mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Generar slots</h6>
-            </div>
-            <div class="card-body">
-                <form method="post" action="/recepcionista/agenda/horarios/generar" class="row g-3 align-items-end">
-                    <input type="hidden" name="fecha" th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}">
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">Veterinario</label>
-                        <select name="veterinarioId" class="form-select" required>
-                            <option value="">Seleccione...</option>
-                            <option th:each="v : ${veterinarios}" th:value="${v.id}" th:text="${v.nombre}">-</option>
-                        </select>
+        <div class="row g-4">
+            <!-- ================= FORMULARIO GENERAR ================= -->
+            <div class="col-xl-5">
+                <div class="h-card h-100">
+                    <div class="h-card-header">
+                        <h5 class="mb-0"><i class="fas fa-plus-circle me-2 text-success"></i>Asignar horario</h5>
+                        <small class="text-muted">Cree los turnos en los que el veterinario recibirá citas</small>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold">Hora Inicio</label>
-                        <input type="time" name="horaInicio" class="form-control" required value="08:00">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold">Hora Fin</label>
-                        <input type="time" name="horaFin" class="form-control" required value="20:00">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-bold">Duración (min)</label>
-                        <input type="number" name="duracionTurno" class="form-control" required min="5" value="30">
-                    </div>
-                    <div class="col-md-12">
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="fas fa-plus"></i> Generar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                    <div class="p-4">
+                        <form id="formGenerar" method="post" action="/recepcionista/agenda/horarios/generar">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Veterinario <span class="text-danger">*</span></label>
+                                <select name="veterinarioId" class="form-select" required>
+                                    <option value="">Seleccione...</option>
+                                    <option th:each="v : ${veterinarios}" th:value="${v.id}" th:text="${v.nombre}">-</option>
+                                    <option value="TODOS" th:if="${#lists.size(veterinarios) > 1}">Todos los veterinarios</option>
+                                </select>
+                            </div>
 
-        <div class="card mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Slots del día</h6>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold">Desde <span class="text-danger">*</span></label>
+                                    <input type="date" name="fecha" id="genDesde" class="form-control" required
+                                        th:min="${hoy}" th:value="${fecha.isBefore(hoy) ? hoy : fecha}">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold">Hasta</label>
+                                    <input type="date" name="fechaHasta" id="genHasta" class="form-control"
+                                        th:min="${hoy}" th:value="${fecha.isBefore(hoy) ? hoy : fecha}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3" id="diasWrap">
+                                <label class="form-label fw-semibold d-flex justify-content-between">
+                                    <span>Días de atención</span>
+                                    <span class="small">
+                                        <a href="#" class="text-decoration-none" data-dias="1,2,3,4,5">Lun–Vie</a> ·
+                                        <a href="#" class="text-decoration-none" data-dias="1,2,3,4,5,6">Lun–Sáb</a>
+                                    </span>
+                                </label>
+                                <div class="dias-chips">
+                                    <th:block th:each="d : ${ {1,2,3,4,5,6,7} }">
+                                        <input type="checkbox" class="btn-check" name="dias" th:value="${d}"
+                                            th:id="|dia${d}|" th:checked="${d <= 6}" autocomplete="off">
+                                        <label class="btn btn-sm btn-outline-primary" th:for="|dia${d}|"
+                                            th:text="${ {'Lun','Mar','Mié','Jue','Vie','Sáb','Dom'}[d - 1] }">Lun</label>
+                                    </th:block>
+                                </div>
+                                <div class="form-text">Solo aplica cuando el rango de fechas abarca varios días.</div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold">Hora inicio <span class="text-danger">*</span></label>
+                                    <input type="time" name="horaInicio" id="genInicio" class="form-control" required
+                                        value="08:00" step="300">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold">Hora fin <span class="text-danger">*</span></label>
+                                    <input type="time" name="horaFin" id="genFin" class="form-control" required
+                                        value="12:00" step="300">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Duración de cada turno <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" name="duracionTurno" id="genDuracion" class="form-control"
+                                        required min="15" step="5" value="240">
+                                    <span class="input-group-text">min</span>
+                                </div>
+                                <div class="duracion-presets mt-2" id="duracionPresets">
+                                    <button type="button" class="btn btn-sm btn-light border" data-min="15">15</button>
+                                    <button type="button" class="btn btn-sm btn-light border" data-min="20">20</button>
+                                    <button type="button" class="btn btn-sm btn-light border" data-min="30">30</button>
+                                    <button type="button" class="btn btn-sm btn-light border" data-min="45">45</button>
+                                    <button type="button" class="btn btn-sm btn-light border" data-min="60">60</button>
+                                    <button type="button" class="btn btn-sm btn-light border active" data-min="all">Todo el rango</button>
+                                </div>
+                                <div class="form-text">Se calcula automáticamente con la hora de inicio y fin. Elija un valor menor para dividir el rango en varios turnos.</div>
+                            </div>
+
+                            <!-- Resumen en vivo -->
+                            <div class="resumen-gen mb-3" id="resumenGen">
+                                <div><i class="far fa-clock me-1"></i> Tiempo total: <b id="resTotal">0 min</b></div>
+                                <div><i class="fas fa-layer-group me-1"></i> Turnos por día: <b id="resTurnos">0</b></div>
+                                <div class="small text-muted mt-1" id="resDetalle"></div>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100 fw-semibold">
+                                <i class="fas fa-check me-1"></i> Crear turnos
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Hora</th>
-                                <th>Duración</th>
-                                <th>Veterinario</th>
-                                <th>Disponible</th>
-                                <th class="text-end">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="a : ${agendas}">
-                                <td th:text="${a.id}">1</td>
-                                <td>
-                                    <span
-                                        th:text="${a.horaInicio != null ? #temporals.format(a.horaInicio, 'HH:mm') : '-'}">08:00</span>
-                                    <span class="text-muted">-</span>
-                                    <span
-                                        th:text="${a.horaFin != null ? #temporals.format(a.horaFin, 'HH:mm') : '-'}">08:30</span>
-                                </td>
-                                <td th:text="${a.duracionTurno != null ? a.duracionTurno + ' min' : '-'}">30 min</td>
-                                <td th:text="${a.veterinario != null ? a.veterinario.nombre : '-'}">-</td>
-                                <td>
-                                    <span class="badge"
-                                        th:classappend="${a.disponible == true} ? 'bg-success' : 'bg-danger'"
-                                        th:text="${a.disponible == true} ? 'Si' : 'No'">Si</span>
-                                </td>
-                                <td class="text-end">
-                                    <form th:if="${a.disponible == true}" method="post"
-                                        th:action="@{/recepcionista/agenda/horarios/bloquear/{id}(id=${a.id})}">
-                                        <input type="hidden" name="fecha"
-                                            th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Bloquear</button>
-                                    </form>
-                                    <form th:if="${a.disponible != true}" method="post"
-                                        th:action="@{/recepcionista/agenda/horarios/liberar/{id}(id=${a.id})}">
-                                        <input type="hidden" name="fecha"
-                                            th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}">
-                                        <button type="submit" class="btn btn-sm btn-outline-success">Liberar</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(agendas)}">
-                                <td colspan="6" class="text-center text-muted py-4">No hay slots creados para este día.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+            <!-- ================= TURNOS DEL DÍA ================= -->
+            <div class="col-xl-7">
+                <div class="h-card h-100">
+                    <div class="h-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                            <h5 class="mb-0"><i class="fas fa-list-ul me-2 text-primary"></i>Turnos del
+                                <span th:text="${#temporals.format(fecha, 'dd/MM/yyyy')}">01/01/2026</span></h5>
+                            <small>
+                                <span class="badge bg-success-subtle text-success-emphasis" th:text="|${libresDia} libres|">0 libres</span>
+                                <span class="badge bg-danger-subtle text-danger-emphasis" th:text="|${ocupadosDia} ocupados/bloqueados|">0</span>
+                            </small>
+                        </div>
+                        <form method="get" action="/recepcionista/agenda/horarios" class="d-flex gap-2">
+                            <input type="date" name="fecha" class="form-control form-control-sm"
+                                th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}" onchange="this.form.submit()">
+                        </form>
+                    </div>
+                    <div class="p-3">
+                        <div th:if="${#maps.isEmpty(turnosPorVet)}" class="empty-state text-center py-5">
+                            <i class="far fa-calendar-times fa-3x mb-3"></i>
+                            <h6 class="fw-semibold">Sin turnos para este día</h6>
+                            <p class="text-muted small mb-0">Use el formulario «Asignar horario» para crear la disponibilidad del veterinario.</p>
+                        </div>
+
+                        <div th:each="entry : ${turnosPorVet}" class="vet-block mb-3">
+                            <div class="vet-block-title">
+                                <i class="fas fa-user-md me-2"></i><span th:text="${entry.key}">Dr.</span>
+                                <span class="ms-auto small text-muted" th:text="|${#lists.size(entry.value)} turnos|"></span>
+                            </div>
+                            <div class="slot-grid">
+                                <div th:each="a : ${entry.value}" class="slot"
+                                    th:classappend="${a.disponible == true} ? 'slot-free' : 'slot-busy'">
+                                    <div class="slot-time">
+                                        <span th:text="${#temporals.format(a.horaInicio, 'HH:mm')}">08:00</span>
+                                        <small th:text="|– ${#temporals.format(a.horaFin, 'HH:mm')}|">– 08:30</small>
+                                    </div>
+                                    <div class="slot-state" th:text="${a.disponible == true} ? 'Libre' : (${a.motivo != null} ? ${a.motivo} : 'Ocupado')">Libre</div>
+                                    <div class="slot-actions">
+                                        <form th:if="${a.disponible == true}" method="post"
+                                            th:action="@{/recepcionista/agenda/horarios/bloquear/{id}(id=${a.id})}">
+                                            <input type="hidden" name="fecha" th:value="${fecha}">
+                                            <button type="submit" class="btn btn-link btn-sm p-0 text-warning" title="Bloquear">
+                                                <i class="fas fa-lock"></i></button>
+                                        </form>
+                                        <form th:if="${a.disponible != true}" method="post"
+                                            th:action="@{/recepcionista/agenda/horarios/liberar/{id}(id=${a.id})}">
+                                            <input type="hidden" name="fecha" th:value="${fecha}">
+                                            <button type="submit" class="btn btn-link btn-sm p-0 text-success" title="Liberar">
+                                                <i class="fas fa-lock-open"></i></button>
+                                        </form>
+                                        <form method="post" class="form-eliminar-turno"
+                                            th:action="@{/recepcionista/agenda/horarios/eliminar/{id}(id=${a.id})}">
+                                            <input type="hidden" name="fecha" th:value="${fecha}">
+                                            <button type="submit" class="btn btn-link btn-sm p-0 text-danger" title="Eliminar">
+                                                <i class="fas fa-trash-alt"></i></button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <script th:src="@{/Js/horarios.js}"></script>
     </div>
 </body>
 

@@ -57,7 +57,8 @@ public class VeterinarioController {
         List<Cita> citasHoy = citaService.obtenerCitasDelDia(hoy);
         List<Cita> citasPendientes = citasHoy.stream()
                 .filter(cita -> "AGENDADA".equalsIgnoreCase(cita.getEstado())
-                        || "CONFIRMADA".equalsIgnoreCase(cita.getEstado()))
+                        || "CONFIRMADA".equalsIgnoreCase(cita.getEstado())
+                        || "EN_ESPERA".equalsIgnoreCase(cita.getEstado()))
                 .toList();
         List<Cita> citasAtendidas = citasHoy.stream()
                 .filter(cita -> "ATENDIDA".equalsIgnoreCase(cita.getEstado())

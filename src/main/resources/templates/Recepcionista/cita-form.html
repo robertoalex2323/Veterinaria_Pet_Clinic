@@ -98,8 +98,26 @@
                                 <label class="form-label fw-bold text-dark">Veterinario</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-user-md"></i></span>
+                                    <select id="filtroVeterinario" class="form-select" th:if="${cita.id == null}" disabled>
+                                        <option value="">Cualquier veterinario disponible</option>
+                                    </select>
                                     <input type="text" id="veterinarioNombre" class="form-control" readonly
-                                        th:value="${cita.veterinario != null ? cita.veterinario.nombre : 'Se asigna según el horario'}">
+                                        th:if="${cita.id != null}"
+                                        th:value="${cita.veterinario != null ? cita.veterinario.nombre : 'Sin asignar'}">
+                                </div>
+                                <div class="form-text" id="veterinarioAsignado" th:if="${cita.id == null}">
+                                    <i class="fas fa-info-circle"></i> Elija un veterinario para ver solo sus horarios, o deje «Cualquiera».
+                                </div>
+                            </div>
+
+                            <!-- Aviso cuando el día no tiene horarios -->
+                            <div id="sinHorariosAviso" class="alert alert-warning d-none align-items-start gap-2 mb-4" role="alert">
+                                <i class="fas fa-calendar-times mt-1"></i>
+                                <div>
+                                    <div class="fw-semibold">No hay horarios libres para esta fecha.</div>
+                                    <div class="small" id="sinHorariosSugerencia"></div>
+                                    <a href="/recepcionista/agenda/horarios" id="linkGestionarHorarios"
+                                        class="small fw-semibold"><i class="fas fa-user-clock me-1"></i>Asignar horario a un veterinario</a>
                                 </div>
                             </div>
 
@@ -189,6 +207,7 @@
         </script>
 
         <script th:src="@{/Js/citas.js}"></script>
+        <script th:src="@{/Js/cita-form.js}"></script>
     </div>
 </body>
 

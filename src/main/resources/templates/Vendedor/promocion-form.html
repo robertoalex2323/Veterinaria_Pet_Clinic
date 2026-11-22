@@ -5,151 +5,311 @@
 <head>
     <meta charset="UTF-8">
     <title>Crear/Editar Promoción - Vendedor</title>
-    <link rel="stylesheet" th:href="@{/Css/promociones-vendedor.css}" />
 </head>
 
 <body>
-<div id="content">
+<div id="content" class="pf-page">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-0"><i class="fas fa-tags text-primary"></i>
-                <span th:text="${modo == 'editar'} ? 'Editar Promoción' : 'Nueva Promoción'">Promoción</span>
-            </h2>
-            <p class="text-muted mb-0">Completa los datos de la promoción</p>
+    <!-- Encabezado -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <span class="pf-head-icon"><i class="fas fa-tags"></i></span>
+            <div>
+                <h2 class="mb-0 fw-bold" th:text="${modo == 'editar'} ? 'Editar promoción' : 'Nueva promoción'">Promoción</h2>
+                <p class="text-muted mb-0">Configure el descuento, a qué aplica y cuándo está vigente</p>
+            </div>
         </div>
-        <div>
-            <a class="btn btn-outline-secondary shadow-sm" th:href="@{/vendedor/promociones}">
-                <i class="fas fa-arrow-left me-2"></i> Volver
-            </a>
-        </div>
+        <a class="btn btn-light border shadow-sm" th:href="@{/vendedor/promociones}">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
     </div>
 
-    <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-        <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
         <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <form id="promocionForm" th:action="@{/vendedor/promociones/guardar}" method="post"
-                  th:object="${promocion}" novalidate>
+    <form id="promocionForm" th:action="@{/vendedor/promociones/guardar}" method="post"
+          th:object="${promocion}" novalidate>
+        <input type="hidden" name="id" th:value="${promocion != null ? promocion.id : ''}" />
 
-                <input type="hidden" name="id" th:value="${promocion != null ? promocion.id : ''}" />
+        <div class="row g-4">
+            <!-- ================= FORMULARIO ================= -->
+            <div class="col-xl-8">
 
-                <div class="row g-4">
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Nombre de la promoción <span class="text-danger">*</span></label>
-                        <div class="input-group">
+                <!-- 1. Información -->
+                <section class="pf-card mb-4">
+                    <header class="pf-card-head"><span class="pf-step">1</span>
+                        <div><h6>Información general</h6><small>Cómo verán la promoción los vendedores</small></div>
+                    </header>
+                    <div class="pf-card-body">
+                        <label class="form-label fw-semibold" for="pfNombre">Nombre de la promoción <span class="text-danger">*</span></label>
+                        <div class="input-group mb-3 has-validation">
                             <span class="input-group-text"><i class="fas fa-tag"></i></span>
-                            <input type="text" class="form-control" name="nombre" th:value="*{nombre}" maxlength="255" required>
+                            <input type="text" id="pfNombre" class="form-control" name="nombre" th:value="*{nombre}"
+                                   maxlength="255" required placeholder="Ej. 20% en collares para perro">
+                            <div class="invalid-feedback">Ingrese un nombre para la promoción.</div>
                         </div>
+                        <label class="form-label fw-semibold d-flex justify-content-between" for="pfDescripcion">
+                            <span>Descripción <span class="text-muted fw-normal">(opcional)</span></span>
+                            <small class="text-muted"><span id="pfDescCount">0</span>/500</small>
+                        </label>
+                        <textarea id="pfDescripcion" class="form-control" name="descripcion" rows="3" maxlength="500"
+                                  placeholder="Condiciones o mensaje para el cliente..." th:text="*{descripcion}"></textarea>
                     </div>
+                </section>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Tipo de promoción <span class="text-danger">*</span></label>
-                        <select class="form-select" name="tipo" required>
-                            <option value="">Selecciona un tipo</option>
-                            <option value="PORCENTAJE" th:selected="${promocion != null && promocion.tipo == 'PORCENTAJE'}">Descuento por porcentaje (%)</option>
-                            <option value="2X1" th:selected="${promocion != null && promocion.tipo == '2X1'}">2x1</option>
-                            <option value="FIJO" th:selected="${promocion != null && promocion.tipo == 'FIJO'}">Descuento fijo (S/)</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Descuento <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-percent"></i></span>
-                            <input type="number" step="0.01" min="0" class="form-control" name="descuento" th:value="*{descuento}">
+                <!-- 2. Descuento -->
+                <section class="pf-card mb-4">
+                    <header class="pf-card-head"><span class="pf-step">2</span>
+                        <div><h6>Tipo de descuento</h6><small>Elija cómo se aplica el beneficio</small></div>
+                    </header>
+                    <div class="pf-card-body">
+                        <div class="pf-types mb-3">
+                            <label class="pf-type">
+                                <input type="radio" name="tipo" value="PORCENTAJE"
+                                       th:checked="${promocion == null or promocion.tipo == null or promocion.tipo == 'PORCENTAJE'}">
+                                <span><i class="fas fa-percent"></i><b>Porcentaje</b><small>Ej. 15% menos</small></span>
+                            </label>
+                            <label class="pf-type">
+                                <input type="radio" name="tipo" value="FIJO" th:checked="${promocion != null and promocion.tipo == 'FIJO'}">
+                                <span><i class="fas fa-coins"></i><b>Monto fijo</b><small>Ej. S/ 10 menos</small></span>
+                            </label>
+                            <label class="pf-type">
+                                <input type="radio" name="tipo" value="2X1" th:checked="${promocion != null and promocion.tipo == '2X1'}">
+                                <span><i class="fas fa-clone"></i><b>2 x 1</b><small>Lleva 2, paga 1</small></span>
+                            </label>
                         </div>
-                    </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Monto mínimo de compra (opcional)</label>
-                        <div class="input-group">
-                            <span class="input-group-text">S/</span>
-                            <input type="number" step="0.01" min="0" class="form-control" name="montoMinimo" th:value="*{montoMinimo}">
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Producto específico</label>
-                        <select class="form-select" name="productoId">
-                            <option value="">Aplica a varios / todos</option>
-                            <option th:each="p : ${productos}"
-                                    th:value="${p.id}"
-                                    th:text="${p.nombre + ' (' + p.categoria + ')'}"
-                                    th:selected="${promocion != null && promocion.productoId != null && promocion.productoId == p.id}">
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Categoría aplicable</label>
-                        <select class="form-select" name="categoriaAplicable">
-                            <option value="">Aplica a todas las categorías</option>
-                            <option th:each="c : ${categorias}" th:value="${c}" th:text="${c}"
-                                    th:selected="${promocion != null and promocion.categoriaAplicable == c}"></option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Fecha inicio (opcional)</label>
-                        <input type="date" class="form-control" name="fechaInicio" th:value="*{fechaInicio}">
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Fecha fin (opcional)</label>
-                        <input type="date" class="form-control" name="fechaFin" th:value="*{fechaFin}">
-                    </div>
-
-                    <div class="col-md-12">
-                        <label class="form-label fw-bold text-dark mb-2">Días de la semana (opcional, deja vacío para todos los días)</label>
-                        <div class="d-flex flex-wrap gap-3">
-                            <div class="form-check" th:each="dia : ${ {1:'Lunes',2:'Martes',3:'Miércoles',4:'Jueves',5:'Viernes',6:'Sábado',7:'Domingo'} }">
-                                <input class="form-check-input" type="checkbox" name="diasSemana"
-                                       th:id="${'dia_' + dia.key}" th:value="${dia.key}"
-                                       th:checked="${diasSeleccionados != null && diasSeleccionados.contains('' + dia.key)}">
-                                <label class="form-check-label" th:for="${'dia_' + dia.key}" th:text="${dia.value}"></label>
+                        <div class="row g-3">
+                            <div class="col-md-6" id="pfDescuentoWrap">
+                                <label class="form-label fw-semibold" for="pfDescuento">Descuento <span class="text-danger">*</span></label>
+                                <div class="input-group has-validation">
+                                    <span class="input-group-text pf-unit" id="pfUnidad">%</span>
+                                    <input type="number" id="pfDescuento" step="0.01" min="0" class="form-control" name="descuento"
+                                           th:value="*{descuento}" placeholder="0.00">
+                                    <div class="invalid-feedback" id="pfDescuentoError">Ingrese un descuento válido.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="pfMinimo">Compra mínima <span class="text-muted fw-normal">(opcional)</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">S/</span>
+                                    <input type="number" id="pfMinimo" step="0.01" min="0" class="form-control" name="montoMinimo"
+                                           th:value="*{montoMinimo}" placeholder="Sin mínimo">
+                                </div>
                             </div>
                         </div>
                     </div>
+                </section>
 
-                    <div class="col-md-12">
-                        <label class="form-label fw-bold text-dark">Descripción (opcional)</label>
-                        <textarea class="form-control" name="descripcion" rows="3" maxlength="500" th:text="*{descripcion}"></textarea>
+                <!-- 3. Aplica a -->
+                <section class="pf-card mb-4">
+                    <header class="pf-card-head"><span class="pf-step">3</span>
+                        <div><h6>¿A qué aplica?</h6><small>Deje vacío para aplicar a todo</small></div>
+                    </header>
+                    <div class="pf-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="pfProducto">Producto específico</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-box"></i></span>
+                                    <select id="pfProducto" class="form-select" name="productoId">
+                                        <option value="">Todos los productos</option>
+                                        <option th:each="p : ${productos}" th:value="${p.id}"
+                                                th:text="${p.nombre + ' (' + p.categoria + ')'}"
+                                                th:selected="${promocion != null && promocion.productoId != null && promocion.productoId == p.id}">
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="pfCategoria">Categoría</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
+                                    <select id="pfCategoria" class="form-select" name="categoriaAplicable">
+                                        <option value="">Todas las categorías</option>
+                                        <option th:each="c : ${categorias}" th:value="${c}" th:text="${c}"
+                                                th:selected="${promocion != null and promocion.categoriaAplicable == c}"></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                </section>
 
-                    <div class="col-md-12">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="activaCheck"
-                                   name="activo" value="true" th:checked="${promocion == null || promocion.activo == null || promocion.activo}">
-                            <input type="hidden" name="activo" value="false">
-                            <label class="form-check-label fw-bold" for="activaCheck">Promoción activa</label>
+                <!-- 4. Vigencia -->
+                <section class="pf-card mb-4">
+                    <header class="pf-card-head"><span class="pf-step">4</span>
+                        <div><h6>Vigencia</h6><small>Fechas y días en que se aplica (opcional)</small></div>
+                    </header>
+                    <div class="pf-card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="pfInicio">Desde</label>
+                                <input type="date" id="pfInicio" class="form-control" name="fechaInicio" th:value="*{fechaInicio}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="pfFin">Hasta</label>
+                                <input type="date" id="pfFin" class="form-control" name="fechaFin" th:value="*{fechaFin}">
+                                <div class="invalid-feedback">La fecha final no puede ser anterior al inicio.</div>
+                            </div>
+                        </div>
+                        <label class="form-label fw-semibold d-flex justify-content-between">
+                            <span>Días de la semana</span>
+                            <span class="small">
+                                <a href="#" class="text-decoration-none" data-dias="">Todos</a> ·
+                                <a href="#" class="text-decoration-none" data-dias="1,2,3,4,5">Lun–Vie</a> ·
+                                <a href="#" class="text-decoration-none" data-dias="6,7">Fin de semana</a>
+                            </span>
+                        </label>
+                        <div class="pf-days">
+                            <th:block th:each="dia : ${ {1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb',7:'Dom'} }">
+                                <input class="btn-check" type="checkbox" name="diasSemana" autocomplete="off"
+                                       th:id="${'dia_' + dia.key}" th:value="${dia.key}"
+                                       th:checked="${diasSeleccionados != null && diasSeleccionados.contains('' + dia.key)}">
+                                <label class="btn btn-outline-primary" th:for="${'dia_' + dia.key}" th:text="${dia.value}">Lun</label>
+                            </th:block>
+                        </div>
+                        <div class="form-text">Sin días marcados, la promoción aplica todos los días.</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ================= VISTA PREVIA ================= -->
+            <div class="col-xl-4">
+                <div class="pf-sticky">
+                    <div class="pf-preview" id="pfPreview">
+                        <div class="pf-preview-top">
+                            <span class="pf-preview-badge" id="pvEstado">Activa</span>
+                            <div class="pf-preview-value" id="pvValor">0% OFF</div>
+                            <div class="pf-preview-name" id="pvNombre">Nombre de la promoción</div>
+                        </div>
+                        <div class="pf-preview-cut"></div>
+                        <div class="pf-preview-body">
+                            <div class="pv-row"><i class="fas fa-box"></i><span id="pvAplica">Todos los productos</span></div>
+                            <div class="pv-row"><i class="fas fa-cart-shopping"></i><span id="pvMinimo">Sin compra mínima</span></div>
+                            <div class="pv-row"><i class="fas fa-calendar-days"></i><span id="pvFechas">Sin fecha límite</span></div>
+                            <div class="pv-row"><i class="fas fa-clock"></i><span id="pvDias">Todos los días</span></div>
+                            <p class="pv-desc" id="pvDesc"></p>
                         </div>
                     </div>
 
+                    <div class="pf-card mt-3">
+                        <div class="pf-card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">Promoción activa</div>
+                                <small class="text-muted">Desactívela para pausarla sin borrarla</small>
+                            </div>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input pf-switch" type="checkbox" role="switch" id="activaCheck"
+                                       th:checked="${promocion == null || promocion.activo == null || promocion.activo}">
+                            </div>
+                            <input type="hidden" name="activo" id="activoHidden" value="true">
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary btn-lg fw-semibold" id="btnGuardarPromocion">
+                            <i class="fas fa-save me-2"></i>
+                            <span th:text="${modo == 'editar'} ? 'Guardar cambios' : 'Crear promoción'">Guardar</span>
+                        </button>
+                        <a class="btn btn-light border" th:href="@{/vendedor/promociones}">Cancelar</a>
+                    </div>
                 </div>
-
-                <hr class="my-4">
-
-                <div class="d-flex justify-content-between">
-                    <a class="btn btn-outline-secondary" th:href="@{/vendedor/promociones}">Cancelar</a>
-                    <button type="submit" class="btn btn-primary shadow-sm" id="btnGuardarPromocion">
-                        <i class="fas fa-save me-2"></i> Guardar
-                    </button>
-                </div>
-
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 
-    <script th:src="@{/js/promociones-vendedor.js}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const $ = (id) => document.getElementById(id);
+        const form = $('promocionForm');
+        const nombre = $('pfNombre'), desc = $('pfDescripcion'), descuento = $('pfDescuento');
+        const minimo = $('pfMinimo'), producto = $('pfProducto'), categoria = $('pfCategoria');
+        const inicio = $('pfInicio'), fin = $('pfFin'), activa = $('activaCheck'), activoHidden = $('activoHidden');
+        const DIAS = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+        const tipo = () => (form.querySelector('input[name="tipo"]:checked') || {}).value || 'PORCENTAJE';
+        const fmtFecha = (v) => v ? v.split('-').reverse().join('/') : '';
+        const soles = (n) => 'S/ ' + Number(n).toFixed(2);
+
+        function render() {
+            const t = tipo();
+            const d = parseFloat(descuento.value) || 0;
+
+            $('pfDescuentoWrap').classList.toggle('d-none', t === '2X1');
+            $('pfUnidad').textContent = t === 'FIJO' ? 'S/' : '%';
+            descuento.max = t === 'PORCENTAJE' ? 100 : '';
+
+            $('pvValor').textContent = t === '2X1' ? '2 x 1' : (t === 'FIJO' ? '- ' + soles(d) : d + '% OFF');
+            $('pvNombre').textContent = nombre.value.trim() || 'Nombre de la promoción';
+
+            const prod = producto.value ? producto.options[producto.selectedIndex].text : '';
+            const cat = categoria.value;
+            $('pvAplica').textContent = prod || (cat ? 'Categoría: ' + cat : 'Todos los productos');
+            $('pvMinimo').textContent = parseFloat(minimo.value) > 0 ? 'Compra mínima ' + soles(minimo.value) : 'Sin compra mínima';
+
+            const fi = fmtFecha(inicio.value), ff = fmtFecha(fin.value);
+            $('pvFechas').textContent = fi && ff ? fi + ' al ' + ff : (fi ? 'Desde ' + fi : (ff ? 'Hasta ' + ff : 'Sin fecha límite'));
+
+            const dias = Array.from(form.querySelectorAll('input[name="diasSemana"]:checked')).map(c => DIAS[c.value]);
+            $('pvDias').textContent = dias.length === 0 || dias.length === 7 ? 'Todos los días' : dias.join(', ');
+
+            $('pvDesc').textContent = desc.value.trim();
+            $('pfDescCount').textContent = desc.value.length;
+
+            activoHidden.value = activa.checked ? 'true' : 'false';
+            $('pvEstado').textContent = activa.checked ? 'Activa' : 'Pausada';
+            $('pfPreview').classList.toggle('is-paused', !activa.checked);
+            $('pfPreview').dataset.tipo = t;
+        }
+
+        form.addEventListener('input', render);
+        form.addEventListener('change', render);
+
+        document.querySelectorAll('[data-dias]').forEach(a => a.addEventListener('click', function (e) {
+            e.preventDefault();
+            const sel = this.dataset.dias ? this.dataset.dias.split(',') : [];
+            form.querySelectorAll('input[name="diasSemana"]').forEach(c => { c.checked = sel.includes(c.value); });
+            render();
+        }));
+
+        form.addEventListener('submit', function (e) {
+            let ok = true;
+            nombre.classList.toggle('is-invalid', !nombre.value.trim());
+            if (!nombre.value.trim()) ok = false;
+
+            const t = tipo(), d = parseFloat(descuento.value);
+            let errDesc = '';
+            if (t !== '2X1') {
+                if (!(d > 0)) errDesc = 'Ingrese un descuento mayor a 0.';
+                else if (t === 'PORCENTAJE' && d > 100) errDesc = 'El porcentaje no puede superar 100%.';
+            } else {
+                descuento.value = descuento.value || '0';
+            }
+            descuento.classList.toggle('is-invalid', !!errDesc);
+            $('pfDescuentoError').textContent = errDesc || 'Ingrese un descuento válido.';
+            if (errDesc) ok = false;
+
+            const fechasMal = inicio.value && fin.value && fin.value < inicio.value;
+            fin.classList.toggle('is-invalid', !!fechasMal);
+            if (fechasMal) ok = false;
+
+            if (!ok) {
+                e.preventDefault();
+                const primero = form.querySelector('.is-invalid');
+                if (primero) primero.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            const btn = $('btnGuardarPromocion');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+        });
+
+        render();
+    });
+    </script>
 </div>
 </body>
 </html>

@@ -32,4 +32,18 @@ public interface AgendaRepository extends JpaRepository<Agenda, Long> {
     @Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio <= :hora AND a.horaFin > :hora")
     List<Agenda> findAgendaPorFechaYHora(@Param("fecha") LocalDate fecha, @Param("hora") java.time.LocalTime hora);
 
+    @Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio <= :hora AND a.horaFin > :hora AND a.disponible = true AND a.veterinario.id = :vetId")
+    List<Agenda> findAgendaDisponiblePorFechaHoraYVeterinario(@Param("fecha") LocalDate fecha, @Param("hora") java.time.LocalTime hora, @Param("vetId") Long vetId);
+
+    @Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio <= :hora AND a.horaFin > :hora AND a.veterinario.id = :vetId")
+    List<Agenda> findAgendaPorFechaHoraYVeterinario(@Param("fecha") LocalDate fecha, @Param("hora") java.time.LocalTime hora, @Param("vetId") Long vetId);
+
+    /** Slots de un veterinario que se cruzan con el rango [inicio, fin). */
+    @Query("SELECT a FROM Agenda a WHERE a.fecha = :fecha AND a.horaInicio < :fin AND a.horaFin > :inicio "
+            + "AND a.veterinario.id = :vetId")
+    List<Agenda> findSolapados(@Param("fecha") LocalDate fecha, @Param("inicio") java.time.LocalTime inicio,
+            @Param("fin") java.time.LocalTime fin, @Param("vetId") Long vetId);
+
+    /** Próximo turno libre con veterinario asignado a partir de una fecha (para sugerir fechas en el formulario de citas). */
+    java.util.Optional<Agenda> findFirstByFechaGreaterThanEqualAndDisponibleTrueAndVeterinarioIsNotNullOrderByFechaAscHoraInicioAsc(LocalDate fecha);
 }

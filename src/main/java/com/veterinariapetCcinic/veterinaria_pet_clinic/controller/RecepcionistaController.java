@@ -97,6 +97,56 @@ public class RecepcionistaController {
         return auth != null ? auth.getName() : "Recepcionista";
     }
 
+    /**
+     * Muestra el mensaje al usuario (alerta + campanita con sonido) y lo difunde
+     * en tiempo real al resto de usuarios conectados.
+     */
+    private void notificar(RedirectAttributes ra, String tipo, String mensaje) {
+        String flash = "error".equals(tipo) ? "error" : ("info".equals(tipo) || "warning".equals(tipo) ? "info" : "success");
+        ra.addFlashAttribute(flash, mensaje);
+        if (!"error".equals(tipo)) {
+            try {
+                notificacionService.enviarNotificacionUI(tipo, mensaje);
+            } catch (Exception e) {
+                log.warn("No se pudo difundir la notificación: {}", e.getMessage());
+            }
+        }
+    }
+
+    /** Valida los datos del cliente. Devuelve el mensaje de error o null si todo es correcto. */
+    private String validarCliente(Cliente cliente) {
+        if (cliente.getNombre() == null || cliente.getNombre().trim().length() < 3) {
+            return "El nombre completo debe tener al menos 3 caracteres.";
+        }
+        if (cliente.getEmail() != null && !cliente.getEmail().isBlank() && !isValidEmail(cliente.getEmail())) {
+            return "Formato de correo electrónico inválido. Por favor, ingrese un email válido.";
+        }
+        String telefono = cliente.getTelefono();
+        if (telefono == null || telefono.trim().isEmpty()) {
+            return "El teléfono no puede estar vacío.";
+        }
+        if (!PHONE_PATTERN.matcher(telefono.trim()).matches()) {
+            return "El teléfono solo debe contener números.";
+        }
+        if (telefono.trim().length() < MIN_PHONE_LENGTH) {
+            return "El teléfono debe tener al menos " + MIN_PHONE_LENGTH + " dígitos.";
+        }
+        return null;
+    }
+
+    private void normalizarCliente(Cliente cliente) {
+        if (cliente.getNombre() != null) cliente.setNombre(cliente.getNombre().trim().replaceAll("\\s+", " "));
+        if (cliente.getTelefono() != null) cliente.setTelefono(cliente.getTelefono().trim());
+        if (cliente.getEmail() != null) {
+            String email = cliente.getEmail().trim().toLowerCase();
+            cliente.setEmail(email.isEmpty() ? null : email);
+        }
+        if (cliente.getDireccion() != null) {
+            String dir = cliente.getDireccion().trim();
+            cliente.setDireccion(dir.isEmpty() ? null : dir);
+        }
+    }
+
     private boolean isValidEmail(String email) {
         if (email == null || email.trim().isEmpty()) {
             return false;
@@ -193,52 +243,25 @@ public class RecepcionistaController {
     }
 
     @PostMapping("/clientes/guardar")
-    public String guardarCliente(@ModelAttribute Cliente cliente, RedirectAttributes redirectAttributes) {
-        try {
-            // ===== VALIDACIÓN DE EMAIL =====
-            if (cliente.getEmail() != null && !cliente.getEmail().isEmpty()) {
-                if (!isValidEmail(cliente.getEmail())) {
-                    log.warn("Intento de guardar cliente con email inválido: {}", cliente.getEmail());
-                    redirectAttributes.addFlashAttribute("error", "Formato de correo electrónico inválido. Por favor, ingrese un email válido.");
-                    return "redirect:/recepcionista/clientes/nuevo";
-                }
+    public String guardarCliente(@ModelAttribute Cliente cliente, Model model, RedirectAttributes redirectAttributes) {
+        normalizarCliente(cliente);
+        String error = validarCliente(cliente);
+        if (error == null) {
+            try {
+                clienteService.guardar(cliente);
+                log.info("Cliente guardado exitosamente con teléfono: {}", cliente.getTelefono());
+                notificar(redirectAttributes, "success", "Cliente «" + cliente.getNombre() + "» registrado correctamente");
+                return "redirect:/recepcionista/clientes";
+            } catch (Exception e) {
+                log.error("Error al guardar cliente: {}", e.getMessage(), e);
+                error = e.getMessage();
             }
-            
-            // ===== VALIDACIÓN DE TELÉFONO =====
-            String telefono = cliente.getTelefono();
-            
-            // Validar que el teléfono no esté vacío
-            if (telefono == null || telefono.trim().isEmpty()) {
-                log.warn("Intento de guardar cliente sin teléfono");
-                redirectAttributes.addFlashAttribute("error", "El teléfono no puede estar vacío.");
-                return "redirect:/recepcionista/clientes/nuevo";
-            }
-            
-            // Validar que solo contenga números
-            if (!isValidPhone(telefono)) {
-                String telefonoTrimmed = telefono.trim();
-                // Determinar el mensaje de error específico
-                if (!PHONE_PATTERN.matcher(telefonoTrimmed).matches()) {
-                    log.warn("Intento de guardar cliente con teléfono que contiene caracteres no numéricos: {}", telefono);
-                    redirectAttributes.addFlashAttribute("error", "El teléfono solo debe contener números.");
-                    return "redirect:/recepcionista/clientes/nuevo";
-                }
-                if (telefonoTrimmed.length() < MIN_PHONE_LENGTH) {
-                    log.warn("Intento de guardar cliente con teléfono muy corto ({} dígitos): {}", telefonoTrimmed.length(), telefono);
-                    redirectAttributes.addFlashAttribute("error", "El teléfono debe tener al menos " + MIN_PHONE_LENGTH + " dígitos.");
-                    return "redirect:/recepcionista/clientes/nuevo";
-                }
-            }
-            
-            // Si todas las validaciones pasan, guardar el cliente
-            clienteService.guardar(cliente);
-            log.info("Cliente guardado exitosamente con teléfono: {}", cliente.getTelefono());
-            redirectAttributes.addFlashAttribute("success", "Cliente guardado exitosamente");
-        } catch (Exception e) {
-            log.error("Error al guardar cliente: {}", e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/recepcionista/clientes";
+        // Se vuelve a mostrar el formulario con los datos ingresados para no perderlos
+        model.addAttribute("nombreUsuario", getNombreUsuario());
+        model.addAttribute("cliente", cliente);
+        model.addAttribute("error", error);
+        return "Recepcionista/cliente-form";
     }
 
     @GetMapping("/clientes/editar/{id}")
@@ -256,64 +279,37 @@ public class RecepcionistaController {
     }
 
     @PostMapping("/clientes/actualizar/{id}")
-    public String actualizarCliente(@PathVariable Long id, @ModelAttribute Cliente cliente,
+    public String actualizarCliente(@PathVariable Long id, @ModelAttribute Cliente cliente, Model model,
             RedirectAttributes redirectAttributes) {
-        try {
-            // ===== VALIDACIÓN DE EMAIL =====
-            if (cliente.getEmail() != null && !cliente.getEmail().isEmpty()) {
-                if (!isValidEmail(cliente.getEmail())) {
-                    log.warn("Intento de actualizar cliente con email inválido: {}", cliente.getEmail());
-                    redirectAttributes.addFlashAttribute("error", "Formato de correo electrónico inválido. Por favor, ingrese un email válido.");
-                    return "redirect:/recepcionista/clientes/editar/" + id;
-                }
+        cliente.setId(id);
+        normalizarCliente(cliente);
+        String error = validarCliente(cliente);
+        if (error == null) {
+            try {
+                clienteService.actualizar(cliente);
+                log.info("Cliente actualizado exitosamente con teléfono: {}", cliente.getTelefono());
+                notificar(redirectAttributes, "success", "Cliente «" + cliente.getNombre() + "» actualizado correctamente");
+                return "redirect:/recepcionista/clientes";
+            } catch (Exception e) {
+                log.error("Error al actualizar cliente {}: {}", id, e.getMessage(), e);
+                error = e.getMessage();
             }
-            
-            // ===== VALIDACIÓN DE TELÉFONO =====
-            String telefono = cliente.getTelefono();
-            
-            // Validar que el teléfono no esté vacío
-            if (telefono == null || telefono.trim().isEmpty()) {
-                log.warn("Intento de actualizar cliente sin teléfono");
-                redirectAttributes.addFlashAttribute("error", "El teléfono no puede estar vacío.");
-                return "redirect:/recepcionista/clientes/editar/" + id;
-            }
-            
-            // Validar que solo contenga números
-            if (!isValidPhone(telefono)) {
-                String telefonoTrimmed = telefono.trim();
-                // Determinar el mensaje de error específico
-                if (!PHONE_PATTERN.matcher(telefonoTrimmed).matches()) {
-                    log.warn("Intento de actualizar cliente con teléfono que contiene caracteres no numéricos: {}", telefono);
-                    redirectAttributes.addFlashAttribute("error", "El teléfono solo debe contener números.");
-                    return "redirect:/recepcionista/clientes/editar/" + id;
-                }
-                if (telefonoTrimmed.length() < MIN_PHONE_LENGTH) {
-                    log.warn("Intento de actualizar cliente con teléfono muy corto ({} dígitos): {}", telefonoTrimmed.length(), telefono);
-                    redirectAttributes.addFlashAttribute("error", "El teléfono debe tener al menos " + MIN_PHONE_LENGTH + " dígitos.");
-                    return "redirect:/recepcionista/clientes/editar/" + id;
-                }
-            }
-            
-            // Si todas las validaciones pasan, actualizar el cliente
-            cliente.setId(id);
-            clienteService.actualizar(cliente);
-            log.info("Cliente actualizado exitosamente con teléfono: {}", cliente.getTelefono());
-            redirectAttributes.addFlashAttribute("success", "Cliente actualizado exitosamente");
-        } catch (Exception e) {
-            log.error("Error al actualizar cliente {}: {}", id, e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/recepcionista/clientes";
+        model.addAttribute("nombreUsuario", getNombreUsuario());
+        model.addAttribute("cliente", cliente);
+        model.addAttribute("error", error);
+        return "Recepcionista/cliente-form";
     }
 
     @GetMapping("/clientes/eliminar/{id}")
     public String eliminarCliente(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
+            String nombre = clienteService.buscarPorId(id).getNombre();
             clienteService.eliminar(id);
-            redirectAttributes.addFlashAttribute("success", "Cliente eliminado exitosamente");
+            notificar(redirectAttributes, "warning", "Cliente «" + nombre + "» eliminado");
         } catch (Exception e) {
             log.error("Error al eliminar cliente {}: {}", id, e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            notificar(redirectAttributes, "error", "No se pudo eliminar el cliente: " + e.getMessage());
         }
         return "redirect:/recepcionista/clientes";
     }
@@ -354,7 +350,7 @@ public class RecepcionistaController {
             RedirectAttributes redirectAttributes) {
         try {
             mascotaService.registrarMascota(clienteId, mascota);
-            redirectAttributes.addFlashAttribute("success", "Mascota registrada exitosamente");
+            notificar(redirectAttributes, "success", "Mascota «" + mascota.getNombre() + "» registrada correctamente");
         } catch (Exception e) {
             log.error("Error al guardar mascota: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
@@ -383,7 +379,7 @@ public class RecepcionistaController {
         try {
             mascota.setId(id);
             mascotaService.actualizar(mascota);
-            redirectAttributes.addFlashAttribute("success", "Mascota actualizada exitosamente");
+            notificar(redirectAttributes, "success", "Mascota «" + mascota.getNombre() + "» actualizada correctamente");
         } catch (Exception e) {
             log.error("Error al actualizar mascota {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
@@ -394,8 +390,9 @@ public class RecepcionistaController {
     @GetMapping("/mascotas/eliminar/{id}")
     public String eliminarMascota(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
+            String nombreMascota = mascotaService.buscarPorId(id).getNombre();
             mascotaService.eliminar(id);
-            redirectAttributes.addFlashAttribute("success", "Mascota eliminada exitosamente");
+            notificar(redirectAttributes, "warning", "Mascota «" + nombreMascota + "» eliminada");
         } catch (Exception e) {
             log.error("Error al eliminar mascota {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
@@ -428,6 +425,30 @@ public class RecepcionistaController {
         }
         model.addAttribute("citas", citas != null ? citas : new ArrayList<>());
         model.addAttribute("fecha", fecha);
+        model.addAttribute("colaEspera", false);
+        model.addAttribute("currentPage", "citas");
+        return "Recepcionista/citas";
+    }
+
+    @GetMapping("/cola-espera")
+    public String listarColaEspera(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+            Model model) {
+        model.addAttribute("nombreUsuario", getNombreUsuario());
+        model.addAttribute("colaEspera", true);
+
+        if (fecha == null) {
+            fecha = LocalDate.now();
+        }
+
+        List<Cita> citas = citaService.obtenerCitasDelDia(fecha).stream()
+                .filter(cita -> "AGENDADA".equalsIgnoreCase(cita.getEstado())
+                        || "CONFIRMADA".equalsIgnoreCase(cita.getEstado())
+                        || "EN_ESPERA".equalsIgnoreCase(cita.getEstado()))
+                .toList();
+        model.addAttribute("citas", citas);
+        model.addAttribute("fecha", fecha);
+        model.addAttribute("currentPage", "cola-espera");
         return "Recepcionista/citas";
     }
 
@@ -457,8 +478,10 @@ public class RecepcionistaController {
                 if (motivoReprogramacion == null || motivoReprogramacion.isBlank()) {
                     motivoReprogramacion = "Reprogramada por recepcionista";
                 }
-                citaService.reprogramarCita(reprogramarDesdeId, nuevaFechaHora, motivoReprogramacion);
-                redirectAttributes.addFlashAttribute("success", "Cita reprogramada exitosamente");
+                Cita nueva = citaService.reprogramarCita(reprogramarDesdeId, nuevaFechaHora, motivoReprogramacion);
+                // Mismo texto que difunde NotificacionService (la campanita lo deduplica)
+                redirectAttributes.addFlashAttribute("info", "Cita reprogramada: "
+                        + (nueva.getMascota() != null ? nueva.getMascota().getNombre() : "Mascota"));
                 return "redirect:/recepcionista/citas";
             }
 
@@ -478,23 +501,23 @@ public class RecepcionistaController {
                     .orElseThrow(() -> new RuntimeException("Veterinario no encontrado."));
             cita.setVeterinario(veterinario);
 
+            // Se valida el turno del veterinario elegido (varios veterinarios pueden atender a la misma hora)
             com.veterinariapetCcinic.veterinaria_pet_clinic.model.Agenda agendaDisponible = agendaService
-                    .buscarAgendaDisponible(nuevaFechaHora.toLocalDate(), nuevaFechaHora.toLocalTime());
+                    .buscarAgendaDisponible(nuevaFechaHora.toLocalDate(), nuevaFechaHora.toLocalTime(), veterinarioId);
             if (agendaDisponible == null) {
-                throw new RuntimeException("El horario seleccionado no existe en la agenda o ya no está disponible.");
-            }
-            if (agendaDisponible.getVeterinario() == null || agendaDisponible.getVeterinario().getId() == null
-                    || !agendaDisponible.getVeterinario().getId().equals(veterinarioId)) {
-                throw new RuntimeException("El horario seleccionado no corresponde al veterinario asignado.");
+                throw new RuntimeException("El horario seleccionado ya no está disponible para " + veterinario.getNombre() + ".");
             }
 
-            citaService.guardar(cita);
-            redirectAttributes.addFlashAttribute("success", "Cita agendada exitosamente");
+            Cita guardada = citaService.guardar(cita);
+            // Mismo texto que difunde NotificacionService.enviarConfirmacionCita (la campanita lo deduplica)
+            redirectAttributes.addFlashAttribute("success", "Cita agendada: " + mascota.getNombre() + " el "
+                    + guardada.getFechaHora().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            return "redirect:/recepcionista/citas?fecha=" + guardada.getFechaHora().toLocalDate();
         } catch (Exception e) {
             log.error("Error al guardar cita: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Error al agendar cita: " + e.getMessage());
+            return "redirect:/recepcionista/citas/nueva";
         }
-        return "redirect:/recepcionista/citas";
     }
 
     @GetMapping("/citas/editar/{id}")
@@ -533,7 +556,8 @@ public class RecepcionistaController {
             }
 
             citaService.actualizar(cita);
-            redirectAttributes.addFlashAttribute("success", "Cita actualizada exitosamente");
+            notificar(redirectAttributes, "success", "Cita de «" + (cita.getMascota() != null ? cita.getMascota().getNombre() : "mascota")
+                    + "» actualizada correctamente");
         } catch (Exception e) {
             log.error("Error al actualizar cita {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Error al actualizar cita: " + e.getMessage());
@@ -547,12 +571,34 @@ public class RecepcionistaController {
         try {
             String motivoCancelacion = motivo != null ? motivo : "Cancelada por recepcionista";
             citaService.cancelarCita(id, motivoCancelacion);
-            redirectAttributes.addFlashAttribute("success", "Cita cancelada exitosamente");
+            Cita cancelada = citaService.buscarPorId(id);
+            // Mismo texto que difunde NotificacionService.enviarCancelacionCita (la campanita lo deduplica)
+            redirectAttributes.addFlashAttribute("info", "Cita cancelada: "
+                    + (cancelada.getMascota() != null ? cancelada.getMascota().getNombre() : "Mascota") + " el "
+                    + cancelada.getFechaHora().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         } catch (Exception e) {
             log.error("Error al cancelar cita {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/recepcionista/citas";
+    }
+
+    @PostMapping("/citas/{id}/espera")
+    public String marcarCitaEnEspera(@PathVariable Long id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Cita cita = citaService.marcarEnSalaDeEspera(id);
+            if (fecha == null && cita.getFechaHora() != null) {
+                fecha = cita.getFechaHora().toLocalDate();
+            }
+            notificar(redirectAttributes, "info", "Paciente «"
+                    + (cita.getMascota() != null ? cita.getMascota().getNombre() : "") + "» en sala de espera");
+        } catch (Exception e) {
+            log.error("Error al registrar llegada de cita {}: {}", id, e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/recepcionista/citas" + (fecha != null ? "?fecha=" + fecha : "");
     }
 
     // ============ GESTIÓN DE AGENDA ============
@@ -641,8 +687,30 @@ public class RecepcionistaController {
 
     // ============ GESTIÓN DE PAGOS ============
     @GetMapping("/pagos")
-    public String listarPagos(Model model) {
+    public String listarPagos(@RequestParam(required = false) Long citaId,
+            @RequestParam(required = false) String nuevo, Model model) {
         model.addAttribute("nombreUsuario", getNombreUsuario());
+        model.addAttribute("abrirModalPago", nuevo != null);
+
+        // Cobro iniciado desde una cita: el modal se abre con los datos precargados
+        if (citaId != null) {
+            try {
+                if (pagoService.estaPagadaLaCita(citaId)) {
+                    model.addAttribute("error", "La cita #" + citaId + " ya fue pagada.");
+                } else {
+                    Cita cita = citaService.buscarPorId(citaId);
+                    model.addAttribute("citaPreId", citaId);
+                    model.addAttribute("abrirModalPago", true);
+                    model.addAttribute("citaPreMascota", cita.getMascota() != null ? cita.getMascota().getNombre() : "-");
+                    model.addAttribute("citaPreCliente", cita.getMascota() != null && cita.getMascota().getCliente() != null
+                            ? cita.getMascota().getCliente().getId() : null);
+                    model.addAttribute("citaPreFecha", cita.getFechaHora() != null
+                            ? cita.getFechaHora().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "-");
+                }
+            } catch (Exception e) {
+                model.addAttribute("error", "No se encontró la cita #" + citaId);
+            }
+        }
 
         try {
             List<Pago> pagos = pagoService.listarTodos();
@@ -667,42 +735,10 @@ public class RecepcionistaController {
     }
 
     @GetMapping("/pagos/nuevo")
-    public String nuevoPagoForm(@RequestParam(required = false) Long citaId, Model model, RedirectAttributes redirectAttributes) {
-        model.addAttribute("nombreUsuario", getNombreUsuario());
-        model.addAttribute("pago", new Pago());
-        model.addAttribute("clientes", clienteService.listarTodos());
-
-        if (citaId != null) {
-            try {
-                if (pagoService.estaPagadaLaCita(citaId)) {
-                    redirectAttributes.addFlashAttribute("error", "Usted ya ha pagado esta cita. No se puede registrar otro pago.");
-                    return "redirect:/recepcionista/citas";
-                }
-
-                Cita cita = citaService.buscarPorId(citaId);
-                model.addAttribute("citaPreId", citaId);
-                model.addAttribute("citaPreMascota",
-                    cita.getMascota() != null ? cita.getMascota().getNombre() : "-");
-                model.addAttribute("citaPreCliente",
-                    cita.getMascota() != null && cita.getMascota().getCliente() != null
-                        ? cita.getMascota().getCliente().getId() : null);
-                model.addAttribute("citaPreFecha",
-                    cita.getFechaHora() != null
-                        ? cita.getFechaHora().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-                        : "-");
-                model.addAttribute("citaPreMotivo",
-                    cita.getMotivo() != null ? cita.getMotivo() : "-");
-                model.addAttribute("citaPreEstado", cita.getEstado());
-                if (cita.getPago() != null) {
-                    model.addAttribute("citaPreMonto", cita.getPago().getMonto());
-                }
-            } catch (Exception e) {
-                model.addAttribute("errorCita", "No se encontró la cita con ID: " + citaId);
-            }
-        }
-        return "Recepcionista/pago-form";
+    public String nuevoPagoForm(@RequestParam(required = false) Long citaId) {
+        // El registro de pagos se hace desde el modal de la lista de pagos
+        return "redirect:/recepcionista/pagos" + (citaId != null ? "?citaId=" + citaId : "?nuevo=1");
     }
-
 
     @GetMapping("/pagos/estado-cita/{citaId}")
     @ResponseBody
@@ -864,9 +900,10 @@ public class RecepcionistaController {
                 }
             }
 
+            // Mismo texto que difunde enviarConfirmacionPago (la campanita lo deduplica)
             redirectAttributes.addFlashAttribute(
                     "success",
-                    "Pago registrado exitosamente.");
+                    "Pago registrado para " + cliente.getNombre() + ": S/ " + String.format("%.2f", monto));
 
             return "redirect:/recepcionista/pagos/ver/" + pago.getId();
 
@@ -906,7 +943,8 @@ public class RecepcionistaController {
             RedirectAttributes redirectAttributes) {
         try {
             pagoService.actualizarEstado(id, estado);
-            redirectAttributes.addFlashAttribute("success", "Estado del pago actualizado a: " + estado);
+            notificar(redirectAttributes, "ANULADO".equalsIgnoreCase(estado) ? "warning" : "success",
+                    "Pago #" + String.format("%06d", id) + " actualizado a " + estado);
         } catch (Exception e) {
             log.error("Error al actualizar estado de pago {}: {}", id, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Error al actualizar el estado: " + e.getMessage());
@@ -1002,12 +1040,4 @@ public class RecepcionistaController {
         return "redirect:/recepcionista/perfil";
     }
 
-    // ============ MACHINE LEARNING ============
-    @GetMapping("/diagnostico")
-    public String diagnostico(Model model) {
-        model.addAttribute("nombreUsuario", getNombreUsuario());
-        List<Mascota> mascotas = mascotaService.listarTodos();
-        model.addAttribute("mascotas", mascotas != null ? mascotas : new ArrayList<>());
-        return "Recepcionista/diagnostico";
-    }
 }

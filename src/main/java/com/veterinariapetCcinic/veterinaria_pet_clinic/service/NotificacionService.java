@@ -123,7 +123,7 @@ public class NotificacionService {
         enviarEmail(cliente.getEmail(),
                 "Cancelación de Cita Veterinaria - " + cita.getMascota().getNombre(),
                 mensaje);
-        addUINotification("warning", "Cita cancelada: " + cita.getMascota().getNombre() + " el " + cita.getFechaHora().format(FORMATTER) + ". Contacto: " + appProperties.getCancellationPhone());
+        addUINotification("warning", "Cita cancelada: " + cita.getMascota().getNombre() + " el " + cita.getFechaHora().format(FORMATTER));
     }
 
     public void enviarRecordatorioCita(Cita cita) {

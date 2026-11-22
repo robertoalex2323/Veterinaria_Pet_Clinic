@@ -14,6 +14,7 @@
     <link rel="stylesheet" th:if="${currentPage == 'mascotas'}" th:href="@{/Css/mascotas.css}">
     <link rel="stylesheet" th:if="${currentPage == 'citas'}" th:href="@{/Css/citas.css}">
     <link rel="stylesheet" th:if="${currentPage == 'agenda'}" th:href="@{/Css/agenda.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'horarios'}" th:href="@{/Css/horarios.css}">
     <link rel="stylesheet" th:if="${currentPage == 'pagos'}" th:href="@{/Css/pagos.css}">
     <link rel="stylesheet" th:if="${currentPage == 'perfil'}" th:href="@{/Css/perfil.css}">
     <link rel="stylesheet" th:if="${currentPage == 'diagnostico'}" th:href="@{/Css/diagnostico.css}">
@@ -82,10 +83,10 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a th:classappend="${currentPage == 'ml'} ? 'active' : ''" class="nav-link"
-                        href="/recepcionista/diagnostico">
-                        <i class="fas fa-robot"></i>
-                        <span>Diagnóstico IA</span>
+                    <a th:classappend="${currentPage == 'cola-espera'} ? 'active' : ''" class="nav-link"
+                        href="/recepcionista/cola-espera">
+                        <i class="fas fa-user-clock"></i>
+                        <span>Cola de Espera</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -126,21 +127,27 @@
 
                         <!-- Historial de Notificaciones (Bandeja) -->
                         <div class="dropdown me-3">
-                            <button class="btn btn-link text-dark position-relative p-0" id="notificationTray" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-link text-dark position-relative p-0" id="notificationTray" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Notificaciones">
                                 <i class="fas fa-bell fs-5"></i>
                                 <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size: 0.6em;">
                                     0
                                 </span>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-0" aria-labelledby="notificationTray" style="width: 320px; max-height: 450px;">
-                                <li class="p-3 border-bottom d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0 fw-bold">Notificaciones Recientes</h6>
-                                    <button class="btn btn-sm btn-link text-decoration-none p-0" id="clearNotifications">Limpiar</button>
-                                </li>
-                                <div id="notificationList" style="max-height: 350px; overflow-y: auto;">
-                                    <li class="p-4 text-center text-muted small">No hay notificaciones recientes</li>
+                            <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0 notif-panel" aria-labelledby="notificationTray">
+                                <div class="notif-panel-header">
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">Notificaciones</h6>
+                                        <small class="text-muted" id="notificationSubtitle">Sin novedades</small>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-light" id="markAllRead" title="Marcar como leídas"><i class="fas fa-check-double"></i></button>
+                                        <button type="button" class="btn btn-sm btn-light text-danger" id="clearNotifications" title="Limpiar"><i class="fas fa-trash-alt"></i></button>
+                                    </div>
                                 </div>
-                            </ul>
+                                <ul id="notificationList" class="list-unstyled mb-0 notif-list">
+                                    <li class="p-4 text-center text-muted small">No hay notificaciones recientes</li>
+                                </ul>
+                            </div>
                         </div>
 
                         <div class="dropdown">
@@ -163,7 +170,10 @@
             </div>
 
             <div class="content-wrapper">
-                <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+                <!-- Mensajes del servidor: se muestran como toast + campanita (notificaciones-ui.js) -->
+                <div id="flashMessages" hidden
+                    th:attr="data-success=${success},data-error=${error},data-info=${info}"></div>
+                <div th:if="${success}" class="alert alert-success alert-dismissible fade show flash-alert">
                     <i class="fas fa-check-circle"></i>
                     <span th:text="${success}"></span>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -173,7 +183,7 @@
                     <span th:text="${error}"></span>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-                <div th:if="${info}" class="alert alert-info alert-dismissible fade show">
+                <div th:if="${info}" class="alert alert-info alert-dismissible fade show flash-alert">
                     <i class="fas fa-info-circle"></i>
                     <span th:text="${info}"></span>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>

@@ -1,234 +1,535 @@
-/* ============ PAGOS CSS (Profesional) ============ */
-
-:root {
-    --pagos-green: #1cc88a;
-    --pagos-green-dark: #13855c;
-    --pagos-blue: #4e73df;
-    --pagos-bg: #f8f9fc;
-    --pagos-text: #3a3b45;
+/* ===================== PAGOS (Recepcionista) ===================== */
+.pagos-page {
+    --p-green: #198754;
+    --p-green-dark: #0f5c3a;
+    --p-border: #e7eaf0;
+    --p-text: #2b2f38;
+    --p-muted: #7a8394;
 }
 
-/* Tarjetas Principales */
-.pagos-card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-    background-color: #ffffff;
-    animation: fadeIn 0.4s ease-out forwards;
-}
-
-.pagos-header {
-    background: linear-gradient(135deg, var(--pagos-green) 0%, var(--pagos-green-dark) 100%);
-    color: white;
-    border-top-left-radius: 12px !important;
-    border-top-right-radius: 12px !important;
-    padding: 1.25rem 1.5rem;
-}
-
-/* Modal (Recibos / Pagos) */
-.modal-pagos-header {
-    background: linear-gradient(135deg, var(--pagos-green) 0%, var(--pagos-green-dark) 100%);
-    padding: 1rem 1.25rem;
-}
-
-.modal-pagos-footer {
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.pago-monto-highlight {
-    background: linear-gradient(180deg, rgba(28, 200, 138, 0.10) 0%, rgba(28, 200, 138, 0.04) 100%);
-    border: 1px solid rgba(28, 200, 138, 0.25);
+/* ---------- KPIs ---------- */
+.kpi-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #fff;
+    border: 1px solid var(--p-border);
     border-radius: 14px;
-    padding: 14px 14px 18px;
-    box-shadow: 0 0.25rem 1rem rgba(28, 200, 138, 0.10);
+    padding: 1.1rem 1.2rem;
+    box-shadow: 0 4px 16px rgba(31, 45, 61, .05);
+    height: 100%;
 }
 
-/* Tabla de Pagos */
-.table-pagos {
-    width: 100%;
-    margin-bottom: 0;
-    color: var(--pagos-text);
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
 }
 
-.table-pagos thead th {
-    background-color: var(--pagos-bg);
-    color: var(--pagos-blue);
-    font-weight: 700;
+.bg-success-soft { background: rgba(25, 135, 84, .12); color: #198754; }
+.bg-primary-soft { background: rgba(13, 110, 253, .12); color: #0d6efd; }
+.bg-info-soft { background: rgba(13, 202, 240, .14); color: #0a8ea8; }
+.bg-warning-soft { background: rgba(255, 193, 7, .18); color: #b58105; }
+
+.kpi-label {
+    font-size: .78rem;
     text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #e3e6f0;
-    padding: 1rem;
-}
-
-.table-pagos tbody td {
-    padding: 1rem;
-    vertical-align: middle;
-    border-bottom: 1px solid #e3e6f0;
-}
-
-.table-pagos tbody tr:hover {
-    background-color: #f1f3f9;
-}
-
-/* Estilos de Monto */
-.monto-text {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--pagos-green);
-}
-
-/* Badges (Etiquetas) */
-.badge-metodo {
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    letter-spacing: .04em;
+    color: var(--p-muted);
     font-weight: 600;
 }
 
-.metodo-efectivo {
-    background-color: #e3e6f0;
-    color: #5a5c69;
+.kpi-value {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--p-text);
+    line-height: 1.2;
 }
 
-.metodo-tarjeta {
-    background-color: var(--pagos-blue);
-    color: white;
+/* ---------- Tabla ---------- */
+.pagos-card {
+    background: #fff;
+    border: 1px solid var(--p-border);
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(31, 45, 61, .05);
+    overflow: hidden;
 }
 
-.metodo-transferencia {
-    background-color: #36b9cc;
-    color: white;
+.pagos-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--p-border);
 }
 
-.metodo-yape {
-    background-color: #6f42c1;
-    color: white;
-}
+.search-box { width: 260px; }
 
-.badge-estado {
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
+.table-pagos thead th {
+    background: #f7f9fc;
+    color: var(--p-muted);
+    font-size: .75rem;
     font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--p-border);
 }
 
-.estado-pagado {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+.table-pagos tbody td {
+    padding: .85rem 1rem;
+    border-bottom: 1px solid #f0f2f6;
+    color: var(--p-text);
 }
 
-.estado-pendiente {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
+.table-pagos tbody tr:hover { background: #fafbfd; }
+
+.cliente-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(25, 135, 84, .12);
+    color: var(--p-green);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-.estado-anulado {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+.monto-text {
+    font-weight: 800;
+    color: var(--p-green);
+    white-space: nowrap;
 }
 
-/* Recibo / Formulario */
-.receipt-container {
-    background: #f8f9fc;
-    border: 1px dashed #b7b9cc;
-    border-radius: 8px;
-    padding: 20px;
+.badge-metodo,
+.badge-estado {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .7rem;
+    border-radius: 20px;
+    font-size: .74rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
-.input-monto-group .input-group-text {
-    background: var(--pagos-green);
-    color: white;
-    font-weight: bold;
+.metodo-efectivo { background: rgba(25, 135, 84, .1); color: #146c43; }
+.metodo-tarjeta { background: rgba(13, 110, 253, .1); color: #0a58ca; }
+.metodo-transferencia { background: rgba(13, 202, 240, .14); color: #087990; }
+.metodo-yape { background: rgba(111, 66, 193, .12); color: #59359a; }
+
+.badge-estado { text-transform: uppercase; letter-spacing: .03em; }
+.estado-pagado { background: #d1f2e0; color: #0f5132; }
+.estado-pendiente { background: #fff3cd; color: #997404; }
+.estado-anulado { background: #f8d7da; color: #842029; }
+
+.empty-icon {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: #f3f5f9;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #b6bdc9;
+}
+
+/* ---------- Modal ---------- */
+.pago-modal {
     border: none;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.pago-modal-header {
+    background: linear-gradient(135deg, #198754 0%, #0f5c3a 100%);
+    color: #fff;
+    padding: 1.1rem 1.5rem;
+    border: none;
+}
+
+.pago-modal-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.2rem;
 }
 
-.input-monto-group input {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--pagos-green);
+.pago-modal-footer {
+    background: #fafbfd;
+    border-top: 1px solid var(--p-border);
 }
 
-/* Animaciones */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.pago-step {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 700;
+    color: var(--p-text);
+    margin-bottom: .75rem;
+    font-size: .95rem;
 }
 
-/* Factura / Recibo */
-.invoice-card {
-    border-top: 5px solid var(--pagos-green) !important;
+.pago-step span {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--p-green);
+    color: #fff;
+    font-size: .75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Impresión */
-@media print {
-    body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
+.pago-modal .form-control,
+.pago-modal .form-select,
+.pago-modal .input-group-text { border-color: #dfe3ea; }
 
-    .modal {
-        display: none !important;
-    }
+.pago-modal .input-group-text { background: #f7f9fc; color: var(--p-muted); }
 
-    .d-print-none {
-        display: none !important;
-    }
-
-    a {
-        color: inherit !important;
-        text-decoration: none !important;
-    }
+.pago-modal .form-control:focus,
+.pago-modal .form-select:focus {
+    border-color: rgba(25, 135, 84, .55);
+    box-shadow: 0 0 0 .2rem rgba(25, 135, 84, .15);
 }
 
-/* Yape / Plin QR */
-.qr-container img {
-    transition: transform 0.25s ease;
+.cita-preview {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .7rem .9rem;
+    border-radius: 12px;
+    background: #f5f8ff;
+    border: 1px solid #dfe8ff;
 }
 
-.qr-container img:hover {
-    transform: scale(1.05);
+.cita-preview > i { color: #0d6efd; font-size: 1.1rem; }
+
+.monto-box {
+    display: flex;
+    align-items: center;
+    border: 2px solid rgba(25, 135, 84, .35);
+    border-radius: 14px;
+    padding: .4rem 1rem;
+    background: rgba(25, 135, 84, .04);
+    transition: border-color .2s, box-shadow .2s;
 }
 
-/* Campos dinámicos */
+.monto-box:focus-within {
+    border-color: var(--p-green);
+    box-shadow: 0 0 0 .25rem rgba(25, 135, 84, .12);
+}
+
+.monto-currency {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--p-green);
+    margin-right: .5rem;
+}
+
+.monto-input {
+    border: none;
+    background: transparent;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--p-text);
+    width: 100%;
+    outline: none;
+}
+
+.metodo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .6rem;
+}
+
+@media (max-width: 576px) {
+    .metodo-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.metodo-tile { cursor: pointer; margin: 0; }
+.metodo-tile input { display: none; }
+
+.metodo-tile span {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .35rem;
+    padding: .8rem .5rem;
+    border: 1.5px solid #dfe3ea;
+    border-radius: 12px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--p-muted);
+    transition: all .15s;
+    text-align: center;
+}
+
+.metodo-tile span i { font-size: 1.25rem; }
+.metodo-tile:hover span { border-color: rgba(25, 135, 84, .5); }
+
+.metodo-tile input:checked + span {
+    border-color: var(--p-green);
+    background: rgba(25, 135, 84, .07);
+    color: var(--p-green);
+    box-shadow: 0 0 0 .2rem rgba(25, 135, 84, .1);
+}
+
 .payment-method-fields {
-    background: #ffffff;
-    padding: 16px;
+    background: #fafbfd;
+    border: 1px solid var(--p-border);
     border-radius: 12px;
-    border: 1px solid rgba(227, 230, 240, 0.95);
-    box-shadow: 0 0.4rem 1rem rgba(58, 59, 69, 0.06);
-    animation: fadeIn 0.25s ease-out forwards;
+    padding: 1rem;
+    animation: pagosFade .2s ease-out;
 }
 
-.pagos-form-alert {
+.vuelto-box {
+    border-radius: 10px;
+    background: #fff;
+    border: 1px dashed #cfd6e0;
+    padding: .35rem .75rem;
+    text-align: right;
+}
+
+.vuelto-box small { color: var(--p-muted); }
+.vuelto-box div { font-size: 1.2rem; font-weight: 800; color: var(--p-green); }
+
+.qr-container img {
+    width: 120px;
+    border-radius: 10px;
+    border: 1px solid var(--p-border);
+    background: #fff;
+    padding: 4px;
+}
+
+/* Resumen (ticket) */
+.resumen-col {
+    background: #f4f6fa;
+    border-left: 1px solid var(--p-border);
+}
+
+.resumen-ticket {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.25rem;
+    box-shadow: 0 6px 20px rgba(31, 45, 61, .07);
+    position: sticky;
+    top: 0;
+}
+
+.resumen-logo { width: 54px; height: 54px; object-fit: contain; }
+
+.resumen-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .3rem 0;
+    font-size: .9rem;
+}
+
+.resumen-row b {
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 65%;
+}
+
+.resumen-hr { border-top: 1px dashed #cfd6e0; opacity: 1; }
+
+.resumen-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: .5rem;
+    padding: .8rem 1rem;
     border-radius: 12px;
-    border: 1px solid rgba(13, 110, 253, 0.15);
-    background: rgba(13, 110, 253, 0.06);
-    color: #0b5ed7;
+    background: rgba(25, 135, 84, .08);
+    color: var(--p-green-dark);
+    font-weight: 800;
+    font-size: 1.25rem;
 }
 
-/* Mejoras de inputs dentro del modal */
-.modal .form-control,
-.modal .form-select {
+.resumen-nota {
+    margin-top: 1rem;
+    font-size: .8rem;
+    color: var(--p-muted);
+}
+
+/* ---------- Comprobante (detalle) ---------- */
+.receipt {
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid var(--p-border);
+    box-shadow: 0 10px 30px rgba(31, 45, 61, .08);
+    padding: 2.25rem;
+    overflow: hidden;
+}
+
+.receipt::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #198754, #20c997);
+}
+
+.receipt.is-void { opacity: .9; }
+
+.receipt-watermark {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-22deg);
+    font-size: 5rem;
+    font-weight: 900;
+    color: rgba(220, 53, 69, .12);
+    letter-spacing: .2em;
+    pointer-events: none;
+}
+
+.receipt-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--p-border);
+}
+
+.receipt-logo { width: 68px; height: 68px; object-fit: contain; }
+
+.receipt-number {
+    text-align: right;
+    border: 1.5px solid var(--p-green);
     border-radius: 12px;
+    padding: .75rem 1.1rem;
+    min-width: 210px;
 }
 
-/* Validación Bootstrap simple (sin JS) */
-.form-control:focus,
-.form-select:focus {
-    border-color: rgba(28, 200, 138, 0.55) !important;
-    box-shadow: 0 0 0 0.2rem rgba(28, 200, 138, 0.18) !important;
+.receipt-number .label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--p-muted);
+    font-weight: 700;
 }
 
+.receipt-number .value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--p-green-dark);
+    margin-bottom: .35rem;
+}
 
+.receipt-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding: 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+    .receipt-info { grid-template-columns: 1fr; }
+    .receipt { padding: 1.25rem; }
+}
+
+.info-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--p-muted);
+    font-weight: 700;
+    margin-bottom: .5rem;
+}
+
+.info-title { font-size: 1.1rem; font-weight: 700; color: var(--p-text); margin-bottom: .3rem; }
+
+.info-line { font-size: .88rem; color: #555e6e; display: flex; gap: .5rem; align-items: baseline; }
+.info-line i { width: 14px; color: var(--p-muted); }
+
+.info-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .3rem 1rem;
+    font-size: .88rem;
+}
+
+.info-grid span { color: var(--p-muted); }
+.info-grid b { text-align: right; color: var(--p-text); }
+
+.receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+
+.receipt-table th {
+    background: #f4f6fa;
+    font-size: .74rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--p-muted);
+    padding: .7rem .9rem;
+}
+
+.receipt-table td { padding: .9rem; border-bottom: 1px solid #eef0f4; }
+
+.receipt-totals { margin-left: auto; max-width: 320px; }
+
+.receipt-totals .row-t {
+    display: flex;
+    justify-content: space-between;
+    padding: .3rem .25rem;
+    font-size: .92rem;
+    color: #555e6e;
+}
+
+.receipt-totals .row-t.total {
+    margin-top: .4rem;
+    padding: .75rem 1rem;
+    border-radius: 12px;
+    background: rgba(25, 135, 84, .08);
+    color: var(--p-green-dark);
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.receipt-footer {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px dashed #cfd6e0;
+    text-align: center;
+    font-weight: 600;
+    color: var(--p-text);
+}
+
+@keyframes pagosFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Impresión ---------- */
+@media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #fff !important; }
+    .sidebar, .navbar-custom, .alert, .modal, .d-print-none { display: none !important; }
+    .main-content { margin: 0 !important; padding: 0 !important; }
+    .content-wrapper { padding: 0 !important; }
+    .receipt { box-shadow: none; border: none; padding: 0; }
+    .col-xl-8, .col-lg-10 { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; }
+    a { color: inherit !important; text-decoration: none !important; }
+}

@@ -5,105 +5,224 @@
     <title>Información de Medicamentos</title>
 </head>
 <body>
-<div id="content">
+<div id="content" class="med-page">
     <!-- Encabezado -->
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h2 class="fw-bold mb-0 text-dark"><i class="fas fa-circle-info me-2 text-primary"></i>Información de Medicamentos</h2>
-            <p class="text-muted">Consulta detalles, imágenes, contraindicaciones e interacciones de cada medicamento.</p>
+            <h2 class="fw-bold mb-1 text-dark"><i class="fas fa-capsules me-2 text-primary"></i>Medicamentos</h2>
+            <p class="text-muted mb-0">Ficha técnica, stock, vencimiento, contraindicaciones e interacciones</p>
+        </div>
+        <a th:href="@{/farmaceutico/inventario}" class="btn btn-primary shadow-sm px-4">
+            <i class="fas fa-boxes-stacked me-2"></i>Gestionar inventario
+        </a>
+    </div>
+
+    <!-- Indicadores (se calculan desde las tarjetas) -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <button type="button" class="med-kpi active" data-filtro="todos">
+                <span class="med-kpi-icon k-blue"><i class="fas fa-pills"></i></span>
+                <span><span class="med-kpi-label">Total</span><span class="med-kpi-value" id="kTotal">0</span></span>
+            </button>
+        </div>
+        <div class="col-6 col-xl-3">
+            <button type="button" class="med-kpi" data-filtro="bajo">
+                <span class="med-kpi-icon k-orange"><i class="fas fa-arrow-trend-down"></i></span>
+                <span><span class="med-kpi-label">Stock bajo</span><span class="med-kpi-value" id="kBajo">0</span></span>
+            </button>
+        </div>
+        <div class="col-6 col-xl-3">
+            <button type="button" class="med-kpi" data-filtro="porvencer">
+                <span class="med-kpi-icon k-yellow"><i class="fas fa-hourglass-half"></i></span>
+                <span><span class="med-kpi-label">Vence en 60 días</span><span class="med-kpi-value" id="kPorVencer">0</span></span>
+            </button>
+        </div>
+        <div class="col-6 col-xl-3">
+            <button type="button" class="med-kpi" data-filtro="vencido">
+                <span class="med-kpi-icon k-red"><i class="fas fa-ban"></i></span>
+                <span><span class="med-kpi-label">Vencidos</span><span class="med-kpi-value" id="kVencido">0</span></span>
+            </button>
         </div>
     </div>
 
-    <!-- Buscador -->
-    <div class="mb-4">
-        <div class="input-group shadow-sm">
-            <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
-            <input type="text" id="searchMedicamento" class="form-control border-0" placeholder="Buscar por nombre de medicamento..." onkeyup="filtrarMedicamentos()">
+    <!-- Barra de búsqueda y orden -->
+    <div class="med-toolbar mb-4">
+        <div class="med-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchMedicamento" placeholder="Buscar por nombre, presentación o proveedor..." autocomplete="off">
         </div>
+        <select id="ordenMedicamentos" class="form-select med-sort">
+            <option value="nombre">Ordenar: nombre (A-Z)</option>
+            <option value="stock">Ordenar: menor stock</option>
+            <option value="precio">Ordenar: mayor precio</option>
+            <option value="vence">Ordenar: vence primero</option>
+        </select>
+        <span class="med-count"><b id="medVisibles">0</b> medicamentos</span>
     </div>
 
-    <!-- Grid de Medicamentos -->
+    <!-- Grid -->
     <div class="row g-4" id="medicamentosGrid">
-        <div th:each="med : ${medicamentos}" class="col-xl-4 col-lg-6 col-md-6" th:attr="data-nombre=${med.nombre}">
-            <div class="card-medicamento">
+        <div th:each="med : ${medicamentos}" class="col-xxl-4 col-lg-6 med-col"
+             th:with="hoy=${#temporals.createToday()},
+                      stockVal=${med.stock != null ? med.stock : 0},
+                      sinStock=${med.stock == null or med.stock <= 0},
+                      bajo=${med.stockMinimo != null and (med.stock == null or med.stock <= med.stockMinimo)},
+                      vencido=${med.fechaVencimiento != null and med.fechaVencimiento.isBefore(#temporals.createToday())},
+                      porVencer=${med.fechaVencimiento != null and !med.fechaVencimiento.isBefore(#temporals.createToday()) and med.fechaVencimiento.isBefore(#temporals.createToday().plusDays(60))}"
+             th:attr="data-nombre=${med.nombre},
+                      data-buscar=${med.nombre + ' ' + (med.presentacion != null ? med.presentacion : '') + ' ' + (med.proveedor != null ? med.proveedor.nombre : '')},
+                      data-stock=${stockVal},
+                      data-precio=${med.precio != null ? med.precio : 0},
+                      data-vence=${med.fechaVencimiento != null ? med.fechaVencimiento : '9999-12-31'},
+                      data-bajo=${bajo or sinStock},
+                      data-vencido=${vencido},
+                      data-porvencer=${porVencer}">
+            <article class="med-card" th:classappend="${vencido} ? 'is-expired' : (${bajo or sinStock} ? 'is-low' : '')">
                 <!-- Imagen -->
-                <div class="med-img-wrapper">
-                    <img th:if="${med.imagenUrl != null and !med.imagenUrl.isEmpty()}" 
-                         th:src="@{${med.imagenUrl}}" 
-                         alt="Imagen de medicamento" class="med-img">
-                    <div th:unless="${med.imagenUrl != null and !med.imagenUrl.isEmpty()}" 
-                         class="med-img-placeholder">
-                        <i class="fas fa-pills"></i>
+                <div class="med-media">
+                    <img th:if="${med.imagenUrl != null and !med.imagenUrl.isEmpty()}"
+                         th:src="@{${med.imagenUrl}}" th:alt="${med.nombre}" loading="lazy">
+                    <div th:unless="${med.imagenUrl != null and !med.imagenUrl.isEmpty()}" class="med-media-empty">
+                        <i class="fas fa-prescription-bottle-medical"></i>
+                        <small>Sin imagen</small>
                     </div>
-                    <!-- Botón subir imagen -->
-                    <button class="btn-upload-img" th:attr="data-id=${med.id}" th:onclick="|document.getElementById('fileInput_' + ${med.id} + '').click()|">
+
+                    <span class="med-status st-expired" th:if="${vencido}"><i class="fas fa-ban"></i> Vencido</span>
+                    <span class="med-status st-out" th:if="${!vencido and sinStock}"><i class="fas fa-box-open"></i> Agotado</span>
+                    <span class="med-status st-low" th:if="${!vencido and !sinStock and bajo}"><i class="fas fa-arrow-down"></i> Stock bajo</span>
+                    <span class="med-status st-soon" th:if="${porVencer and !bajo and !sinStock}"><i class="fas fa-hourglass-half"></i> Por vencer</span>
+                    <span class="med-status st-ok" th:if="${!vencido and !bajo and !sinStock and !porVencer}"><i class="fas fa-check"></i> Disponible</span>
+
+                    <button type="button" class="med-upload" title="Cambiar imagen"
+                            th:onclick="|document.getElementById('fileInput_${med.id}').click()|">
                         <i class="fas fa-camera"></i>
                     </button>
-                    <form th:action="@{/farmaceutico/medicamentos/subir-imagen/{id}(id=${med.id})}" method="post" enctype="multipart/form-data" style="display:none;">
-                        <input type="file" name="archivo" th:id="'fileInput_' + ${med.id}" accept="image/*" onchange="this.form.submit()">
+                    <form th:action="@{/farmaceutico/medicamentos/subir-imagen/{id}(id=${med.id})}" method="post"
+                          enctype="multipart/form-data" class="d-none">
+                        <input type="file" name="archivo" th:id="|fileInput_${med.id}|" accept="image/*" onchange="this.form.submit()">
                     </form>
                 </div>
-                <!-- Info -->
-                <div class="med-body">
-                    <h5 class="med-nombre" th:text="${med.nombre}">Aspirina</h5>
-                    <span class="med-presentacion" th:text="${med.presentacion}">Tabletas 100mg</span>
-                    
-                    <div class="med-precio-stock">
-                        <span class="med-precio" th:text="'S/ ' + ${#numbers.formatDecimal(med.precio, 1, 'COMMA', 2, 'POINT')}">S/ 35.00</span>
-                        <span th:if="${med.stockMinimo != null and med.stock <= med.stockMinimo}" class="badge bg-danger-soft text-danger">Stock Bajo</span>
-                        <span th:if="${med.stockMinimo == null or med.stock > med.stockMinimo}" class="badge bg-success-soft text-success" th:text="'Stock: ' + ${med.stock}">Stock: 12</span>
+
+                <!-- Cuerpo -->
+                <div class="med-content">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div class="min-w-0">
+                            <h5 class="med-title" th:text="${med.nombre}">Aspirina</h5>
+                            <span class="med-chip" th:if="${med.presentacion != null}">
+                                <i class="fas fa-box"></i> <span th:text="${med.presentacion}">Tabletas</span>
+                            </span>
+                        </div>
+                        <div class="med-price" th:text="${med.precio != null ? 'S/ ' + #numbers.formatDecimal(med.precio, 1, 'COMMA', 2, 'POINT') : 'S/ —'}">S/ 35.00</div>
                     </div>
 
-                    <p class="med-descripcion" th:if="${med.descripcion != null and !med.descripcion.isEmpty()}" th:text="${med.descripcion}">Descripción del medicamento</p>
+                    <!-- Stock -->
+                    <div class="med-stock">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Stock disponible</span>
+                            <span class="fw-bold">
+                                <span th:text="${stockVal}">12</span>
+                                <span class="text-muted fw-normal" th:if="${med.stockMinimo != null}" th:text="| / mín. ${med.stockMinimo}|"> / mín. 2</span>
+                            </span>
+                        </div>
+                        <div class="med-bar">
+                            <span th:classappend="${sinStock or bajo} ? 'bar-low' : 'bar-ok'"
+                                  th:style="|width: ${med.stockMinimo != null and med.stockMinimo > 0 ? (stockVal * 100 / (med.stockMinimo * 3)) : (stockVal > 0 ? 100 : 0)}%|"></span>
+                        </div>
+                    </div>
 
-                    <div class="med-detalles">
-                        <div class="med-detalle" th:if="${med.contraindicaciones != null and !med.contraindicaciones.isEmpty()}">
-                            <span class="detalle-label"><i class="fas fa-exclamation-triangle text-danger me-1"></i> Contraindicaciones</span>
-                            <span class="detalle-valor" th:text="${med.contraindicaciones}">No usar en gatos</span>
+                    <!-- Datos -->
+                    <div class="med-facts">
+                        <div>
+                            <span class="fact-label"><i class="fas fa-truck"></i> Proveedor</span>
+                            <span class="fact-value" th:text="${med.proveedor != null ? med.proveedor.nombre : 'Sin proveedor'}"
+                                  th:classappend="${med.proveedor == null} ? 'text-muted fst-italic' : ''">Genérico</span>
                         </div>
-                        <div class="med-detalle" th:if="${med.interacciones != null and !med.interacciones.isEmpty()}">
-                            <span class="detalle-label"><i class="fas fa-pills text-warning me-1"></i> Interacciones</span>
-                            <span class="detalle-valor" th:text="${med.interacciones}">Ibuprofeno</span>
+                        <div>
+                            <span class="fact-label"><i class="fas fa-calendar-xmark"></i> Vencimiento</span>
+                            <span class="fact-value"
+                                  th:classappend="${vencido} ? 'text-danger' : (${porVencer} ? 'text-warning-emphasis' : (${med.fechaVencimiento == null} ? 'text-muted fst-italic' : ''))"
+                                  th:text="${med.fechaVencimiento != null ? #temporals.format(med.fechaVencimiento, 'dd/MM/yyyy') : 'Sin fecha'}">Sin fecha</span>
                         </div>
-                        <div class="med-detalle">
-                            <span class="detalle-label"><i class="fas fa-boxes text-primary me-1"></i> Presentación</span>
-                            <span class="detalle-valor" th:text="${med.presentacion}">Caja x20</span>
-                        </div>
-                        <div class="med-detalle">
-                            <span class="detalle-label"><i class="fas fa-tag text-info me-1"></i> Proveedor</span>
-                            <span class="detalle-valor" th:text="${med.proveedor != null ? med.proveedor.nombre : 'Sin proveedor'}">Genérico SAC</span>
-                        </div>
-                        <div class="med-detalle">
-                            <span class="detalle-label"><i class="fas fa-cubes text-secondary me-1"></i> Stock Mínimo</span>
-                            <span class="detalle-valor" th:text="${med.stockMinimo != null ? med.stockMinimo : 'No definido'}">10</span>
-                        </div>
-                        <div class="med-detalle">
-                            <span class="detalle-label"><i class="fas fa-calendar-day text-danger me-1"></i> Vencimiento</span>
-                            <span class="detalle-valor" th:text="${med.fechaVencimiento != null ? #temporals.format(med.fechaVencimiento, 'dd/MM/yyyy') : 'Sin fecha'}">Sin fecha</span>
-                        </div>
+                    </div>
+
+                    <p class="med-desc" th:if="${med.descripcion != null and !med.descripcion.isEmpty()}" th:text="${med.descripcion}">Descripción</p>
+
+                    <div class="med-warn warn-red" th:if="${med.contraindicaciones != null and !med.contraindicaciones.isEmpty()}">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <div><b>Contraindicaciones</b><span th:text="${med.contraindicaciones}">No usar en gatos</span></div>
+                    </div>
+                    <div class="med-warn warn-amber" th:if="${med.interacciones != null and !med.interacciones.isEmpty()}">
+                        <i class="fas fa-right-left"></i>
+                        <div><b>Interacciones</b><span th:text="${med.interacciones}">Ibuprofeno</span></div>
                     </div>
                 </div>
-            </div>
+            </article>
         </div>
     </div>
 
-    <!-- Mensaje si no hay medicamentos -->
-    <div th:if="${#lists.isEmpty(medicamentos)}" class="text-center py-5">
-        <i class="fas fa-pills fa-4x text-muted mb-3"></i>
-        <h5 class="text-muted">No hay medicamentos registrados</h5>
+    <!-- Sin resultados -->
+    <div id="medSinResultados" class="med-empty d-none">
+        <i class="fas fa-magnifying-glass"></i>
+        <h6 class="fw-bold mt-3 mb-1">No hay medicamentos que coincidan</h6>
+        <p class="text-muted small mb-0">Pruebe con otro nombre o quite el filtro.</p>
+    </div>
+
+    <div th:if="${#lists.isEmpty(medicamentos)}" class="med-empty">
+        <i class="fas fa-pills"></i>
+        <h5 class="fw-bold mt-3">No hay medicamentos registrados</h5>
         <a th:href="@{/farmaceutico/inventario}" class="btn btn-primary mt-2">Ir a Inventario</a>
     </div>
 
     <script>
-    function filtrarMedicamentos() {
-        const input = document.getElementById('searchMedicamento');
-        const filter = input.value.toLowerCase();
-        const cards = document.querySelectorAll('[data-nombre]');
-        cards.forEach(card => {
-            const nombre = card.getAttribute('data-nombre').toLowerCase();
-            card.style.display = nombre.includes(filter) ? '' : 'none';
-        });
-    }
+    document.addEventListener('DOMContentLoaded', function () {
+        const grid = document.getElementById('medicamentosGrid');
+        const cols = Array.from(grid.querySelectorAll('.med-col'));
+        const buscar = document.getElementById('searchMedicamento');
+        const orden = document.getElementById('ordenMedicamentos');
+        let filtro = 'todos';
+
+        const contar = (attr) => cols.filter(c => c.dataset[attr] === 'true').length;
+        document.getElementById('kTotal').textContent = cols.length;
+        document.getElementById('kBajo').textContent = contar('bajo');
+        document.getElementById('kPorVencer').textContent = contar('porvencer');
+        document.getElementById('kVencido').textContent = contar('vencido');
+
+        function aplicar() {
+            const q = buscar.value.toLowerCase().trim();
+            let n = 0;
+            cols.forEach(c => {
+                const okQ = !q || (c.dataset.buscar || '').toLowerCase().includes(q);
+                const okF = filtro === 'todos' || c.dataset[filtro] === 'true';
+                c.classList.toggle('d-none', !(okQ && okF));
+                if (okQ && okF) n++;
+            });
+            document.getElementById('medVisibles').textContent = n;
+            document.getElementById('medSinResultados').classList.toggle('d-none', n > 0 || cols.length === 0);
+        }
+
+        function ordenar() {
+            const v = orden.value;
+            const cmp = {
+                nombre: (a, b) => a.dataset.nombre.localeCompare(b.dataset.nombre, 'es'),
+                stock: (a, b) => (+a.dataset.stock) - (+b.dataset.stock),
+                precio: (a, b) => (+b.dataset.precio) - (+a.dataset.precio),
+                vence: (a, b) => a.dataset.vence.localeCompare(b.dataset.vence)
+            }[v];
+            cols.sort(cmp).forEach(c => grid.appendChild(c));
+        }
+
+        buscar.addEventListener('input', aplicar);
+        orden.addEventListener('change', ordenar);
+        document.querySelectorAll('.med-kpi').forEach(btn => btn.addEventListener('click', function () {
+            document.querySelectorAll('.med-kpi').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            filtro = this.dataset.filtro;
+            aplicar();
+        }));
+
+        ordenar();
+        aplicar();
+    });
     </script>
 </div>
 </body>

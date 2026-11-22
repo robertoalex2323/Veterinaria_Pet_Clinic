@@ -27,6 +27,10 @@ public class Cliente {
     @Column(length = 200)
     private String direccion;
     
+    /** Coordenadas de la dirección (seleccionadas en el mapa). */
+    private Double latitud;
+    private Double longitud;
+
     @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
     
@@ -58,6 +62,12 @@ public class Cliente {
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
     
+    public Double getLatitud() { return latitud; }
+    public void setLatitud(Double latitud) { this.latitud = latitud; }
+
+    public Double getLongitud() { return longitud; }
+    public void setLongitud(Double longitud) { this.longitud = longitud; }
+
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
     

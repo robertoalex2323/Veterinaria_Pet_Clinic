@@ -142,6 +142,7 @@
             </div>
 
             <div class="content-wrapper">
+                <div id="flashMessages" hidden th:attr="data-success=${success},data-error=${error},data-info=${info}"></div>
                 <!-- Mensajes de Alerta Dinámicos -->
                 <div th:if="${success}" class="alert alert-success alert-dismissible fade show m-3">
                     <i class="fas fa-check-circle me-2"></i>

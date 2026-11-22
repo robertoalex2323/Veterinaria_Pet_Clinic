@@ -519,3 +519,95 @@
         animation: none !important;
     }
 }
+
+/* ============ FORMULARIO DE PROMOCIÓN (rediseño) ============ */
+.pf-head-icon {
+    width: 54px; height: 54px; border-radius: 16px;
+    background: linear-gradient(135deg, #6f42c1, #d63384); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.35rem;
+    box-shadow: 0 8px 18px rgba(111, 66, 193, .3);
+}
+.pf-card {
+    background: #fff; border: 1px solid #e6e9f0; border-radius: 16px;
+    box-shadow: 0 4px 18px rgba(31, 45, 61, .05);
+}
+.pf-card-head {
+    display: flex; align-items: center; gap: .8rem;
+    padding: .95rem 1.25rem; border-bottom: 1px solid #eef0f4;
+}
+.pf-card-head h6 { margin: 0; font-weight: 700; color: #1f2d3d; }
+.pf-card-head small { color: #7a8394; }
+.pf-step {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(111, 66, 193, .12); color: #6f42c1; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.pf-card-body { padding: 1.25rem; }
+.pf-page .form-control, .pf-page .form-select, .pf-page .input-group-text { border-color: #dfe3ea; }
+.pf-page .input-group-text { background: #f7f9fc; color: #7a8394; }
+.pf-page .form-control:focus, .pf-page .form-select:focus {
+    border-color: #b69bea; box-shadow: 0 0 0 .2rem rgba(111, 66, 193, .13);
+}
+.pf-unit { font-weight: 700; color: #6f42c1 !important; min-width: 44px; justify-content: center; }
+
+/* Tipo de descuento como tarjetas */
+.pf-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+@media (max-width: 576px) { .pf-types { grid-template-columns: 1fr; } }
+.pf-type { margin: 0; cursor: pointer; }
+.pf-type input { display: none; }
+.pf-type span {
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: .2rem;
+    padding: 1rem .75rem; border: 1.5px solid #dfe3ea; border-radius: 14px; transition: all .15s;
+}
+.pf-type span i { font-size: 1.35rem; color: #9aa3b2; margin-bottom: .25rem; }
+.pf-type span b { color: #2b2f38; }
+.pf-type span small { color: #7a8394; font-size: .78rem; }
+.pf-type:hover span { border-color: #b69bea; }
+.pf-type input:checked + span {
+    border-color: #6f42c1; background: rgba(111, 66, 193, .06);
+    box-shadow: 0 0 0 .2rem rgba(111, 66, 193, .1);
+}
+.pf-type input:checked + span i { color: #6f42c1; }
+
+/* Días */
+.pf-days { display: flex; flex-wrap: wrap; gap: .45rem; }
+.pf-days .btn { min-width: 58px; border-radius: 22px; font-weight: 600; }
+
+/* Vista previa tipo cupón */
+.pf-sticky { position: sticky; top: 1rem; }
+.pf-preview {
+    border-radius: 18px; overflow: hidden; background: #fff;
+    box-shadow: 0 14px 34px rgba(111, 66, 193, .18); transition: filter .2s;
+}
+.pf-preview.is-paused { filter: grayscale(.85); }
+.pf-preview-top {
+    position: relative; padding: 1.5rem 1.4rem 1.6rem; color: #fff;
+    background: linear-gradient(135deg, #6f42c1 0%, #d63384 100%);
+}
+.pf-preview[data-tipo="FIJO"] .pf-preview-top { background: linear-gradient(135deg, #198754 0%, #20c997 100%); }
+.pf-preview[data-tipo="2X1"] .pf-preview-top { background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%); }
+.pf-preview-badge {
+    position: absolute; top: 1rem; right: 1rem; font-size: .7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    background: rgba(255, 255, 255, .25); padding: .25rem .6rem; border-radius: 20px;
+}
+.pf-preview-value { font-size: 2.4rem; font-weight: 900; line-height: 1.1; letter-spacing: -.02em; }
+.pf-preview-name { font-size: 1.05rem; font-weight: 600; opacity: .95; margin-top: .3rem; word-break: break-word; }
+.pf-preview-cut {
+    height: 0; border-top: 2px dashed #e1e5ec; margin: 0 1.2rem; position: relative;
+}
+.pf-preview-cut::before, .pf-preview-cut::after {
+    content: ''; position: absolute; top: -12px; width: 22px; height: 22px; border-radius: 50%;
+    background: #f4f6fa;
+}
+.pf-preview-cut::before { left: -2.05rem; }
+.pf-preview-cut::after { right: -2.05rem; }
+.pf-preview-body { padding: 1.1rem 1.4rem 1.3rem; }
+.pv-row { display: flex; gap: .7rem; align-items: baseline; padding: .3rem 0; font-size: .9rem; color: #3c4453; }
+.pv-row i { width: 16px; color: #6f42c1; }
+.pv-desc { margin: .6rem 0 0; font-size: .85rem; color: #7a8394; font-style: italic; }
+.pv-desc:empty { display: none; }
+.pf-switch { width: 3em !important; height: 1.5em !important; cursor: pointer; }
+#content .pf-days .btn-check:checked + .btn-outline-primary {
+    background: #6f42c1 !important; border-color: #6f42c1 !important; color: #fff !important;
+}
