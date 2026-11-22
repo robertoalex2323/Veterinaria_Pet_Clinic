@@ -2,10 +2,10 @@
   const form = document.getElementById('productoForm');
   if (!form) return;
 
-  const nombreInput = form.querySelector('input[name="nombre"]');
-  const categoriaInput = form.querySelector('input[name="categoria"]');
-  const precioInput = form.querySelector('input[name="precio"]');
-  const stockInput = form.querySelector('input[name="stock"]');
+  const nombreInput = document.getElementById('nombreInput') || form.querySelector('input[name="nombre"]');
+  const categoriaInput = document.getElementById('categoriaInput') || form.querySelector('input[name="categoria"]');
+  const precioInput = document.getElementById('precioInput') || form.querySelector('input[name="precio"]');
+  const stockInput = document.getElementById('stockInput') || form.querySelector('input[name="stock"]');
   const descripcionInput = document.getElementById('descripcionInput');
   const descripcionCounter = document.getElementById('descripcionCounter');
   const fotoInput = document.getElementById('fotoInput');
@@ -15,14 +15,58 @@
   const eliminarFotoCheck = document.getElementById('eliminarFotoCheck');
   const btnGuardar = document.getElementById('btnGuardarProducto');
 
+  // Elementos de la previsualización en vivo
+  const previewNombre = document.getElementById('previewNombre');
+  const previewCategoria = document.getElementById('previewCategoria');
+  const previewPrecio = document.getElementById('previewPrecio');
+  const previewStockBadge = document.getElementById('previewStockBadge');
+
   const MAX_FOTO_BYTES = 2 * 1024 * 1024; // 2MB
   const TIPOS_VALIDOS = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 
+  function updateLivePreview() {
+    if (previewNombre && nombreInput) {
+      previewNombre.textContent = nombreInput.value.trim() || 'Nombre del Producto';
+    }
+    if (previewCategoria && categoriaInput) {
+      previewCategoria.textContent = categoriaInput.value.trim() || 'Categoría';
+    }
+    if (previewPrecio && precioInput) {
+      const p = parseFloat(precioInput.value);
+      previewPrecio.textContent = !isNaN(p) && p > 0 ? `S/ ${p.toFixed(2)}` : 'S/ 0.00';
+    }
+    if (previewStockBadge && stockInput) {
+      const s = parseInt(stockInput.value, 10);
+      if (isNaN(s) || s <= 0) {
+        previewStockBadge.className = 'badge bg-danger-subtle text-danger rounded-pill px-2 py-1 small';
+        previewStockBadge.textContent = 'Agotado (0)';
+      } else if (s <= 5) {
+        previewStockBadge.className = 'badge bg-warning-subtle text-warning rounded-pill px-2 py-1 small';
+        previewStockBadge.textContent = `Stock Bajo (${s})`;
+      } else {
+        previewStockBadge.className = 'badge bg-success-subtle text-success rounded-pill px-2 py-1 small';
+        previewStockBadge.textContent = `En Stock (${s})`;
+      }
+    }
+  }
+
+  // Chips de sugerencia rápida para categoría
+  document.querySelectorAll('.category-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (categoriaInput) {
+        categoriaInput.value = btn.dataset.cat;
+        showFieldError(categoriaInput, false);
+        updateLivePreview();
+      }
+    });
+  });
+
   function showFieldError(input, show) {
-    const wrapper = input.closest('.col-md-6, .col-md-12');
-    const feedback = wrapper ? wrapper.querySelector(`[data-error-for="${input.name}"]`) : null;
-    if (!feedback) return;
-    feedback.classList.toggle('d-none', !show);
+    if (!input) return;
+    const feedback = form.querySelector(`[data-error-for="${input.name}"]`);
+    if (feedback) {
+      feedback.classList.toggle('d-none', !show);
+    }
     input.classList.toggle('is-invalid', show);
   }
 
@@ -32,7 +76,8 @@
     if (!wrap) return null;
     const img = document.createElement('img');
     img.id = 'fotoPreviewImg';
-    img.className = 'pf-foto-img';
+    img.className = 'img-fluid rounded-3 pf-foto-img';
+    img.alt = 'Foto del producto';
     wrap.prepend(img);
     fotoPreviewImg = img;
     return img;
@@ -53,27 +98,32 @@
   // --- Preview de la foto seleccionada ---
   if (fotoInput) {
     fotoInput.addEventListener('change', () => {
-      fotoError.classList.add('d-none');
-      fotoError.textContent = '';
+      if (fotoError) {
+        fotoError.classList.add('d-none');
+        fotoError.textContent = '';
+      }
 
       const file = fotoInput.files && fotoInput.files[0];
       if (!file) return;
 
       if (!TIPOS_VALIDOS.includes(file.type)) {
-        fotoError.textContent = 'Formato no permitido. Usa JPG, PNG, WEBP o GIF.';
-        fotoError.classList.remove('d-none');
+        if (fotoError) {
+          fotoError.textContent = 'Formato no permitido. Usa JPG, PNG, WEBP o GIF.';
+          fotoError.classList.remove('d-none');
+        }
         fotoInput.value = '';
         return;
       }
 
       if (file.size > MAX_FOTO_BYTES) {
-        fotoError.textContent = 'La imagen supera el máximo de 2MB.';
-        fotoError.classList.remove('d-none');
+        if (fotoError) {
+          fotoError.textContent = 'La imagen supera el límite de 2MB.';
+          fotoError.classList.remove('d-none');
+        }
         fotoInput.value = '';
         return;
       }
 
-      // Si elige una foto nueva, ya no tiene sentido "eliminar la actual"
       if (eliminarFotoCheck) eliminarFotoCheck.checked = false;
 
       const reader = new FileReader();
@@ -88,7 +138,7 @@
     });
   }
 
-  // Si marca "eliminar foto actual", limpiamos cualquier archivo seleccionado
+  // Si marca "eliminar foto actual"
   if (eliminarFotoCheck) {
     eliminarFotoCheck.addEventListener('change', () => {
       if (eliminarFotoCheck.checked) {
@@ -99,25 +149,25 @@
     });
   }
 
-  // --- Validación en el envío (además de la del backend) ---
+  // Validación y envío del formulario
   form.addEventListener('submit', (e) => {
     let valido = true;
 
-    const nombreOk = nombreInput.value.trim().length > 0;
+    const nombreOk = nombreInput && nombreInput.value.trim().length > 0;
     showFieldError(nombreInput, !nombreOk);
     valido = valido && nombreOk;
 
-    const categoriaOk = categoriaInput.value.trim().length > 0;
+    const categoriaOk = categoriaInput && categoriaInput.value.trim().length > 0;
     showFieldError(categoriaInput, !categoriaOk);
     valido = valido && categoriaOk;
 
-    const precioNum = parseFloat(precioInput.value);
-    const precioOk = precioInput.value !== '' && !Number.isNaN(precioNum) && precioNum > 0;
+    const precioNum = precioInput ? parseFloat(precioInput.value) : 0;
+    const precioOk = precioInput && precioInput.value !== '' && !isNaN(precioNum) && precioNum > 0;
     showFieldError(precioInput, !precioOk);
     valido = valido && precioOk;
 
-    const stockNum = parseInt(stockInput.value, 10);
-    const stockOk = stockInput.value === '' || (!Number.isNaN(stockNum) && stockNum >= 0);
+    const stockNum = stockInput ? parseInt(stockInput.value, 10) : -1;
+    const stockOk = stockInput && stockInput.value !== '' && !isNaN(stockNum) && stockNum >= 0;
     showFieldError(stockInput, !stockOk);
     valido = valido && stockOk;
 
@@ -130,12 +180,18 @@
 
     if (btnGuardar) {
       btnGuardar.disabled = true;
-      btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Guardando...';
+      btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Guardando producto...';
     }
   });
 
   [nombreInput, categoriaInput, precioInput, stockInput].forEach((input) => {
     if (!input) return;
-    input.addEventListener('input', () => showFieldError(input, false));
+    input.addEventListener('input', () => {
+      showFieldError(input, false);
+      updateLivePreview();
+    });
   });
+
+  // Inicializar preview al cargar
+  updateLivePreview();
 })();

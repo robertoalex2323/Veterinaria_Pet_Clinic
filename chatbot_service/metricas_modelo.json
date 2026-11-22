@@ -1,0 +1,77 @@
+{
+  "accuracy": 0.9,
+  "total_muestras": 96,
+  "muestras_entrenamiento": 76,
+  "muestras_evaluacion": 20,
+  "clases": [
+    "CONSULTA_GENERAL",
+    "EMERGENCIA_CRITICA",
+    "PRIORIDAD_MEDIA",
+    "URGENCIA_ALTA"
+  ],
+  "matriz_confusion": [
+    [
+      5,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      4,
+      1,
+      0
+    ],
+    [
+      1,
+      0,
+      4,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      5
+    ]
+  ],
+  "reporte_clasificacion": {
+    "CONSULTA_GENERAL": {
+      "precision": 0.8333333333333334,
+      "recall": 1.0,
+      "f1-score": 0.9090909090909091,
+      "support": 5.0
+    },
+    "EMERGENCIA_CRITICA": {
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1-score": 0.8888888888888888,
+      "support": 5.0
+    },
+    "PRIORIDAD_MEDIA": {
+      "precision": 0.8,
+      "recall": 0.8,
+      "f1-score": 0.8,
+      "support": 5.0
+    },
+    "URGENCIA_ALTA": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 5.0
+    },
+    "accuracy": 0.9,
+    "macro avg": {
+      "precision": 0.9083333333333334,
+      "recall": 0.9,
+      "f1-score": 0.8994949494949496,
+      "support": 20.0
+    },
+    "weighted avg": {
+      "precision": 0.9083333333333334,
+      "recall": 0.9,
+      "f1-score": 0.8994949494949495,
+      "support": 20.0
+    }
+  }
+}

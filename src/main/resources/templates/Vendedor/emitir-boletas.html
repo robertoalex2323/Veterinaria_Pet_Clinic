@@ -3,88 +3,300 @@
       th:replace="~{fragments/sidebar_vendedor::layout(~{::div#content}, 'emitir_boleta')}">
 <head>
     <meta charset="UTF-8">
-    <title>Emitir Boletas - Vendedor</title>
+    <title>Emitir Boletas - Vendedor Pet Clinic</title>
+    <link rel="stylesheet" th:href="@{/Css/emitir_boleta-vendedor.css}">
 </head>
 <body>
 <div id="content">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Header Principal -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h2 class="mb-0">
-                <i class="fas fa-file-invoice text-primary"></i> Emitir Boleta
+            <h2 class="mb-1 text-dark fw-bold">
+                <i class="fas fa-file-invoice-dollar text-primary me-2"></i>Emisión de Comprobantes
             </h2>
-            <p class="text-muted mb-0">Selecciona una venta y envía el comprobante al correo del cliente.</p>
+            <p class="text-muted mb-0">Genera, descarga y envía boletas electrónicas de venta para los clientes de Pet Clinic.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/vendedor/ventas/registrar}" class="btn btn-success shadow-sm">
+                <i class="fas fa-cart-plus me-1"></i> Nueva Venta
+            </a>
+            <a th:href="@{/vendedor/ventas/historial}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-history me-1"></i> Historial Completo
+            </a>
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <strong><i class="fas fa-cash-register me-2"></i> Datos de emisión</strong>
+    <!-- Alertas Flash -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-check-circle fa-lg me-2 text-success"></i>
+            <div>
+                <strong>¡Éxito!</strong> <span th:text="${success}"></span>
+            </div>
         </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
 
-        <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label">Venta (ID)</label>
+    <div th:if="${advertencia}" class="alert alert-warning alert-dismissible fade show shadow-sm mb-4" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle fa-lg me-2 text-warning"></i>
+            <div>
+                <strong>Aviso de Entrega:</strong> <span th:text="${advertencia}"></span>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
 
-                    <input class="form-control" name="ventaId" form="emitirForm" type="number" min="1" placeholder="Ej: 1" required>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-times-circle fa-lg me-2 text-danger"></i>
+            <div>
+                <strong>Error:</strong> <span th:text="${error}"></span>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+
+    <!-- Banner Destacado de Descarga Inmediata si se generó un comprobante -->
+    <div th:if="${comprobanteGeneradoId != null}" class="card border-primary shadow-sm mb-4 bg-light">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3 py-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary text-white p-3 rounded-circle d-flex align-items-center justify-content-center" style="width:50px; height:50px;">
+                    <i class="fas fa-file-pdf fa-xl"></i>
                 </div>
-
-                <div class="col-md-6">
-                    <div class="alert alert-info mb-0">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Este formulario genera el comprobante y lo envía al correo del cliente mediante el servicio de comprobantes.
-                    </div>
-                </div>
-
-                <div class="col-md-2 d-grid">
-                    <button type="submit" form="emitirForm" class="btn btn-primary">
-                        <i class="fas fa-paper-plane me-2"></i> Emitir
-                    </button>
+                <div>
+                    <h5 class="mb-0 fw-bold text-dark">Comprobante N° <span th:text="${comprobanteGeneradoId}">1</span> listo</h5>
+                    <small class="text-muted">El documento PDF ha sido generado y firmado por el sistema.</small>
                 </div>
             </div>
-
-            <form id="emitirForm" th:action="@{/vendedor/ventas/emitir}" method="post" class="mt-4">
-                <input type="hidden" name="ventaId" id="ventaIdHidden"/>
-
-               <div class="d-flex justify-content-end gap-2 mt-3">
-                    <a th:href="@{/vendedor/ventas/registrar}" class="btn btn-outline-secondary">
-                        <i class="fas fa-plus me-2"></i> Registrar nueva venta
-                    </a>
-                    <button type="button" id="btnDescargarPdf" class="btn btn-outline-primary">
-                        <i class="fas fa-download me-2"></i> Descargar PDF
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-file-pdf me-2"></i> Generar y enviar PDF
-                    </button>
-                </div>
-            </form>
-
+            <div class="d-flex gap-2">
+                <a th:href="@{/vendedor/ventas/{id}/boleta.pdf(id=${comprobanteGeneradoId})}" target="_blank" class="btn btn-primary shadow-sm">
+                    <i class="fas fa-download me-1"></i> Descargar / Imprimir Boleta PDF
+                </a>
+                <a th:href="@{/vendedor/ventas/ver/{id}(id=${comprobanteGeneradoId})}" class="btn btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i> Ver Detalle de Venta
+                </a>
+            </div>
         </div>
     </div>
 
-    <script th:inline="javascript">
-        // Mantener compatibilidad con el layout: al enviar, sincroniza ventaId -> hidden.
-        document.addEventListener('DOMContentLoaded', function () {
-            const input = document.querySelector('input[name="ventaId"]');
-            const hidden = document.getElementById('ventaIdHidden');
-            const form = document.getElementById('emitirForm');
-            const btnDescargar = document.getElementById('btnDescargarPdf');
+    <!-- Mini KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-primary h-100">
+                <div class="card-body d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <div class="text-muted small fw-bold text-uppercase">Ventas Hoy</div>
+                        <div class="fs-4 fw-bold text-dark" th:text="${totalVentasHoy ?: 0}">0</div>
+                    </div>
+                    <div class="text-primary fs-2 opacity-50"><i class="fas fa-receipt"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-success h-100">
+                <div class="card-body d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <div class="text-muted small fw-bold text-uppercase">Recaudación de Hoy</div>
+                        <div class="fs-4 fw-bold text-success">S/ <span th:text="${montoVentasHoy != null ? #numbers.formatDecimal(montoVentasHoy, 1, 2) : '0.00'}">0.00</span></div>
+                    </div>
+                    <div class="text-success fs-2 opacity-50"><i class="fas fa-coins"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-info h-100">
+                <div class="card-body d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <div class="text-muted small fw-bold text-uppercase">Formato Legal</div>
+                        <div class="fs-5 fw-bold text-dark">Boleta Electrónica (IGV 18%)</div>
+                    </div>
+                    <div class="text-info fs-2 opacity-50"><i class="fas fa-stamp"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            if (input && hidden && form) {
-                form.addEventListener('submit', function () {
-                    hidden.value = input.value;
+    <!-- Tarjeta Principal: Selector de Venta / Emisión Rápida -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <strong class="text-dark fs-5">
+                <i class="fas fa-search me-2 text-primary"></i>Generar y Emitir por ID de Venta
+            </strong>
+        </div>
+
+        <div class="card-body p-4">
+            <form id="emitirForm" th:action="@{/vendedor/ventas/emitir}" method="post">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-dark" for="inputVentaId">
+                            Número / ID de Venta <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-hashtag"></i></span>
+                            <input class="form-control" id="inputVentaId" name="ventaId" type="number" min="1"
+                                   placeholder="Ingresa el ID (Ej: 1, 2...)" required autocomplete="off">
+                        </div>
+                        <div class="form-text">O selecciona directamente una venta de la lista inferior.</div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <div class="alert alert-info mb-0 py-2 small d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2 fs-5"></i>
+                            <div>
+                                Genera el comprobante electrónico en formato PDF y lo despacha al correo registrado del cliente.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="button" id="btnDescargarPdf" class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-download me-1"></i> Descargar
+                        </button>
+                        <button type="submit" class="btn btn-primary flex-fill shadow-sm">
+                            <i class="fas fa-paper-plane me-1"></i> Emitir y Enviar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de Ventas Recientes para Emisión Directa -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 flex-wrap gap-2">
+            <div>
+                <strong class="text-dark fs-5">
+                    <i class="fas fa-list-check me-2 text-primary"></i>Ventas Recientes Listas para Comprobante
+                </strong>
+                <small class="text-muted d-block">Haz clic en cualquier venta para seleccionarla o descargar su boleta directamente.</small>
+            </div>
+            <div>
+                <input type="text" id="filtroVentas" class="form-control form-control-sm" placeholder="Filtrar por cliente..." style="max-width: 220px;">
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tablaVentas">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;" class="text-center">ID</th>
+                            <th>Cliente</th>
+                            <th>Fecha y Hora</th>
+                            <th>Método de Pago</th>
+                            <th>Total</th>
+                            <th class="text-center">Estado Email</th>
+                            <th style="width: 220px;" class="text-end pe-3">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${ventasRecientes == null or #lists.isEmpty(ventasRecientes)}">
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block opacity-50"></i>
+                                No hay ventas recientes registradas para emitir comprobantes.
+                            </td>
+                        </tr>
+                        <tr th:each="v : ${ventasRecientes}">
+                            <td class="text-center fw-bold text-primary">
+                                #<span th:text="${v.id}">1</span>
+                            </td>
+                            <td>
+                                <strong class="text-dark d-block" th:text="${v.cliente != null ? v.cliente.nombre : 'Cliente General'}">Nombre</strong>
+                                <small class="text-muted">
+                                    <i class="fas fa-envelope me-1"></i>
+                                    <span th:text="${v.cliente != null && v.cliente.email != null && !#strings.isEmpty(v.cliente.email) ? v.cliente.email : 'Sin correo registrado'}">correo@ejemplo.com</span>
+                                </small>
+                            </td>
+                            <td>
+                                <span class="d-block text-dark fw-medium" th:text="${v.fecha != null ? #temporals.format(v.fecha, 'dd/MM/yyyy HH:mm') : '-'}">01/01/2026 10:00</span>
+                            </td>
+                            <td>
+                                <span th:class="${v.metodoPago == 'Efectivo' ? 'badge bg-success' : (v.metodoPago == 'Yape' ? 'badge bg-purple text-white' : (v.metodoPago == 'Plin' ? 'badge bg-info text-white' : 'badge bg-secondary'))}"
+                                      th:text="${v.metodoPago != null ? v.metodoPago : 'Efectivo'}" style="background-color: #6f42c1;">
+                                    Efectivo
+                                </span>
+                            </td>
+                            <td class="fw-bold text-dark">
+                                S/ <span th:text="${v.total != null ? #numbers.formatDecimal(v.total, 1, 2) : '0.00'}">0.00</span>
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${v.comprobanteEnviado}" class="badge bg-success-subtle text-success border border-success">
+                                    <i class="fas fa-check-double me-1"></i> Enviado
+                                </span>
+                                <span th:unless="${v.comprobanteEnviado}" class="badge bg-secondary-subtle text-secondary border border-secondary">
+                                    <i class="fas fa-clock me-1"></i> Pendiente
+                                </span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-secondary btn-seleccionar-venta"
+                                            th:attr="data-id=${v.id}" title="Seleccionar para emitir">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </button>
+                                    <a th:href="@{/vendedor/ventas/{id}/boleta.pdf(id=${v.id})}" target="_blank"
+                                       class="btn btn-outline-primary" title="Descargar comprobante PDF">
+                                        <i class="fas fa-file-pdf me-1"></i> PDF
+                                    </a>
+                                    <form th:action="@{/vendedor/ventas/emitir}" method="post" class="d-inline">
+                                        <input type="hidden" name="ventaId" th:value="${v.id}">
+                                        <button type="submit" class="btn btn-primary" title="Enviar por correo">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de interacción -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            const inputVentaId = document.getElementById('inputVentaId');
+            const btnDescargar = document.getElementById('btnDescargarPdf');
+            const filtroInput = document.getElementById('filtroVentas');
+            const tabla = document.getElementById('tablaVentas');
+
+            // Botón seleccionar venta desde la tabla
+            document.querySelectorAll('.btn-seleccionar-venta').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    if (inputVentaId) {
+                        inputVentaId.value = id;
+                        inputVentaId.focus();
+                        inputVentaId.classList.add('is-valid');
+                        setTimeout(() => inputVentaId.classList.remove('is-valid'), 1500);
+                    }
+                });
+            });
+
+            // Botón descargar PDF directo
+            if (btnDescargar && inputVentaId) {
+                btnDescargar.addEventListener('click', function () {
+                    const id = inputVentaId.value.trim();
+                    if (!id || Number(id) <= 0) {
+                        alert('Por favor ingresa o selecciona un ID de venta válido para descargar.');
+                        inputVentaId.focus();
+                        return;
+                    }
+                    window.open('/vendedor/ventas/' + id + '/boleta.pdf', '_blank');
                 });
             }
 
-            if (btnDescargar && input) {
-                btnDescargar.addEventListener('click', function () {
-                    const ventaId = input.value.trim();
-                    if (!ventaId || Number(ventaId) <= 0) {
-                        alert('Ingresa un ID de venta válido antes de descargar.');
-                        return;
-                    }
-                    window.open('/vendedor/ventas/' + ventaId + '/boleta.pdf', '_blank');
+            // Filtro rápido de tabla
+            if (filtroInput && tabla) {
+                filtroInput.addEventListener('keyup', function () {
+                    const term = this.value.toLowerCase().trim();
+                    const rows = tabla.querySelectorAll('tbody tr');
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(term) ? '' : 'none';
+                    });
                 });
             }
         });

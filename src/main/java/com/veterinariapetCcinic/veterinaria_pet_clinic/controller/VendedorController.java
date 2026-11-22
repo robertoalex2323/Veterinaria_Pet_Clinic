@@ -348,8 +348,12 @@ private final ProductoService productoService;
         model.addAttribute("nombreUsuario", getNombreUsuario());
         model.addAttribute("buscar", buscar);
 
-        // Búsqueda simple en memoria (ajustar si luego necesitas query en BD)
-        List<Producto> productos = productoService.listarTodos();
+        List<Producto> todos = productoService.listarTodos();
+        if (todos == null) {
+            todos = new ArrayList<>();
+        }
+
+        List<Producto> productos = todos;
         if (buscar != null && !buscar.trim().isEmpty()) {
             String q = buscar.trim().toLowerCase();
             productos = productos.stream()
@@ -358,7 +362,17 @@ private final ProductoService productoService;
                     .collect(Collectors.toList());
         }
 
+        long stockBajo = todos.stream().filter(p -> p.getStock() != null && p.getStock() <= 5).count();
+        long totalStock = todos.stream().filter(p -> p.getStock() != null).mapToLong(Producto::getStock).sum();
+
         model.addAttribute("productos", productos);
+        model.addAttribute("totalProductos", todos.size());
+        model.addAttribute("totalStock", totalStock);
+        model.addAttribute("stockBajoCount", stockBajo);
+        model.addAttribute("categorias", categoriasExistentes());
+        if (!model.containsAttribute("producto")) {
+            model.addAttribute("producto", new Producto());
+        }
         return "Vendedor/productos";
     }
 

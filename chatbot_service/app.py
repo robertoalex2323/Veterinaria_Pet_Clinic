@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import joblib
+import numpy as np
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -81,7 +83,22 @@ MAX_HISTORY_MESSAGES = parse_history_limit(os.getenv("CHATBOT_HISTORY_LIMIT", "1
 
 chat_histories = defaultdict(lambda: deque(maxlen=MAX_HISTORY_MESSAGES))
 session_memory = defaultdict(dict)
-APP_VERSION = "2026-07-19-chatbot-diagnostico-v5"
+APP_VERSION = "2026-07-19-chatbot-diagnostico-v6-ml"
+
+ML_MODEL_PATH = os.path.join(BASE_DIR, "modelo_triaje_clinico.pkl")
+METRICS_PATH = os.path.join(BASE_DIR, "metricas_modelo.json")
+
+ml_pipeline = None
+ml_metadata = {}
+
+if os.path.exists(ML_MODEL_PATH):
+    try:
+        loaded_bundle = joblib.load(ML_MODEL_PATH)
+        ml_pipeline = loaded_bundle.get("pipeline")
+        ml_metadata = loaded_bundle.get("metadata", {})
+        app.logger.info("Modelo Scikit-learn cargado exitosamente: %s", ML_MODEL_PATH)
+    except Exception as _ml_err:
+        app.logger.warning("No se pudo cargar modelo Scikit-learn: %s", _ml_err)
 
 
 INTENT_KEYWORDS = {
@@ -530,7 +547,8 @@ def fallback_response(message, intent, history=None):
     return choose_response("general", history)
 
 
-def save_message(session_id, role, content):
+def save_message(session_id, role, content, intent="", provider="", confianza=None):
+    # Cache en memoria RAM local
     chat_histories[session_id].append(
         {
             "role": role,
@@ -538,21 +556,183 @@ def save_message(session_id, role, content):
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     )
+    # Persistencia en base de datos PostgreSQL mediante Spring Boot
+    try:
+        url = f"{SPRING_BASE_URL}/api/chatbot/mensajes"
+        payload = {
+            "session_id": session_id,
+            "role": role,
+            "content": content,
+            "intent": intent or "",
+            "provider": provider or "chatbot",
+            "confianza": confianza
+        }
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=3) as _:
+            pass
+    except Exception as exc:
+        app.logger.debug("PostgreSQL persistencia no disponible temporalmente: %s", exc)
+
+
+def get_session_history(session_id):
+    # Sincroniza desde PostgreSQL si esta disponible
+    try:
+        url = f"{SPRING_BASE_URL}/api/chatbot/historial/{session_id}"
+        req = urllib.request.Request(url, headers={"Accept": "application/json"}, method="GET")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            mensajes_bd = json.loads(resp.read().decode("utf-8"))
+            if mensajes_bd and isinstance(mensajes_bd, list):
+                chat_histories[session_id].clear()
+                for item in mensajes_bd:
+                    chat_histories[session_id].append({
+                        "role": item.get("role", "user"),
+                        "content": item.get("content", ""),
+                        "timestamp": item.get("timestamp")
+                    })
+                return chat_histories[session_id]
+    except Exception as exc:
+        app.logger.debug("Historial desde PostgreSQL no disponible: %s", exc)
+    return chat_histories[session_id]
+
+
+def predict_triaje_ml(especie, edad, temperatura, sintomas):
+    """Predice el nivel de triaje y diagnostico presuntivo usando el modelo entrenado con Scikit-learn (.pkl)."""
+    input_text = f"{especie or 'Mascota'} de {edad or '1'} anios, temp {temperatura or '38.5'}C: {sintomas}"
+    
+    if ml_pipeline is None:
+        return None
+
+    try:
+        clases = list(ml_pipeline.classes_)
+        probas = ml_pipeline.predict_proba([input_text])[0]
+        max_idx = int(np.argmax(probas))
+        cat_pred = clases[max_idx]
+        confianza_pct = int(round(float(probas[max_idx]) * 100))
+        confianza = max(65, min(confianza_pct, 97))
+
+        if cat_pred == "EMERGENCIA_CRITICA":
+            return {
+                "titulo": "Emergencia Veterinaria Inmediata (Nivel 1 - Critico)",
+                "nivel_triaje": "EMERGENCIA_CRITICA",
+                "color_triaje": "danger",
+                "confianza": max(confianza, 88),
+                "justificacion": (
+                    "El modelo de Machine Learning (Random Forest) identifico signos de alto riesgo vital "
+                    "(posible convulsión, shock, intoxicación aguda, colapso o dificultad respiratoria severa). "
+                    "Requiere atención médica inmediata en clínica."
+                ),
+                "recomendaciones": [
+                    "Trasladar de inmediato a la mascota a Pet Clinic (Piura).",
+                    "No administrar medicamentos caseros ni forzar la ingesta de agua o comida.",
+                    "Mantener las vías respiratorias despejadas y evitar movimientos bruscos durante el traslado.",
+                    "Avisar a recepción o emergencias para preparar el box clínico."
+                ],
+                "provider": "scikit-learn-randomforest",
+                "modelo": "modelo_triaje_clinico.pkl"
+            }
+        elif cat_pred == "URGENCIA_ALTA":
+            return {
+                "titulo": "Urgencia Veterinaria Prioritaria (Nivel 2 - Naranja)",
+                "nivel_triaje": "URGENCIA_ALTA",
+                "color_triaje": "warning",
+                "confianza": max(confianza, 82),
+                "justificacion": (
+                    "El modelo de Machine Learning detecto un cuadro clínico agudo con riesgo de complicación "
+                    "(gastroenteritis severa, sospecha de parvovirus/distemper, herida abierta o fiebre elevada). "
+                    "Se debe atender en menos de 30-60 minutos."
+                ),
+                "recomendaciones": [
+                    "Acudir a consulta prioritaria en Pet Clinic durante las próximas horas.",
+                    "Aislar de otros animales si hay sospecha de infección viral o vómitos con diarrea.",
+                    "Monitorear temperatura corporal e hidratación (cuidado especial con el calor de Piura).",
+                    "Llevar muestra fecal si el veterinario requiere examen coprológico."
+                ],
+                "provider": "scikit-learn-randomforest",
+                "modelo": "modelo_triaje_clinico.pkl"
+            }
+        elif cat_pred == "PRIORIDAD_MEDIA":
+            return {
+                "titulo": "Atención Clínica Programada (Nivel 3 - Amarillo)",
+                "nivel_triaje": "PRIORIDAD_MEDIA",
+                "color_triaje": "info",
+                "confianza": max(confianza, 76),
+                "justificacion": (
+                    "El modelo analizo síntomas de evolución intermedia "
+                    "(tos moderada, otitis, cojera leve, inapetencia o decaimiento general sin colapso). "
+                    "Requiere evaluación médica el mismo día."
+                ),
+                "recomendaciones": [
+                    "Programar cita médica veterinaria para el día de hoy.",
+                    "Mantener a la mascota hidratada con agua fresca y en reposo.",
+                    "Registrar la frecuencia de los síntomas (horario de vómitos o tipo de tos).",
+                    "Evitar esfuerzos físicos o baños hasta la evaluación clínica."
+                ],
+                "provider": "scikit-learn-randomforest",
+                "modelo": "modelo_triaje_clinico.pkl"
+            }
+        else: # CONSULTA_GENERAL
+            return {
+                "titulo": "Consulta Preventiva / Control General (Nivel 4 - Verde)",
+                "nivel_triaje": "CONSULTA_GENERAL",
+                "color_triaje": "success",
+                "confianza": max(confianza, 80),
+                "justificacion": (
+                    "El modelo de Machine Learning clasifico la consulta dentro de cuidados preventivos o de rutina "
+                    "(vacunación, desparasitación, ectoparásitos, chequeo anual o estética)."
+                ),
+                "recomendaciones": [
+                    "Agendar cita en el horario de conveniencia del tutor.",
+                    "Llevar el carnet de vacunación y desparasitación a la consulta.",
+                    "Consultar por paquetes preventivos y asesoría nutricional.",
+                    "Revisar regularmente el pelaje para prevención de pulgas y garrapatas."
+                ],
+                "provider": "scikit-learn-randomforest",
+                "modelo": "modelo_triaje_clinico.pkl"
+            }
+    except Exception as exc:
+        app.logger.warning("Error en prediccion con modelo ML: %s", exc)
+        return None
 
 
 def build_response(message, session_id):
     update_session_memory(session_id, message)
-    history = chat_histories[session_id]
+    history = get_session_history(session_id)
     intent = detect_intent(message, history)
-    if intent == "system_data":
-        gemini_response = None
-    else:
-        gemini_response = generate_with_gemini(message, intent, history, session_id)
-    provider = "gemini" if gemini_response else "local-fallback"
-    response = gemini_response or fallback_response(message, intent, history)
+    
+    # Si el usuario describe sintomas o emergencias, enriquecer con el modelo ML entrenado
+    ml_triage_info = None
+    if intent in ("symptoms", "emergency"):
+        ml_triage_info = predict_triaje_ml("Mascota", "", "", message)
 
-    save_message(session_id, "user", message)
-    save_message(session_id, "assistant", response)
+    gemini_response = None
+    if intent != "system_data":
+        gemini_response = generate_with_gemini(message, intent, history, session_id)
+    
+    provider = "gemini" if gemini_response else ("scikit-learn-ml" if ml_triage_info else "local-fallback")
+    
+    if gemini_response:
+        response = gemini_response
+    elif ml_triage_info:
+        recs = " ".join([f"- {r}" for r in ml_triage_info.get("recomendaciones", [])[:2]])
+        response = (
+            f"🐾 He analizado los signos con nuestro modelo de Machine Learning de Pet Clinic:\n"
+            f"**{ml_triage_info['titulo']}** (Confianza ML: {ml_triage_info['confianza']}%)\n\n"
+            f"{ml_triage_info['justificacion']}\n\n"
+            f"💡 **Recomendación prioritaria:**\n{recs}\n\n"
+            f"¿Deseas que coordinemos una cita veterinaria prioritaria ahora mismo?"
+        )
+    else:
+        response = fallback_response(message, intent, history)
+
+    save_message(session_id, "user", message, intent=intent, provider="user")
+    confianza_valor = ml_triage_info.get("confianza") if ml_triage_info else None
+    save_message(session_id, "assistant", response, intent=intent, provider=provider, confianza=confianza_valor)
 
     return {
         "response": response,
@@ -561,6 +741,7 @@ def build_response(message, session_id):
         "history_size": len(chat_histories[session_id]),
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "provider": provider,
+        "ml_triaje": ml_triage_info,
     }
 
 
@@ -898,15 +1079,57 @@ def diagnostico():
             "timestamp": datetime.now(timezone.utc).isoformat(),
         })
 
-    result = generate_diagnosis_with_gemini(especie, edad, temperatura, sintomas)
-    provider = "gemini"
-    if not result:
+    # 1. Prediccion con modelo Scikit-learn Random Forest (.pkl)
+    ml_result = predict_triaje_ml(especie, edad, temperatura, sintomas)
+    
+    # 2. IA generativa (Gemini) si estuviera disponible
+    gemini_result = generate_diagnosis_with_gemini(especie, edad, temperatura, sintomas) if GEMINI_API_KEY else None
+
+    if ml_result:
+        result = ml_result
+        if gemini_result and gemini_result.get("justificacion"):
+            result["analisis_adicional"] = gemini_result.get("justificacion")
+        provider = "scikit-learn-randomforest"
+    elif gemini_result:
+        result = gemini_result
+        provider = "gemini"
+    else:
         result = diagnosis_fallback(especie, sintomas)
         provider = "local-fallback"
 
     result["provider"] = provider
     result["timestamp"] = datetime.now(timezone.utc).isoformat()
     return jsonify(result)
+
+
+@app.get("/triaje/metricas")
+def triaje_metricas():
+    if os.path.exists(METRICS_PATH):
+        try:
+            with open(METRICS_PATH, "r", encoding="utf-8") as f:
+                return jsonify(json.load(f))
+        except Exception as err:
+            return jsonify({"error": str(err)}), 500
+    return jsonify({"error": "Metricas de modelo no encontradas."}), 404
+
+
+@app.post("/triaje/predecir")
+def triaje_predecir():
+    payload = request.get_json(silent=True) or {}
+    especie = str(payload.get("especie", "")).strip()
+    edad = str(payload.get("edad", "")).strip()
+    temperatura = str(payload.get("temperatura", "")).strip()
+    sintomas = str(payload.get("sintomas", "")).strip()
+
+    if not sintomas:
+        return jsonify({"error": "El campo 'sintomas' es obligatorio."}), 400
+
+    resultado = predict_triaje_ml(especie, edad, temperatura, sintomas)
+    if not resultado:
+        resultado = diagnosis_fallback(especie, sintomas)
+        resultado["provider"] = "fallback"
+
+    return jsonify(resultado)
 
 
 @app.post("/reset")

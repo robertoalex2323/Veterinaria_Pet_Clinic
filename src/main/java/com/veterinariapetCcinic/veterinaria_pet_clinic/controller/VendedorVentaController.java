@@ -262,7 +262,20 @@ public class VendedorVentaController {
     public record ClienteSugerencia(Long id, String nombre, String telefono, String email, String direccion) {}
 
     @GetMapping("/emitir")
-    public String mostrarEmitirBoleta() {
+    public String mostrarEmitirBoleta(Model model) {
+        List<Venta> todas = ventaService.listarTodasLasVentas();
+        if (todas == null) {
+            todas = new ArrayList<>();
+        }
+        List<Venta> ventasRecientes = todas.stream()
+                .sorted((a, b) -> Long.compare(b.getId() != null ? b.getId() : 0L, a.getId() != null ? a.getId() : 0L))
+                .limit(20)
+                .collect(Collectors.toList());
+        model.addAttribute("ventasRecientes", ventasRecientes);
+
+        List<Venta> hoy = ventaService.listarVentasHoy();
+        model.addAttribute("totalVentasHoy", hoy != null ? hoy.size() : 0);
+        model.addAttribute("montoVentasHoy", ventaService.calcularVentasHoy());
         return "Vendedor/emitir-boletas";
     }
 
@@ -291,13 +304,16 @@ public class VendedorVentaController {
             boolean correoEnviado = notificacionService.enviarVentaConComprobante(venta, pdf);
 
             if (!tieneEmail) {
-                redirectAttributes.addFlashAttribute("error", "El cliente de esta venta no tiene correo registrado, no se pudo enviar el comprobante.");
+                redirectAttributes.addFlashAttribute("advertencia", "Comprobante N° " + venta.getId() + " generado con éxito. El cliente no tiene correo registrado, pero puedes descargarlo o imprimirlo aquí.");
+                redirectAttributes.addFlashAttribute("comprobanteGeneradoId", venta.getId());
             } else if (correoEnviado) {
                 redirectAttributes.addFlashAttribute("success",
-                        "Comprobante generado y entregado al correo del cliente: " + venta.getCliente().getEmail());
+                        "Comprobante N° " + venta.getId() + " generado y enviado exitosamente al correo: " + venta.getCliente().getEmail());
+                redirectAttributes.addFlashAttribute("comprobanteGeneradoId", venta.getId());
             } else {
-                redirectAttributes.addFlashAttribute("error",
-                        "El comprobante se generó, pero no se pudo enviar al correo del cliente. Inténtalo nuevamente.");
+                redirectAttributes.addFlashAttribute("advertencia",
+                        "El comprobante N° " + venta.getId() + " se generó correctamente en el sistema. El servicio de correo no pudo enviar el email (" + venta.getCliente().getEmail() + "). Puedes descargarlo o imprimirlo de inmediato aquí abajo.");
+                redirectAttributes.addFlashAttribute("comprobanteGeneradoId", venta.getId());
             }
             return "redirect:/vendedor/ventas/emitir";
         } catch (Exception e) {

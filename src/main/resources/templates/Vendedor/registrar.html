@@ -66,13 +66,18 @@
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label" for="clienteNombre">Nombre</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label mb-0" for="clienteNombre">Nombre</label>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="btnClienteGenerico" style="font-size: 0.75rem;">
+                                <i class="fas fa-user-tag me-1"></i>Público General
+                            </button>
+                        </div>
                         <div class="autocomplete-wrap">
                             <input class="form-control" id="clienteNombre" name="clienteNombre" required
                                    placeholder="Ej: Dario Arroyo" autocomplete="off" maxlength="100"/>
                             <div id="clienteSugerencias" class="autocomplete-list d-none" role="listbox"></div>
                         </div>
-                        <div class="form-text">Empieza a escribir para buscar un cliente ya registrado.</div>
+                        <div class="form-text">Empieza a escribir para buscar un cliente registrado.</div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label" for="clienteTelefono">Teléfono</label>
@@ -140,7 +145,7 @@
                     <table class="table table-bordered align-middle" id="tablaProductos">
                         <thead class="table-light">
                         <tr>
-                            <th style="width:60px;" class="text-center">Sí</th>
+                            <th style="width:60px;" class="text-center" title="Seleccionar producto"><i class="fas fa-check"></i></th>
                             <th>Producto</th>
                             <th style="width:110px;" class="text-center">Stock</th>
                             <th style="width:170px;" class="text-center">Cantidad</th>
@@ -291,6 +296,21 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnGenerico = document.getElementById('btnClienteGenerico');
+            const inputNombre = document.getElementById('clienteNombre');
+            const inputTel = document.getElementById('clienteTelefono');
+            const inputEmail = document.getElementById('clienteEmail');
+            if (btnGenerico && inputNombre) {
+                btnGenerico.addEventListener('click', function () {
+                    inputNombre.value = 'Cliente Varios / Mostrador';
+                    if (inputTel && !inputTel.value) inputTel.value = '999999999';
+                    if (inputEmail && !inputEmail.value) inputEmail.value = 'mostrador@petclinic.pe';
+                });
+            }
+        });
+    </script>
     <script th:src="@{/Js/Registrar-vendedor.js}"></script>
     <script th:src="@{/Js/registrar-venta-clientes-vendedor.js}"></script>
 
